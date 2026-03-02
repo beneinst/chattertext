@@ -350,10 +350,16 @@ CSS
     </div>
 
     <div class="controls" style="margin-top: 20px;">
-        <div class="control-group" style="flex: 2;">
-            <label>🎙️ File Voce (nella cartella 2.Voci/)</label>
-            <input type="text" id="voiceFile" value="3l14n.wav" placeholder="nome_voce.wav">
-        </div>
+        
+    <div class="control-group" style="flex: 2;">
+        <label>🎙️ Voce 1 - Principale (nella cartella 2.Voci/)</label>
+        <input type="text" id="voiceFile" value="3l14n.wav" placeholder="nome_voce.wav">
+    </div>
+    <div class="control-group" style="flex: 2;">
+        <label>🎙️ Voce 2 - Secondaria (opzionale, nella cartella 2.Voci/)</label>
+        <input type="text" id="voiceFile2" value="" placeholder="lascia vuoto per usare solo Voce 1">
+    </div>
+</div>
         <div class="control-group">
             <label>Exaggeration</label>
             <input type="number" id="exaggeration" value="0.62" min="0.4" max="0.8" step="0.01">
@@ -367,7 +373,7 @@ CSS
             <input type="number" id="temperature" value="0.58" min="0.45" max="0.75" step="0.01">
         </div>
     </div>
-</div>
+
 			
 
                 <div class="controls" style="margin-top: 20px;">
@@ -796,10 +802,15 @@ function exportPythonScript() {
     const chunks = window.processedChunks;
 
     // Leggi i parametri dalla UI
-    const voiceFile = document.getElementById('voiceFile').value.trim() || '3l14n.wav';
+    
     const exaggeration = parseFloat(document.getElementById('exaggeration').value) || 0.50;
     const cfgWeight = parseFloat(document.getElementById('cfgWeight').value) || 0.65;
     const temperature = parseFloat(document.getElementById('temperature').value) || 0.50;
+	
+	const voiceFile = document.getElementById('voiceFile').value.trim() || '3l14n.wav';
+	const voiceFile2Raw = document.getElementById('voiceFile2').value.trim();
+	const voiceFile2 = voiceFile2Raw || voiceFile; // fallback su voce 1 se vuota
+	const hasTwoVoices = !!voiceFile2Raw;
 
     const sceneStartersList = [
         "poi", "quando", "all'improvviso", "improvvisamente",
@@ -851,15 +862,32 @@ function exportPythonScript() {
         "    if len(chunk) > 400:",
         "        print(f' Chunk {i+1} e lungo {len(chunk)} caratteri (limite consigliato: 400)')",
         "",
-        "# === AUDIO PROMPT ===",
-        `AUDIO_PROMPT = "2.Voci/${voiceFile}"`,
-        "",
-        "if not os.path.exists(AUDIO_PROMPT):",
-        "    print(f' File audio prompt non trovato: {AUDIO_PROMPT}')",
-        "    print('   Modifica la variabile AUDIO_PROMPT con il percorso corretto')",
-        "    exit(1)",
-        "",
-		"# === NOISE REDUCTION: gate + high-pass ===",
+  "# === AUDIO PROMPTS ===",
+`AUDIO_PROMPT_V1 = "2.Voci/${voiceFile}"`,
+`AUDIO_PROMPT_V2 = "2.Voci/${voiceFile2}"`,
+`HAS_TWO_VOICES = ${hasTwoVoices ? 'True' : 'False'}`,
+"",
+"for prompt in ([AUDIO_PROMPT_V1, AUDIO_PROMPT_V2] if HAS_TWO_VOICES else [AUDIO_PROMPT_V1]):",
+"    if not os.path.exists(prompt):",
+"        print(f' File audio prompt non trovato: {prompt}')",
+"        exit(1)",
+"",
+"# Ogni chunk porta con sé quale voce usare",
+"# formato: (testo, 'v1' | 'v2')",
+"tagged_chunks = []",
+"for chunk in chunks:",
+"    if '[v2]' in chunk and HAS_TWO_VOICES:",
+"        clean = chunk.replace('[v2]', '').replace('[/v2]', '').strip()",
+"        tagged_chunks.append((clean, 'v2'))",
+"    else:",
+"        clean = chunk.replace('[v1]', '').replace('[/v1]', '').strip()",
+"        tagged_chunks.append((clean, 'v1'))",
+"",
+"print(f'\\n Chunk da processare: {len(tagged_chunks)}')",
+"print(f' Voce 1: {AUDIO_PROMPT_V1}')",
+"print(f' Voce 2: {AUDIO_PROMPT_V2 if HAS_TWO_VOICES else \"(non usata)\"}')",
+"",
+"# === NOISE REDUCTION: gate + high-pass ===",
 "def reduce_noise(wav, sr, gate_threshold_db=-50, highpass_hz=80):",
 "    threshold = 10 ** (gate_threshold_db / 20)",
 "    if wav.dim() == 1:",
@@ -877,71 +905,72 @@ function exportPythonScript() {
 "    wav = ta.functional.highpass_biquad(wav, sr, cutoff_freq=highpass_hz)",
 "    return wav",
 "",
-        "# === PROSODIA ===",
-        "",
-        "def prosody_params(text):",
-        "    return {",
-        "        \"exaggeration\": " + exaggeration + ",",
-        "        \"cfg_weight\": " + cfgWeight + ",",
-        "        \"temperature\": " + temperature + ",",
-        "        \"top_p\": 0.75,",
-        "        \"min_p\": 0.15",
-        "    }",
-        "",
-        "# === GENERAZIONE ===",
-        "audio_segments = []",
-        "failed_chunks = []",
-        "",
-        "print('\\n' + '='*60)",
-        "print('INIZIO GENERAZIONE AUDIO')",
-        "print('='*60)",
-        "",
-        "for idx, chunk in enumerate(chunks):",
-        "    print(f'\\n Genero chunk {idx+1}/{len(chunks)}')",
-        "    print(f'   {len(chunk.split())} parole, {len(chunk)} caratteri')",
-        "    print(f'   Preview: {chunk[:60]}{\"...\" if len(chunk) > 60 else \"\"}')",
-        "    try:",
-        "        p = prosody_params(chunk)",
-        "        wav = model.generate(",
-        "            chunk,",
-        "            language_id='it',",
-        "            audio_prompt_path=AUDIO_PROMPT,",
-        "            exaggeration=p['exaggeration'],",
-        "            cfg_weight=p['cfg_weight'],",
-        "            temperature=p['temperature'],",
-        "            min_p=p['min_p'],",
-        "            top_p=p['top_p']",
-        "        )",
-        "        wav = wav / (torch.max(torch.abs(wav)) + 1e-8) * 0.95",
-        "        audio_segments.append(wav)",
-        "        print('   Generato!')",
-        "    except Exception as e:",
-        "        print(f'   Errore: {e}')",
-        "        failed_chunks.append(idx)",
-        "        print('   Retry con parametri conservativi...')",
-        "        try:",
-        "            wav = model.generate(",
-        "                chunk,",
-        "                language_id='it',",
-        "                audio_prompt_path=AUDIO_PROMPT,",
-        "                exaggeration=0.0,",
-        "                cfg_weight=0.25,",
-        "                temperature=0.22,",
-        "                min_p=0.20,",
-        "                top_p=0.65",
-        "            )",
-        "            wav = wav / (torch.max(torch.abs(wav)) + 1e-8) * 0.95",
-        "            audio_segments.append(wav)",
-        "            print('   Recuperato!')",
-        "        except Exception as e2:",
-        "            print(f'   Fallito anche con retry: {e2}')",
-        "            with open('generation_errors.log', 'a', encoding='utf-8') as f:",
-        "                f.write(f'\\n{\"=\"*60}\\n')",
-        "                f.write(f'Timestamp: {datetime.datetime.now()}\\n')",
-        "                f.write(f'Chunk #{idx+1}\\n')",
-        "                f.write(f'Error: {e2}\\n')",
-        "                f.write(f'Text: {chunk}\\n')",
-        "            continue",
+"# === PROSODIA ===",
+"",
+"def prosody_params(text):",
+"    return {",
+"        \"exaggeration\": " + exaggeration + ",",
+"        \"cfg_weight\": " + cfgWeight + ",",
+"        \"temperature\": " + temperature + ",",
+"        \"top_p\": 0.75,",
+"        \"min_p\": 0.15",
+"    }",
+"",
+"# === GENERAZIONE ===",
+"audio_segments = []",
+"failed_chunks = []",
+"",
+"print('\\n' + '='*60)",
+"print('INIZIO GENERAZIONE AUDIO')",
+"print('='*60)",
+"",
+"for idx, (text, voice) in enumerate(tagged_chunks):",
+"    print(f'\\n Genero chunk {idx+1}/{len(tagged_chunks)} [{voice.upper()}]')",
+"    print(f'   {len(text.split())} parole, {len(text)} caratteri')",
+"    print(f'   Preview: {text[:60]}{\"...\" if len(text) > 60 else \"\"}')",
+"    voice_prompt = AUDIO_PROMPT_V2 if voice == 'v2' else AUDIO_PROMPT_V1",
+"    try:",
+"        p = prosody_params(text)",
+"        wav = model.generate(",
+"            text,",
+"            language_id='it',",
+"            audio_prompt_path=voice_prompt,",
+"            exaggeration=p['exaggeration'],",
+"            cfg_weight=p['cfg_weight'],",
+"            temperature=p['temperature'],",
+"            min_p=p['min_p'],",
+"            top_p=p['top_p']",
+"        )",
+"        wav = wav / (torch.max(torch.abs(wav)) + 1e-8) * 0.95",
+"        audio_segments.append(wav)",
+"        print('   Generato!')",
+"    except Exception as e:",
+"        print(f'   Errore: {e}')",
+"        failed_chunks.append(idx)",
+"        print('   Retry con parametri conservativi...')",
+"        try:",
+"            wav = model.generate(",
+"                text,",
+"                language_id='it',",
+"                audio_prompt_path=voice_prompt,",
+"                exaggeration=0.0,",
+"                cfg_weight=0.25,",
+"                temperature=0.22,",
+"                min_p=0.20,",
+"                top_p=0.65",
+"            )",
+"            wav = wav / (torch.max(torch.abs(wav)) + 1e-8) * 0.95",
+"            audio_segments.append(wav)",
+"            print('   Recuperato!')",
+"        except Exception as e2:",
+"            print(f'   Fallito anche con retry: {e2}')",
+"            with open('generation_errors.log', 'a', encoding='utf-8') as f:",
+"                f.write(f'\\n{\"=\"*60}\\n')",
+"                f.write(f'Timestamp: {datetime.datetime.now()}\\n')",
+"                f.write(f'Chunk #{idx+1} [{voice}]\\n')",
+"                f.write(f'Error: {e2}\\n')",
+"                f.write(f'Text: {text}\\n')",
+"            continue",
         "",
         "# === SALVATAGGIO ===",
         "print('\\n' + '='*60)",
