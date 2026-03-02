@@ -433,14 +433,7 @@ CSS
     text = text.replace(/(?<!\n)\n(?!\n)/g, ' ');
     text = text.replace(/([.!?])\1+/g, '$1');
 
-    // ✅ PAUSE TRA FRASI E VIRGOLE
-    text = text.replace(/\. /g, '.  ');       // pausa dopo punto
-    text = text.replace(/\? /g, '?  ');       // pausa dopo domanda
-    text = text.replace(/! /g, '!  ');        // pausa dopo esclamazione
-    text = text.replace(/, /g, ',  ');        // micro-pausa dopo virgola
-    text = text.replace(/; /g, ';  ');        // pausa dopo punto e virgola
-	// Spezza frasi lunghissime senza punteggiatura (oltre 15 parole)
-	text = text.replace(/(\b\w+\b(?:\s+\b\w+\b){14})\s+/g, '$1, ');
+  
 
     return text.trim();
 }
@@ -801,15 +794,13 @@ function downloadChunks() {
 
 function exportPythonScript() {
     const chunks = window.processedChunks;
-	
-	// Leggi i parametri dalla UI
-    const voiceFile = document.getElementById('voiceFile').value.trim() || '3l14n.wav';
-    const exaggeration = parseFloat(document.getElementById('exaggeration').value) || 0.62;
-    const cfgWeight = parseFloat(document.getElementById('cfgWeight').value) || 0.70;
-    const temperature = parseFloat(document.getElementById('temperature').value) || 0.58;
 
-    // ✅ FIX: costruiamo il testo Python per le liste con apostrofi
-    // usando stringhe con virgolette doppie per evitare conflitti con gli apostrofi italiani
+    // Leggi i parametri dalla UI
+    const voiceFile = document.getElementById('voiceFile').value.trim() || '3l14n.wav';
+    const exaggeration = parseFloat(document.getElementById('exaggeration').value) || 0.50;
+    const cfgWeight = parseFloat(document.getElementById('cfgWeight').value) || 0.65;
+    const temperature = parseFloat(document.getElementById('temperature').value) || 0.50;
+
     const sceneStartersList = [
         "poi", "quando", "all'improvviso", "improvvisamente",
         "in quel momento", "mentre", "subito dopo", "intanto"
@@ -825,12 +816,11 @@ function exportPythonScript() {
         "sconvolto", "agitato", "sorpreso"
     ];
 
-    // Serializza come Python list con virgolette doppie
     const pyList = arr => "[\n        " + arr.map(s => `"${s}"`).join(", ") + "\n    ]";
 
     const script = [
         "# Script generato automaticamente da Chatterbox Text Processor V2",
-        "# Versione Ottimizzata - CPU Safe",
+        "# Versione Ottimizzata - CPU Safe + Trim + Crossfade",
         "import os",
         "import torch",
         "import torchaudio as ta",
@@ -869,36 +859,34 @@ function exportPythonScript() {
         "    print('   Modifica la variabile AUDIO_PROMPT con il percorso corretto')",
         "    exit(1)",
         "",
-        "# === FUNZIONI DI PROSODIA E PAUSE INTERNE ===",
-        "",
-        "def inject_internal_pauses(text):",
-        "    text = text.replace(\", \", \",  \")",
-        "    text = text.replace(\"; \", \";   \")",
-        "    text = text.replace(\": \", \":   \")",
-        "    text = text.replace(\" - \", \" --  \")",
-        "    text = text.replace(\") \", \")   \")",
-        "    return text",
+		"# === NOISE REDUCTION: gate + high-pass ===",
+"def reduce_noise(wav, sr, gate_threshold_db=-50, highpass_hz=80):",
+"    threshold = 10 ** (gate_threshold_db / 20)",
+"    if wav.dim() == 1:",
+"        wav = wav.unsqueeze(0)",
+"    gate_mask = (torch.abs(wav) > threshold).float()",
+"    kernel_size = int(sr * 0.008)",
+"    if kernel_size % 2 == 0:",
+"        kernel_size += 1",
+"    kernel = torch.ones(1, 1, kernel_size) / kernel_size",
+"    gate_mask = gate_mask.unsqueeze(0)",
+"    gate_mask = torch.nn.functional.conv1d(",
+"        gate_mask, kernel, padding=kernel_size // 2",
+"    ).squeeze(0).clamp(0, 1)",
+"    wav = wav * gate_mask",
+"    wav = ta.functional.highpass_biquad(wav, sr, cutoff_freq=highpass_hz)",
+"    return wav",
+"",
+        "# === PROSODIA ===",
         "",
         "def prosody_params(text):",
-        "    lower = text.lower()",
-        "    params = {",
-       `        'exaggeration': ${exaggeration},`,
-        `        'cfg_weight': ${cfgWeight},`,
-        `        'temperature': ${temperature},`,
-        "        'top_p': 0.93,",
-        "        'min_p': 0.035",
+        "    return {",
+        "        \"exaggeration\": " + exaggeration + ",",
+        "        \"cfg_weight\": " + cfgWeight + ",",
+        "        \"temperature\": " + temperature + ",",
+        "        \"top_p\": 0.75,",
+        "        \"min_p\": 0.15",
         "    }",
-        "    if text.strip().startswith(('\"', \"'\")):  ",
-        "        params['exaggeration'] = 0.70",
-        "        params['temperature'] = 0.62",
-        "    emotional = ['paura', 'terrore', 'ansia', 'pianto', 'felice', 'disperato']",
-        "    if any(w in lower for w in emotional):",
-        "        params['exaggeration'] = 0.68",
-        "        params['temperature'] = 0.60",
-        "    if len(text) > 350:",
-        "        params['temperature'] = 0.52",
-        "        params['cfg_weight'] = 0.75",
-        "    return params",
         "",
         "# === GENERAZIONE ===",
         "audio_segments = []",
@@ -913,10 +901,9 @@ function exportPythonScript() {
         "    print(f'   {len(chunk.split())} parole, {len(chunk)} caratteri')",
         "    print(f'   Preview: {chunk[:60]}{\"...\" if len(chunk) > 60 else \"\"}')",
         "    try:",
-        "        chunk_for_tts = inject_internal_pauses(chunk)",
         "        p = prosody_params(chunk)",
         "        wav = model.generate(",
-        "            chunk_for_tts,",
+        "            chunk,",
         "            language_id='it',",
         "            audio_prompt_path=AUDIO_PROMPT,",
         "            exaggeration=p['exaggeration'],",
@@ -937,11 +924,11 @@ function exportPythonScript() {
         "                chunk,",
         "                language_id='it',",
         "                audio_prompt_path=AUDIO_PROMPT,",
-        "                exaggeration=0.6,",
-        "                cfg_weight=0.6,",
-        "                temperature=0.55,",
-        "                min_p=0.05,",
-        "                top_p=0.90",
+        "                exaggeration=0.0,",
+        "                cfg_weight=0.25,",
+        "                temperature=0.22,",
+        "                min_p=0.20,",
+        "                top_p=0.65",
         "            )",
         "            wav = wav / (torch.max(torch.abs(wav)) + 1e-8) * 0.95",
         "            audio_segments.append(wav)",
@@ -1033,28 +1020,61 @@ function exportPythonScript() {
         "    base = max(0.12, min(base, 2.4))",
         "    return base",
         "",
-        "# === FADE IN/OUT PER RIDURRE ARTEFATTI ===",
+        "# === TRIM EDGES: rimuove rumore di inizio/fine chunk ===",
+        "def trim_edges(wav, sr, threshold_db=-45, margin_ms=30):",
+        "    margin = int(sr * margin_ms / 1000)",
+        "    threshold = 10 ** (threshold_db / 20)",
+        "    mono = wav[0] if wav.dim() > 1 else wav",
+        "    energy = torch.abs(mono)",
+        "    start = 0",
+        "    for i in range(len(energy)):",
+        "        if energy[i] > threshold:",
+        "            start = max(0, i - margin)",
+        "            break",
+        "    end = len(energy)",
+        "    for i in range(len(energy) - 1, -1, -1):",
+        "        if energy[i] > threshold:",
+        "            end = min(len(energy), i + margin)",
+        "            break",
+        "    return wav[..., start:end]",
+        "",
+        "# === CROSSFADE: giunzione morbida tra chunk ===",
+        "def crossfade_join(seg1, seg2, sr, fade_ms=55):",
+        "    fade_samples = int(sr * fade_ms / 1000)",
+        "    if seg1.shape[-1] < fade_samples or seg2.shape[-1] < fade_samples:",
+        "        return torch.cat([seg1, seg2], dim=-1)",
+        "    fade_out = torch.linspace(1, 0, fade_samples) ** 1.5",
+        "    fade_in  = torch.linspace(0, 1, fade_samples) ** 1.5",
+        "    tail    = seg1[..., -fade_samples:] * fade_out",
+        "    head    = seg2[..., :fade_samples]  * fade_in",
+        "    overlap = tail + head",
+        "    return torch.cat([seg1[..., :-fade_samples], overlap, seg2[..., fade_samples:]], dim=-1)",
+        "",
+        "# === FADE IN/OUT ANTI-ARTEFATTO ===",
         "def apply_fade(wav, sr, fade_ms=14):",
         "    fade_samples = int(sr * fade_ms / 1000)",
-        "    fade_in = torch.linspace(0, 1, fade_samples)",
+        "    fade_in  = torch.linspace(0, 1, fade_samples)",
         "    fade_out = torch.linspace(1, 0, fade_samples)",
         "    wav = wav.clone()",
-        "    wav[..., :fade_samples] *= fade_in",
+        "    wav[..., :fade_samples]  *= fade_in",
         "    wav[..., -fade_samples:] *= fade_out",
         "    return wav",
         "",
-        "# === CONCATENAZIONE CON PAUSA DINAMICA ===",
-        "final_segments = []",
+        "# === CONCATENAZIONE: Trim → Fade → Pausa → Crossfade ===",
+        "final_audio = None",
         "",
         "for i, seg in enumerate(audio_segments):",
+        "    seg = reduce_noise(seg, model.sr, gate_threshold_db=-50, highpass_hz=80)",
+		"    seg = trim_edges(seg, model.sr, threshold_db=-45, margin_ms=30)",
         "    seg = apply_fade(seg, model.sr, fade_ms=14)",
-        "    if i > 0:",
-        "        pause = dynamic_pause(chunks[i-1])",
-        "        silence = torch.zeros((seg.shape[0], int(model.sr * pause)))",
-        "        final_segments.append(silence)",
-        "    final_segments.append(seg)",
+        "    if final_audio is None:",
+        "        final_audio = seg",
+        "        continue",
+        "    pause = dynamic_pause(chunks[i-1])",
+        "    silence = torch.zeros((seg.shape[0], int(model.sr * pause)))",
+        "    seg_with_pause = torch.cat([silence, seg], dim=-1)",
+        "    final_audio = crossfade_join(final_audio, seg_with_pause, model.sr, fade_ms=55)",
         "",
-        "final_audio = torch.cat(final_segments, dim=-1)",
         "final_audio = final_audio / (torch.max(torch.abs(final_audio)) + 1e-8) * 0.95",
         "",
         "ta.save(out_name, final_audio, model.sr)",
@@ -1079,43 +1099,6 @@ function exportPythonScript() {
     alert('Script Python esportato!\n\nEsegui: python chatterbox_auto.py');
 }
 
-function exportForAcPy() {
-    const chunks = window.processedChunks;
-    
-    const content = chunks.map((chunk, i) => 
-        `### CHUNK ${i + 1} ###\n${chunk}`
-    ).join('\n\n');
-    
-    const instructions = `# ISTRUZIONI PER L'USO CON ac.py
-# 
-# 1. Questo file contiene ${chunks.length} chunk già ottimizzati per Chatterbox
-# 2. Ogni chunk è numerato e separato
-# 3. Per usarlo con ac.py:
-#    - Copia UN chunk alla volta in testo_da_leggere.txt
-#    - Esegui: python ac.py
-#    - Ripeti per ogni chunk
-#
-# OPPURE usa lo script automatico "chatterbox_auto.py"
-#
-# ============================================================
-
-${content}
-
-# ============================================================
-# Fine chunk - Totale: ${chunks.length} chunk
-# Parole per chunk: ${chunks.map(c => c.split(/\s+/).length).join(', ')}
-# Caratteri per chunk: ${chunks.map(c => c.length).join(', ')}
-`;
-    
-    const blob = new Blob([instructions], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'chunks_per_acpy.txt';
-    a.click();
-    
-    alert(`File creato: chunks_per_acpy.txt\n\nContiene ${chunks.length} chunk numerati.\n\nCopia un chunk alla volta in testo_da_leggere.txt ed esegui ac.py`);
-}
 
 function clearAll() {
     document.getElementById('inputText').value = '';
