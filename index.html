@@ -428,7 +428,19 @@ CSS
       </p>
     </div>
     <script>
-        function normalizeText(text) {
+	
+       function normalizeText(text) {
+    // Proteggi i tag v1/v2 e inizio/fine PRIMA di normalizzare
+    const tagMap = {};
+    let tagIndex = 0;
+    text = text.replace(/\[\/?(?:v1|v2|inizio|fine|pausa|pausa_lunga|silenzio)\]/gi, match => {
+
+        const placeholder = `__TAG${tagIndex}__`;
+        tagMap[placeholder] = match;
+        tagIndex++;
+        return placeholder;
+    });
+
     text = text.replace(/l'Om\b/g, "l'om");
     text = text.replace(/nell'(\w)/g, (m, p1) => `nell'${p1.toLowerCase()}`);
     text = text.replace(/dell'(\w)/g, (m, p1) => `dell'${p1.toLowerCase()}`);
@@ -439,7 +451,10 @@ CSS
     text = text.replace(/(?<!\n)\n(?!\n)/g, ' ');
     text = text.replace(/([.!?])\1+/g, '$1');
 
-  
+    // Ripristina i tag
+    Object.entries(tagMap).forEach(([placeholder, tag]) => {
+        text = text.replace(placeholder, tag);
+    });
 
     return text.trim();
 }
@@ -492,20 +507,37 @@ function analyzeText(text) {
 
 function chunkText(text, minWords, maxWords, maxChars) {
 
-    // 1️⃣ SE CI SONO TAG, USALI
+    // 1️⃣ SE CI SONO TAG [inizio]/[fine], USALI
     const tagPattern = /\[inizio\]([\s\S]*?)\[fine\]/gi;
     const tagMatches = Array.from(text.matchAll(tagPattern));
 
     if (tagMatches.length > 0) {
-        return tagMatches.map(m => m[1].trim()).filter(c => c.length > 0);
+        const chunks = [];
+        for (const m of tagMatches) {
+            const content = m[1].trim();
+            if (!content) continue;
+
+            // Separa per tag voce: [v1]...[/v1] o [v2]...[/v2]
+            const voicePattern = /\[(v1|v2)\]([\s\S]*?)\[\/\1\]/gi;
+            const voiceMatches = Array.from(content.matchAll(voicePattern));
+
+            if (voiceMatches.length > 0) {
+                // Ci sono tag voce → ogni blocco voce è un chunk
+                for (const vm of voiceMatches) {
+                    const voice = vm[1];       // 'v1' o 'v2'
+                    const vtext = vm[2].trim();
+                    if (vtext) chunks.push(`[${voice}]${vtext}[/${voice}]`);
+                }
+            } else {
+                // Nessun tag voce → chunk unico senza tag
+                if (content) chunks.push(content);
+            }
+        }
+        return chunks;
     }
 
     // 2️⃣ SE NON CI SONO TAG → GENERALI AUTOMATICAMENTE
-
-    // Dividi per paragrafi (riga vuota)
     let paragrafi = text.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
-
-    // Se i paragrafi sono troppo lunghi → spezza in frasi
     let chunks = [];
 
     for (let p of paragrafi) {
@@ -513,15 +545,10 @@ function chunkText(text, minWords, maxWords, maxChars) {
             chunks.push(p);
             continue;
         }
-
-        // Spezza in frasi
         const frasi = p.match(/[^.!?]+[.!?]+/g) || [p];
-
         let buffer = "";
-
         for (let frase of frasi) {
             const test = buffer ? buffer + " " + frase : frase;
-
             if (test.length > maxChars || test.split(/\s+/).length > maxWords) {
                 if (buffer.trim().length > 0) chunks.push(buffer.trim());
                 buffer = frase;
@@ -529,7 +556,6 @@ function chunkText(text, minWords, maxWords, maxChars) {
                 buffer = test;
             }
         }
-
         if (buffer.trim().length > 0) chunks.push(buffer.trim());
     }
 
@@ -552,18 +578,17 @@ function processText() {
         return;
     }
 
-    // ✅ Estrai i tag PRIMA della normalizzazione
     const hasTagMode = /\[inizio\]/i.test(text);
     
     let normalized;
     if (hasTagMode) {
-        // Normalizza ogni chunk tra i tag separatamente, preservando i tag
         normalized = text.replace(/\[inizio\]([\s\S]*?)\[fine\]/gi, (match, content) => {
             return '[inizio]' + normalizeText(content) + '[fine]';
         });
     } else {
         normalized = normalizeText(text);
     }
+
     const errors = analyzeText(normalized);
     
     const words = normalized.split(/\s+/).filter(w => w.length > 0);
@@ -593,28 +618,41 @@ function processText() {
     document.getElementById('totalChunks').textContent = chunks.length;
     
     // ✅ CONTATORE TAG [inizio]/[fine]
-const tagCount = (normalized.match(/\[inizio\]/gi) || []).length;
-const tagInfo = document.getElementById('tagInfo');
-if (tagInfo) {
-    if (tagCount > 0) {
-        tagInfo.textContent = `🏷️ Tag trovati: ${tagCount} blocchi [inizio]/[fine]`;
-        tagInfo.style.color = '#28a745';
-    } else {
-        tagInfo.textContent = '⚙️ Modalità automatica (nessun tag trovato)';
-        tagInfo.style.color = '#ffc107';
+    const tagCount = (normalized.match(/\[inizio\]/gi) || []).length;
+    const tagInfo = document.getElementById('tagInfo');
+    if (tagInfo) {
+        if (tagCount > 0) {
+            tagInfo.textContent = `🏷️ Tag trovati: ${tagCount} blocchi [inizio]/[fine]`;
+            tagInfo.style.color = '#28a745';
+        } else {
+            tagInfo.textContent = '⚙️ Modalità automatica (nessun tag trovato)';
+            tagInfo.style.color = '#ffc107';
+        }
     }
-}
-	
-	const container = document.getElementById('chunksContainer');
+
+    const container = document.getElementById('chunksContainer');
     container.innerHTML = chunks.map((chunk, i) => {
         const words = chunk.split(/\s+/).length;
         const chars = chunk.length;
         const status = getChunkStatus(words, chars);
-        
+
+        // Badge voce
+        const hasV2 = chunk.includes('[v2]');
+const hasV1 = chunk.includes('[v1]');
+const hasPausa = chunk.includes('[pausa_lunga]') ? '⏸⏸' :
+                 chunk.includes('[pausa]') ? '⏸' : '';
+const hasSilenzio = chunk.includes('[silenzio]') ? '🔇' : '';
+
+const voiceTag = hasV2 ?
+    `<span style="background:#e74c3c;color:white;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:6px;">🎙️ V2 ${hasPausa}${hasSilenzio}</span>` :
+    hasV1 ?
+    `<span style="background:#3498db;color:white;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:6px;">🎙️ V1 ${hasPausa}${hasSilenzio}</span>` :
+    `<span style="background:#6c757d;color:white;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:6px;">🎙️ Auto ${hasPausa}${hasSilenzio}</span>`;
+
         return `
     <div class="chunk">
         <div class="chunk-header">
-            <div class="chunk-title">Chunk ${i + 1}</div>
+            <div class="chunk-title">Chunk ${i + 1} ${voiceTag}</div>
             <div class="chunk-info">
                 <span id="chunk-words-${i}"><strong>${words}</strong> parole</span>
                 <span id="chunk-chars-${i}"><strong>${chars}</strong> caratteri</span>
@@ -635,6 +673,7 @@ if (tagInfo) {
     document.getElementById('chunksSection').classList.remove('hidden');
     window.processedChunks = chunks;
 }
+
 
 function updateChunkStats(index) {
     const textarea = document.getElementById(`chunk-${index}`);
@@ -740,7 +779,11 @@ function reloadChunks() {
         return `
             <div class="chunk">
                 <div class="chunk-header">
-                    <div class="chunk-title">Chunk ${i + 1}</div>
+                    <div class="chunk-title">Chunk ${i + 1} ${
+    chunk.includes('[v2]') ? '<span style="background:#e74c3c;color:white;padding:2px 8px;border-radius:10px;font-size:11px;">🎙️ V2</span>' :
+    chunk.includes('[v1]') ? '<span style="background:#3498db;color:white;padding:2px 8px;border-radius:10px;font-size:11px;">🎙️ V1</span>' :
+    '<span style="background:#6c757d;color:white;padding:2px 8px;border-radius:10px;font-size:11px;">🎙️ Auto</span>'
+}</div>
                     <div class="chunk-info">
                         <span id="chunk-words-${i}"><strong>${words}</strong> parole</span>
                         <span id="chunk-chars-${i}"><strong>${chars}</strong> caratteri</span>
@@ -875,17 +918,30 @@ function exportPythonScript() {
 "# Ogni chunk porta con sé quale voce usare",
 "# formato: (testo, 'v1' | 'v2')",
 "tagged_chunks = []",
-"for chunk in chunks:",
-"    if '[v2]' in chunk and HAS_TWO_VOICES:",
-"        clean = chunk.replace('[v2]', '').replace('[/v2]', '').strip()",
-"        tagged_chunks.append((clean, 'v2'))",
-"    else:",
-"        clean = chunk.replace('[v1]', '').replace('[/v1]', '').strip()",
-"        tagged_chunks.append((clean, 'v1'))",
+"PAUSE_MAP = {'[pausa]': 0.5, '[pausa_lunga]': 1.2, '[silenzio]': 2.0}",
 "",
-"print(f'\\n Chunk da processare: {len(tagged_chunks)}')",
-"print(f' Voce 1: {AUDIO_PROMPT_V1}')",
-"print(f' Voce 2: {AUDIO_PROMPT_V2 if HAS_TWO_VOICES else \"(non usata)\"}')",
+"for chunk in chunks:",
+"    # Estrai pause inline prima di pulire il testo",
+"    pauses_inline = []",
+"    import re",
+"    parts = re.split(r'(\\[pausa(?:_lunga)?\\]|\\[silenzio\\])', chunk)",
+"    cleaned_parts = []",
+"    for part in parts:",
+"        if part in PAUSE_MAP:",
+"            pauses_inline.append(('pause', PAUSE_MAP[part]))",
+"            cleaned_parts.append(None)  # placeholder",
+"        else:",
+"            cleaned_parts.append(part)",
+"    if '[v2]' in chunk and HAS_TWO_VOICES:",
+"        clean = chunk",
+"        clean = re.sub(r'\\[/?v2\\]', '', clean)",
+"        clean = re.sub(r'\\[pausa(?:_lunga)?\\]|\\[silenzio\\]', '', clean).strip()",
+"        tagged_chunks.append((clean, 'v2', pauses_inline))",
+"    else:",
+"        clean = chunk",
+"        clean = re.sub(r'\\[/?v1\\]', '', clean)",
+"        clean = re.sub(r'\\[pausa(?:_lunga)?\\]|\\[silenzio\\]', '', clean).strip()",
+"        tagged_chunks.append((clean, 'v1', pauses_inline))",
 "",
 "# === NOISE REDUCTION: gate + high-pass ===",
 "def reduce_noise(wav, sr, gate_threshold_db=-50, highpass_hz=80):",
@@ -924,8 +980,10 @@ function exportPythonScript() {
 "print('INIZIO GENERAZIONE AUDIO')",
 "print('='*60)",
 "",
-"for idx, (text, voice) in enumerate(tagged_chunks):",
+"for idx, (text, voice, pauses_inline) in enumerate(tagged_chunks):",
 "    print(f'\\n Genero chunk {idx+1}/{len(tagged_chunks)} [{voice.upper()}]')",
+"    if pauses_inline:",
+"        print(f'   Pause inline: {pauses_inline}')",
 "    print(f'   {len(text.split())} parole, {len(text)} caratteri')",
 "    print(f'   Preview: {text[:60]}{\"...\" if len(text) > 60 else \"\"}')",
 "    voice_prompt = AUDIO_PROMPT_V2 if voice == 'v2' else AUDIO_PROMPT_V1",
@@ -942,6 +1000,12 @@ function exportPythonScript() {
 "            top_p=p['top_p']",
 "        )",
 "        wav = wav / (torch.max(torch.abs(wav)) + 1e-8) * 0.95",
+"        # Inserisci pause inline DOPO il wav generato",
+"        if pauses_inline:",
+"            extra_silence = sum(d for _, d in pauses_inline)",
+"            pause_tensor = torch.zeros((wav.shape[0], int(model.sr * extra_silence)))",
+"            wav = torch.cat([wav, pause_tensor], dim=-1)",
+"            print(f'   Aggiunta pausa inline: {extra_silence:.1f}s')",
 "        audio_segments.append(wav)",
 "        print('   Generato!')",
 "    except Exception as e:",
@@ -960,6 +1024,10 @@ function exportPythonScript() {
 "                top_p=0.65",
 "            )",
 "            wav = wav / (torch.max(torch.abs(wav)) + 1e-8) * 0.95",
+"            if pauses_inline:",
+"                extra_silence = sum(d for _, d in pauses_inline)",
+"                pause_tensor = torch.zeros((wav.shape[0], int(model.sr * extra_silence)))",
+"                wav = torch.cat([wav, pause_tensor], dim=-1)",
 "            audio_segments.append(wav)",
 "            print('   Recuperato!')",
 "        except Exception as e2:",
