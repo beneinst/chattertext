@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatterText — Guida al Sistema di Tag</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg:        #0e1117;
+    --surface:   #161b27;
+    --surface2:  #1d2436;
+    --border:    #2a3148;
+    --accent:    #4fc3c3;
+    --accent2:   #2a7fff;
+    --teal:      #3ab5b5;
+    --verde:     #2db87a;
+    --arancio:   #e6813a;
+    --viola:     #9b6ddb;
+    --rosso:     #e05555;
+    --giallo:    #f0c040;
+    --text:      #d8dce8;
+    --text-dim:  #7a85a0;
+    --text-code: #7ee8e8;
+    --mono:      'IBM Plex Mono', monospace;
+    --serif:     'Libre Baskerville', Georgia, serif;
+    --sans:      'Source Sans 3', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  /* ── LAYOUT ── */
+  .page-wrap {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 32px 0;
+  }
+
+  .sidebar-logo {
+    padding: 0 24px 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .sidebar-logo .logo-name {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+
+  .sidebar-logo .logo-sub {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .nav-section {
+    padding: 0 16px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 16px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 24px;
+    font-size: 13px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+
+  .nav-item:hover {
+    color: var(--text);
+    background: var(--surface2);
+    border-left-color: var(--accent);
+  }
+
+  .nav-item .nav-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    min-width: 20px;
+  }
+
+  /* ── CONTENUTO ── */
+  .content {
+    max-width: 900px;
+    padding: 60px 56px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    margin-bottom: 72px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: 52px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero .subtitle {
+    font-size: 18px;
+    color: var(--text-dim);
+    font-weight: 300;
+    margin-bottom: 24px;
+  }
+
+  .hero-badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+  }
+
+  .badge-teal   { background: rgba(79,195,195,0.15); color: var(--accent); border: 1px solid rgba(79,195,195,0.3); }
+  .badge-verde  { background: rgba(45,184,122,0.15); color: var(--verde);  border: 1px solid rgba(45,184,122,0.3); }
+  .badge-arancio{ background: rgba(230,129,58,0.15); color: var(--arancio);border: 1px solid rgba(230,129,58,0.3); }
+  .badge-viola  { background: rgba(155,109,219,0.15);color: var(--viola);  border: 1px solid rgba(155,109,219,0.3); }
+  .badge-rosso  { background: rgba(224,85,85,0.15);  color: var(--rosso);  border: 1px solid rgba(224,85,85,0.3); }
+  .badge-blu    { background: rgba(42,127,255,0.15); color: var(--accent2);border: 1px solid rgba(42,127,255,0.3); }
+
+  /* ── SEZIONI ── */
+  .section {
+    margin-bottom: 72px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    min-width: 28px;
+  }
+
+  .section-title {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+
+  .subsection {
+    margin: 32px 0 16px;
+  }
+
+  .subsection-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 14px;
+  }
+
+  p { margin-bottom: 14px; color: var(--text); font-size: 15px; }
+
+  /* ── TABELLE TAG ── */
+  .tag-grid {
+    display: grid;
+    gap: 6px;
+    margin: 16px 0 24px;
+  }
+
+  .tag-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .tag-grid-5 { grid-template-columns: repeat(5, 1fr); }
+  .tag-grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+  .tag-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 14px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .tag-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .tag-card .tag-name {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .tag-card .tag-value {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--giallo);
+    margin-bottom: 6px;
+  }
+
+  .tag-card .tag-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+
+  .tag-card .tag-use {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 6px;
+    border-top: 1px solid var(--border);
+    padding-top: 6px;
+  }
+
+  /* Colori card */
+  .c-teal   { border-color: rgba(79,195,195,0.4);  }
+  .c-teal   .tag-name { color: var(--accent); }
+  .c-verde  { border-color: rgba(45,184,122,0.4);  }
+  .c-verde  .tag-name { color: var(--verde); }
+  .c-arancio{ border-color: rgba(230,129,58,0.4);  }
+  .c-arancio .tag-name { color: var(--arancio); }
+  .c-viola  { border-color: rgba(155,109,219,0.4); }
+  .c-viola  .tag-name { color: var(--viola); }
+  .c-rosso  { border-color: rgba(224,85,85,0.4);   }
+  .c-rosso  .tag-name { color: var(--rosso); }
+  .c-blu    { border-color: rgba(42,127,255,0.4);  }
+  .c-blu    .tag-name { color: var(--accent2); }
+  .c-gray   { border-color: var(--border); }
+  .c-gray   .tag-name { color: var(--text-dim); }
+
+  /* ── TABELLA DATI ── */
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+
+  table.data-table th {
+    background: var(--surface2);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+  }
+
+  table.data-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  table.data-table tr:last-child td { border-bottom: none; }
+  table.data-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+  .td-tag {
+    font-family: var(--mono);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .td-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--giallo);
+    white-space: nowrap;
+  }
+
+  .td-note { font-style: italic; color: var(--text-dim); font-size: 13px; }
+
+  /* ── BOX CODICE ── */
+  .code-block {
+    background: #080d14;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 20px 24px;
+    margin: 16px 0 24px;
+    overflow-x: auto;
+  }
+
+  .code-block pre {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text-code);
+  }
+
+  .code-block .cm  { color: var(--text-dim); font-style: italic; }  /* commento */
+  .code-block .ct  { color: var(--accent); font-weight: 600; }       /* tag */
+  .code-block .cv1 { color: #74b9ff; font-weight: 600; }             /* v1 */
+  .code-block .cv2 { color: #e05555; font-weight: 600; }             /* v2 */
+  .code-block .cj  { color: var(--verde); font-weight: 600; }        /* join */
+  .code-block .ce  { color: var(--arancio); font-weight: 600; }      /* enfasi */
+  .code-block .cp  { color: var(--viola); font-weight: 600; }        /* pause */
+  .code-block .cs  { color: var(--giallo); font-weight: 600; }       /* speed */
+  .code-block .cff { color: var(--rosso); font-weight: 600; }        /* volume */
+  .code-block .txt { color: #c8d0e0; }                               /* testo */
+
+  /* ── BOX NOTA ── */
+  .note-box {
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 16px 0 24px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .note-info    { background: rgba(42,127,255,0.08);  border-left: 3px solid var(--accent2); }
+  .note-warning { background: rgba(230,129,58,0.08);  border-left: 3px solid var(--arancio); }
+  .note-tip     { background: rgba(45,184,122,0.08);  border-left: 3px solid var(--verde); }
+
+  .note-box .note-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .note-info    .note-label { color: var(--accent2); }
+  .note-warning .note-label { color: var(--arancio); }
+  .note-tip     .note-label { color: var(--verde); }
+
+  /* ── REGOLA BLOCCO ── */
+  .rule-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin: 16px 0 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .rule-item { text-align: center; }
+  .rule-num {
+    font-family: var(--mono);
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .rule-label { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ── ORDINE TAG ── */
+  .order-list {
+    counter-reset: ord;
+    list-style: none;
+    margin: 16px 0 24px;
+  }
+
+  .order-list li {
+    counter-increment: ord;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .order-list li:last-child { border-bottom: none; }
+
+  .order-list li::before {
+    content: counter(ord, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    min-width: 24px;
+    padding-top: 2px;
+  }
+
+  .order-list .ol-tag {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-code);
+    min-width: 160px;
+  }
+
+  .order-list .ol-note { font-size: 13px; color: var(--text-dim); font-style: italic; }
+
+  /* ── RIEPILOGO TOTALE ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px;
+    margin: 16px 0;
+  }
+
+  .summary-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .summary-item .s-tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 90px;
+  }
+
+  .summary-item .s-val {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* ── EMOZIONI GRID ── */
+  .emo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+    margin: 16px 0 24px;
+  }
+
+  .emo-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .emo-card .emo-name {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .emo-card .emo-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .emo-params {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .emo-bar-row { display: flex; align-items: center; gap: 8px; }
+  .emo-bar-label { font-size: 10px; color: var(--text-dim); width: 36px; }
+  .emo-bar-bg { flex: 1; height: 4px; background: var(--border); border-radius: 2px; }
+  .emo-bar-fill { height: 4px; border-radius: 2px; background: var(--accent); }
+
+  /* ── ESEMPI ── */
+  .esempio {
+    margin-bottom: 40px;
+  }
+
+  .esempio-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .esempio-title .es-num {
+    background: var(--accent);
+    color: #000;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    .sidebar { display: none; }
+    .page-wrap { grid-template-columns: 1fr; }
+    .content { padding: 20px; max-width: 100%; }
+    .tag-card:hover { transform: none; }
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-name">ChatterText</div>
+    <div class="logo-sub">Guida al Sistema di Tag</div>
+  </div>
+
+  <div class="nav-section">Contenuto</div>
+  <a class="nav-item" href="#intro"><span class="nav-num">00</span> Introduzione</a>
+  <a class="nav-item" href="#struttura"><span class="nav-num">01</span> Struttura Blocco</a>
+  <a class="nav-item" href="#voce"><span class="nav-num">02</span> Tag Voce</a>
+  <a class="nav-item" href="#emozioni"><span class="nav-num">03</span> Stati Emotivi</a>
+  <a class="nav-item" href="#pause"><span class="nav-num">04</span> Tag Pause</a>
+  <a class="nav-item" href="#giunzione"><span class="nav-num">05</span> Tag Giunzione</a>
+  <a class="nav-item" href="#enfasi"><span class="nav-num">06</span> Tag Enfasi</a>
+  <a class="nav-item" href="#velocita"><span class="nav-num">07</span> Tag Velocità</a>
+  <a class="nav-item" href="#volume"><span class="nav-num">08</span> Tag Volume</a>
+  <a class="nav-item" href="#ordine"><span class="nav-num">09</span> Ordine dei Tag</a>
+  <a class="nav-item" href="#esempi"><span class="nav-num">10</span> Esempi Pratici</a>
+  <a class="nav-item" href="#riepilogo"><span class="nav-num">11</span> Riepilogo Totale</a>
+</nav>
+
+<!-- ═══ CONTENUTO ═══ -->
+<main class="content">
+
+<!-- HERO -->
+<div class="hero" id="intro">
+  <h1>Chatter<span>Text</span></h1>
+  <p class="subtitle">Guida completa al sistema di tag per Chatterbox TTS — v2.0</p>
+  <div class="hero-badges">
+    <span class="badge badge-teal">26 tag supportati</span>
+    <span class="badge badge-verde">GPU Ready</span>
+    <span class="badge badge-arancio">11 stati emotivi</span>
+    <span class="badge badge-viola">5 giunzioni audio</span>
+    <span class="badge badge-rosso">4 velocità</span>
+    <span class="badge badge-blu">4 volumi</span>
+  </div>
+
+  <div style="margin-top:28px;">
+    <p>ChatterText permette di controllare con precisione ogni aspetto della sintesi vocale attraverso un sistema di tag inseriti direttamente nel testo. Questa guida descrive tutti i tag disponibili, il loro effetto sull'audio, e come combinarli correttamente.</p>
+    <div class="note-box note-tip">
+      <div class="note-label">✓ Nota</div>
+      I tag sono <strong>case-insensitive</strong>: <code style="font-family:var(--mono);color:var(--accent)">[V1_Serio]</code> e <code style="font-family:var(--mono);color:var(--accent)">[v1_serio]</code> funzionano allo stesso modo.
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 1. STRUTTURA ═══ -->
+<section class="section" id="struttura">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2 class="section-title">Struttura Fondamentale — Il Blocco</h2>
+  </div>
+
+  <p>L'unità base del testo è il <strong>blocco</strong>, delimitato da <code style="font-family:var(--mono);color:var(--accent)">[inizio]</code> e <code style="font-family:var(--mono);color:var(--accent)">[fine]</code>. Ogni blocco è una singola unità di lettura inviata al motore TTS.</p>
+
+  <div class="code-block"><pre><span class="ct">[inizio]</span>
+  <span class="cv1">[V1_serio]</span>
+    <span class="txt">Il testo da leggere va qui.</span>
+  <span class="cv1">[/V1_serio]</span>
+<span class="ct">[fine]</span></pre></div>
+
+  <div class="subsection">
+    <div class="subsection-title">Regola del Blocco-Respiro</div>
+    <p>Ogni blocco deve contenere <strong>una sola unità di respiro</strong>: una frase breve o una parte di frase fino alla pausa naturale.</p>
+
+    <div class="rule-box">
+      <div class="rule-item">
+        <div class="rule-num">14</div>
+        <div class="rule-label">parole massime per blocco</div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-num">80</div>
+        <div class="rule-label">caratteri massimi per blocco</div>
+      </div>
+    </div>
+
+    <div class="note-box note-warning">
+      <div class="note-label">⚠ Attenzione</div>
+      I blocchi che superano i limiti vengono segnalati in <strong>giallo</strong> (attenzione) o <strong>rosso</strong> (troppo lungo) nell'interfaccia. Non è un errore bloccante, ma può ridurre la qualità della lettura.
+    </div>
+
+    <p style="margin-top:14px;font-style:italic;color:var(--text-dim);">Senza tag strutturali, l'app divide automaticamente il testo in chunk basandosi su punteggiatura e lunghezza.</p>
+  </div>
+</section>
+
+<!-- ═══ 2. VOCE ═══ -->
+<section class="section" id="voce">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2 class="section-title">Tag Voce — Chi Parla</h2>
+  </div>
+
+  <p>I tag voce specificano quale profilo vocale legge il blocco. L'app supporta fino a <strong>due voci</strong> configurabili (V1 e V2) corrispondenti ai file <code style="font-family:var(--mono);color:var(--text-dim)">.wav</code> nella cartella <code style="font-family:var(--mono);color:var(--text-dim)">2.Voci/</code>.</p>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Tag</th><th>Formato</th><th>Descrizione</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="td-tag" style="color:#74b9ff">[v1] / [/v1]</td>
+        <td><code style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">[v1] testo [/v1]</code></td>
+        <td>Voce 1 con parametri di default</td>
+      </tr>
+      <tr>
+        <td class="td-tag" style="color:var(--rosso)">[v2] / [/v2]</td>
+        <td><code style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">[v2] testo [/v2]</code></td>
+        <td>Voce 2 con parametri di default</td>
+      </tr>
+      <tr>
+        <td class="td-tag" style="color:#74b9ff">[V1_emo] / [/V1_emo]</td>
+        <td><code style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">[V1_calmo] testo [/V1_calmo]</code></td>
+        <td>Voce 1 con stato emotivo specifico</td>
+      </tr>
+      <tr>
+        <td class="td-tag" style="color:var(--rosso)">[V2_emo] / [/V2_emo]</td>
+        <td><code style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">[V2_serio] testo [/V2_serio]</code></td>
+        <td>Voce 2 con stato emotivo specifico</td>
+      </tr>
+      <tr>
+        <td class="td-tag" style="color:var(--verde)">[emo] / [/emo]</td>
+        <td><code style="font-family:var(--mono);font-size:12px;color:var(--text-dim)">[calmo] testo [/calmo]</code></td>
+        <td>Voce automatica (V1) con emozione</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══ 3. EMOZIONI ═══ -->
+<section class="section" id="emozioni">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2 class="section-title">Stati Emotivi</h2>
+  </div>
+
+  <p>Gli stati emotivi modificano i parametri prosodici del TTS: <strong>exaggeration</strong> (espressività), <strong>cfg_weight</strong> (fedeltà alla voce), <strong>temperature</strong> (variabilità). Si usano combinati con V1 o V2.</p>
+
+  <div class="emo-grid">
+    <!-- calmo -->
+    <div class="emo-card" style="border-color:rgba(39,174,96,0.4)">
+      <div class="emo-name" style="color:#2ecc71">calmo</div>
+      <div class="emo-tag">[V1_calmo]</div>
+      <div class="emo-params">
+        <div class="emo-bar-row"><span class="emo-bar-label">exag</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:35%;background:#2ecc71"></div></div><span style="font-size:10px;color:var(--text-dim)">0.35</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">cfg</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:85%;background:#2ecc71"></div></div><span style="font-size:10px;color:var(--text-dim)">0.85</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">temp</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:40%;background:#2ecc71"></div></div><span style="font-size:10px;color:var(--text-dim)">0.40</span></div>
+      </div>
+    </div>
+    <!-- appassionato -->
+    <div class="emo-card" style="border-color:rgba(230,126,34,0.4)">
+      <div class="emo-name" style="color:#e67e22">appassionato</div>
+      <div class="emo-tag">[V1_appassionato]</div>
+      <div class="emo-params">
+        <div class="emo-bar-row"><span class="emo-bar-label">exag</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:75%;background:#e67e22"></div></div><span style="font-size:10px;color:var(--text-dim)">0.75</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">cfg</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:60%;background:#e67e22"></div></div><span style="font-size:10px;color:var(--text-dim)">0.60</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">temp</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:65%;background:#e67e22"></div></div><span style="font-size:10px;color:var(--text-dim)">0.65</span></div>
+      </div>
+    </div>
+    <!-- arrabbiato -->
+    <div class="emo-card" style="border-color:rgba(192,57,43,0.4)">
+      <div class="emo-name" style="color:#e74c3c">arrabbiato</div>
+      <div class="emo-tag">[V1_arrabbiato]</div>
+      <div class="emo-params">
+        <div class="emo-bar-row"><span class="emo-bar-label">exag</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:90%;background:#e74c3c"></div></div><span style="font-size:10px;color:var(--text-dim)">0.90</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">cfg</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:50%;background:#e74c3c"></div></div><span style="font-size:10px;color:var(--text-dim)">0.50</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">temp</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:75%;background:#e74c3c"></div></div><span style="font-size:10px;color:var(--text-dim)">0.75</span></div>
+      </div>
+    </div>
+    <!-- triste -->
+    <div class="emo-card" style="border-color:rgba(142,68,173,0.4)">
+      <div class="emo-name" style="color:#9b59b6">triste</div>
+      <div class="emo-tag">[V1_triste]</div>
+      <div class="emo-params">
+        <div class="emo-bar-row"><span class="emo-bar-label">exag</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:45%;background:#9b59b6"></div></div><span style="font-size:10px;color:var(--text-dim)">0.45</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">cfg</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:80%;background:#9b59b6"></div></div><span style="font-size:10px;color:var(--text-dim)">0.80</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">temp</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:45%;background:#9b59b6"></div></div><span style="font-size:10px;color:var(--text-dim)">0.45</span></div>
+      </div>
+    </div>
+    <!-- ironico -->
+    <div class="emo-card" style="border-color:rgba(22,160,133,0.4)">
+      <div class="emo-name" style="color:#1abc9c">ironico</div>
+      <div class="emo-tag">[V1_ironico]</div>
+      <div class="emo-params">
+        <div class="emo-bar-row"><span class="emo-bar-label">exag</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:65%;background:#1abc9c"></div></div><span style="font-size:10px;color:var(--text-dim)">0.65</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">cfg</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:65%;background:#1abc9c"></div></div><span style="font-size:10px;color:var(--text-dim)">0.65</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">temp</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:70%;background:#1abc9c"></div></div><span style="font-size:10px;color:var(--text-dim)">0.70</span></div>
+      </div>
+    </div>
+    <!-- sussurrato -->
+    <div class="emo-card" style="border-color:rgba(84,110,122,0.4)">
+      <div class="emo-name" style="color:#7f8c8d">sussurrato</div>
+      <div class="emo-tag">[V1_sussurrato]</div>
+      <div class="emo-params">
+        <div class="emo-bar-row"><span class="emo-bar-label">exag</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:25%;background:#7f8c8d"></div></div><span style="font-size:10px;color:var(--text-dim)">0.25</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">cfg</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:90%;background:#7f8c8d"></div></div><span style="font-size:10px;color:var(--text-dim)">0.90</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">temp</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:35%;background:#7f8c8d"></div></div><span style="font-size:10px;color:var(--text-dim)">0.35</span></div>
+      </div>
+    </div>
+    <!-- riflessivo -->
+    <div class="emo-card" style="border-color:rgba(41,128,185,0.4)">
+      <div class="emo-name" style="color:#3498db">riflessivo</div>
+      <div class="emo-tag">[V1_riflessivo]</div>
+      <div class="emo-params">
+        <div class="emo-bar-row"><span class="emo-bar-label">exag</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:40%;background:#3498db"></div></div><span style="font-size:10px;color:var(--text-dim)">0.40</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">cfg</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:78%;background:#3498db"></div></div><span style="font-size:10px;color:var(--text-dim)">0.78</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">temp</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:48%;background:#3498db"></div></div><span style="font-size:10px;color:var(--text-dim)">0.48</span></div>
+      </div>
+    </div>
+    <!-- deciso -->
+    <div class="emo-card" style="border-color:rgba(211,84,0,0.4)">
+      <div class="emo-name" style="color:#d35400">deciso</div>
+      <div class="emo-tag">[V1_deciso]</div>
+      <div class="emo-params">
+        <div class="emo-bar-row"><span class="emo-bar-label">exag</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:80%;background:#d35400"></div></div><span style="font-size:10px;color:var(--text-dim)">0.80</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">cfg</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:55%;background:#d35400"></div></div><span style="font-size:10px;color:var(--text-dim)">0.55</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">temp</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:60%;background:#d35400"></div></div><span style="font-size:10px;color:var(--text-dim)">0.60</span></div>
+      </div>
+    </div>
+    <!-- preoccupato -->
+    <div class="emo-card" style="border-color:rgba(127,140,141,0.4)">
+      <div class="emo-name" style="color:#95a5a6">preoccupato</div>
+      <div class="emo-tag">[V1_preoccupato]</div>
+      <div class="emo-params">
+        <div class="emo-bar-row"><span class="emo-bar-label">exag</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:55%;background:#95a5a6"></div></div><span style="font-size:10px;color:var(--text-dim)">0.55</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">cfg</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:72%;background:#95a5a6"></div></div><span style="font-size:10px;color:var(--text-dim)">0.72</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">temp</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:55%;background:#95a5a6"></div></div><span style="font-size:10px;color:var(--text-dim)">0.55</span></div>
+      </div>
+    </div>
+    <!-- gentile -->
+    <div class="emo-card" style="border-color:rgba(46,204,113,0.4)">
+      <div class="emo-name" style="color:#2ecc71">gentile</div>
+      <div class="emo-tag">[V1_gentile]</div>
+      <div class="emo-params">
+        <div class="emo-bar-row"><span class="emo-bar-label">exag</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:42%;background:#2ecc71"></div></div><span style="font-size:10px;color:var(--text-dim)">0.42</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">cfg</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:82%;background:#2ecc71"></div></div><span style="font-size:10px;color:var(--text-dim)">0.82</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">temp</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:42%;background:#2ecc71"></div></div><span style="font-size:10px;color:var(--text-dim)">0.42</span></div>
+      </div>
+    </div>
+    <!-- serio -->
+    <div class="emo-card" style="border-color:rgba(52,73,94,0.6)">
+      <div class="emo-name" style="color:#bdc3c7">serio</div>
+      <div class="emo-tag">[V1_serio]</div>
+      <div class="emo-params">
+        <div class="emo-bar-row"><span class="emo-bar-label">exag</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:50%;background:#bdc3c7"></div></div><span style="font-size:10px;color:var(--text-dim)">0.50</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">cfg</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:75%;background:#bdc3c7"></div></div><span style="font-size:10px;color:var(--text-dim)">0.75</span></div>
+        <div class="emo-bar-row"><span class="emo-bar-label">temp</span><div class="emo-bar-bg"><div class="emo-bar-fill" style="width:50%;background:#bdc3c7"></div></div><span style="font-size:10px;color:var(--text-dim)">0.50</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note-box note-tip">
+    <div class="note-label">✓ Suggerimento</div>
+    I parametri emotivi sono personalizzabili dalla finestra <strong>Modifica Preset</strong> nell'app. Le modifiche vengono incorporate nello script generato.
+  </div>
+</section>
+
+<!-- ═══ 4. PAUSE ═══ -->
+<section class="section" id="pause">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2 class="section-title">Tag Pause — Ritmo e Respiro</h2>
+  </div>
+
+  <p>Le pause si inseriscono <strong>inline nel testo</strong>, nel punto esatto dove si vuole il silenzio. Vengono rimosse prima della sintesi e convertite in silenzio audio aggiunto dopo il chunk.</p>
+
+  <div class="tag-grid tag-grid-4">
+    <div class="tag-card c-teal">
+      <div class="tag-name">[p1]</div>
+      <div class="tag-value">0.20s</div>
+      <div class="tag-desc">Pausa breve — virgola</div>
+      <div class="tag-use">Respiro leggero, elenco, inciso</div>
+    </div>
+    <div class="tag-card c-blu">
+      <div class="tag-name">[p2]</div>
+      <div class="tag-value">0.40s</div>
+      <div class="tag-desc">Pausa media — due punti, punto e virgola</div>
+      <div class="tag-use">Fine premessa, pausa pensante</div>
+    </div>
+    <div class="tag-card c-viola">
+      <div class="tag-name">[p3]</div>
+      <div class="tag-value">0.70s</div>
+      <div class="tag-desc">Pausa lunga — punto, ?, !</div>
+      <div class="tag-use">Fine frase, pausa drammatica</div>
+    </div>
+    <div class="tag-card c-verde">
+      <div class="tag-name">[b]</div>
+      <div class="tag-value">0.90s</div>
+      <div class="tag-desc">Breath — respiro reale</div>
+      <div class="tag-use">Tra battute importanti, cambio di pensiero</div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Tag Legacy (compatibilità)</div>
+    <table class="data-table">
+      <thead><tr><th>Tag</th><th>Durata</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td class="td-tag" style="color:var(--text-dim)">[pausa]</td><td class="td-val">0.50s</td><td class="td-note">Ancora supportato. Equivale a un [p2] abbondante.</td></tr>
+        <tr><td class="td-tag" style="color:var(--text-dim)">[pausa_lunga]</td><td class="td-val">1.20s</td><td class="td-note">Preferire [b] + [para] nel nuovo sistema.</td></tr>
+        <tr><td class="td-tag" style="color:var(--text-dim)">[silenzio]</td><td class="td-val">2.00s</td><td class="td-note">Preferire [scena] nel nuovo sistema.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note-box note-info">
+    <div class="note-label">ℹ Nota</div>
+    Le pause possono essere combinate: <code style="font-family:var(--mono);color:var(--accent)">[p3][b]</code> equivale a 0.70s + 0.90s = <strong>1.60s totali</strong> di silenzio dopo il chunk.
+  </div>
+</section>
+
+<!-- ═══ 5. GIUNZIONE ═══ -->
+<section class="section" id="giunzione">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2 class="section-title">Tag Giunzione — Flusso tra Blocchi</h2>
+  </div>
+
+  <p>I tag di giunzione controllano il <strong>collegamento audio tra blocchi consecutivi</strong>. Si inseriscono <strong>prima di [fine]</strong>, come ultima istruzione del blocco. Senza tag, l'app usa un algoritmo automatico basato su punteggiatura e lunghezza.</p>
+
+  <div class="tag-grid tag-grid-5">
+    <div class="tag-card c-teal">
+      <div class="tag-name">[join]</div>
+      <div class="tag-value">overlap 80ms</div>
+      <div class="tag-desc">Stessa frase — nessuna pausa udibile</div>
+      <div class="tag-use">La frase continua nel blocco successivo</div>
+    </div>
+    <div class="tag-card c-blu">
+      <div class="tag-name">[cont]</div>
+      <div class="tag-value">0.12s smooth</div>
+      <div class="tag-desc">Stessa battuta — piccolo respiro</div>
+      <div class="tag-use">Stessa frase divisa in due blocchi</div>
+    </div>
+    <div class="tag-card c-viola">
+      <div class="tag-name">[cambio]</div>
+      <div class="tag-value">0.35s smooth</div>
+      <div class="tag-desc">Cambio voce V1→V2</div>
+      <div class="tag-use">Transizione tra parlanti</div>
+    </div>
+    <div class="tag-card c-arancio">
+      <div class="tag-name">[para]</div>
+      <div class="tag-value">0.90s silenzio</div>
+      <div class="tag-desc">Nuovo paragrafo</div>
+      <div class="tag-use">Cambio di pensiero o interlocutore</div>
+    </div>
+    <div class="tag-card c-rosso">
+      <div class="tag-name">[scena]</div>
+      <div class="tag-value">2.00s stacco</div>
+      <div class="tag-desc">Cambio scena</div>
+      <div class="tag-use">Salto temporale, inizio capitolo</div>
+    </div>
+  </div>
+
+  <div class="note-box note-tip">
+    <div class="note-label">✓ Come funziona [join]</div>
+    Il tag <strong>[join]</strong> genera un <em>overlap</em>: i due audio si sovrappongono per 80ms con crossfade quadratico. Il risultato è una lettura continua come se i due blocchi fossero un'unica frase.
+  </div>
+</section>
+
+<!-- ═══ 6. ENFASI ═══ -->
+<section class="section" id="enfasi">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2 class="section-title">Tag Enfasi — Intensità Prosodica</h2>
+  </div>
+
+  <p>I tag di enfasi modificano i parametri prosodici del TTS per quel singolo blocco, aumentando l'<em>exaggeration</em> e riducendo il <em>cfg_weight</em>. Vanno inseriti <strong>dopo il testo e prima del tag di chiusura voce</strong>.</p>
+
+  <div class="tag-grid tag-grid-2">
+    <div class="tag-card c-arancio">
+      <div class="tag-name">[e1]</div>
+      <div class="tag-value">+0.10 exag / −0.05 cfg</div>
+      <div class="tag-desc">Enfasi leggera</div>
+      <div class="tag-use">Sottolineatura, importanza moderata</div>
+    </div>
+    <div class="tag-card c-rosso">
+      <div class="tag-name">[e2]</div>
+      <div class="tag-value">+0.25 exag / −0.12 cfg</div>
+      <div class="tag-desc">Enfasi forte</div>
+      <div class="tag-use">Climax, rivelazione, grido emotivo</div>
+    </div>
+  </div>
+
+  <div class="code-block"><pre><span class="cv1">[V1_deciso]</span><span class="ce">[e2]</span>
+  <span class="txt">Questa è la verità!</span><span class="ce">[e2]</span><span class="cp">[p3]</span>
+<span class="cv1">[/V1_deciso]</span></pre></div>
+
+  <div class="note-box note-warning">
+    <div class="note-label">⚠ Attenzione</div>
+    L'enfasi si somma ai parametri dell'emozione. Se <code style="font-family:var(--mono)">[V1_arrabbiato]</code> ha exaggeration=0.90 e si aggiunge <code style="font-family:var(--mono)">[e2]</code> (+0.25), il valore viene clampato a <strong>1.0</strong> (massimo consentito).
+  </div>
+</section>
+
+<!-- ═══ 7. VELOCITÀ ═══ -->
+<section class="section" id="velocita">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2 class="section-title">Tag Velocità — Ritmo di Lettura</h2>
+  </div>
+
+  <p>Alterano la durata della lettura tramite <strong>resample audio post-generazione</strong>: il WAV viene ricampionato a <code style="font-family:var(--mono);color:var(--text-dim)">sr × factor</code>. La velocità cambia ma il <strong>pitch rimane invariato</strong>.</p>
+
+  <div class="tag-grid tag-grid-4">
+    <div class="tag-card c-verde">
+      <div class="tag-name">[vv]</div>
+      <div class="tag-value">×1.40 (+40%)</div>
+      <div class="tag-desc">Molto veloce</div>
+      <div class="tag-use">Risposta secca, ironia tagliente</div>
+    </div>
+    <div class="tag-card" style="border-color:rgba(85,239,196,0.4)">
+      <div class="tag-name" style="color:#55efc4">[v+]</div>
+      <div class="tag-value">×1.20 (+20%)</div>
+      <div class="tag-desc">Veloce</div>
+      <div class="tag-use">Dialogo vivace, narrazione concitata</div>
+    </div>
+    <div class="tag-card c-arancio">
+      <div class="tag-name">[v-]</div>
+      <div class="tag-value">×0.82 (−18%)</div>
+      <div class="tag-desc">Lento</div>
+      <div class="tag-use">Riflessione, peso emotivo</div>
+    </div>
+    <div class="tag-card c-rosso">
+      <div class="tag-name">[vvv]</div>
+      <div class="tag-value">×0.65 (−35%)</div>
+      <div class="tag-desc">Molto lento</div>
+      <div class="tag-use">Morte, dramma, solennità massima</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 8. VOLUME ═══ -->
+<section class="section" id="volume">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2 class="section-title">Tag Volume — Gain Audio</h2>
+  </div>
+
+  <p>Modificano il <strong>gain lineare del WAV</strong> dopo la generazione. Il clamp automatico a ±0.98 previene distorsioni nel file finale.</p>
+
+  <div class="tag-grid tag-grid-4">
+    <div class="tag-card c-rosso">
+      <div class="tag-name">[ff]</div>
+      <div class="tag-value">×1.30 (+30%)</div>
+      <div class="tag-desc">Forte</div>
+      <div class="tag-use">Grida, proclama, discorso pubblico</div>
+    </div>
+    <div class="tag-card c-arancio">
+      <div class="tag-name">[f+]</div>
+      <div class="tag-value">×1.15 (+15%)</div>
+      <div class="tag-desc">Leggermente forte</div>
+      <div class="tag-use">Enfasi verbale, importanza</div>
+    </div>
+    <div class="tag-card c-blu">
+      <div class="tag-name">[f-]</div>
+      <div class="tag-value">×0.75 (−25%)</div>
+      <div class="tag-desc">Leggermente piano</div>
+      <div class="tag-use">Confidenziale, a parte</div>
+    </div>
+    <div class="tag-card c-viola">
+      <div class="tag-name">[pp]</div>
+      <div class="tag-value">×0.50 (−50%)</div>
+      <div class="tag-desc">Pianissimo</div>
+      <div class="tag-use">Sussurro, pensiero interiore</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 9. ORDINE ═══ -->
+<section class="section" id="ordine">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2 class="section-title">Ordine dei Tag nel Blocco</h2>
+  </div>
+
+  <p>L'ordine corretto in cui inserire i tag all'interno di un blocco:</p>
+
+  <div class="code-block"><pre><span class="ct">[inizio]</span>
+  <span class="cv1">[V1_emozione]</span> <span class="cs">[vv]</span> <span class="cff">[ff]</span>        <span class="cm">← apertura: voce, velocità, volume</span>
+    <span class="txt">Testo...</span><span class="cp">[p1]</span><span class="txt">...testo...</span><span class="cp">[p3][b]</span>  <span class="cm">← testo con pause inline</span>
+    <span class="ce">[e2]</span> <span class="cj">[join]</span>                   <span class="cm">← enfasi e giunzione</span>
+  <span class="cv1">[/V1_emozione]</span>
+<span class="ct">[fine]</span></pre></div>
+
+  <ul class="order-list">
+    <li><span class="ol-tag">[inizio]</span><span class="ol-note">Apre il blocco. Sempre per primo.</span></li>
+    <li><span class="ol-tag">[V1_emo] / [V2_emo]</span><span class="ol-note">Tag voce apertura — specifica chi parla e con che tono.</span></li>
+    <li><span class="ol-tag">[vv] [v+] [v-] [vvv]</span><span class="ol-note">Velocità — subito dopo il tag voce.</span></li>
+    <li><span class="ol-tag">[ff] [f+] [f-] [pp]</span><span class="ol-note">Volume — dopo la velocità.</span></li>
+    <li><span class="ol-tag">Testo</span><span class="ol-note">Il testo da leggere, con le pause inline [p1][p2][p3][b].</span></li>
+    <li><span class="ol-tag">[e1] / [e2]</span><span class="ol-note">Enfasi — dopo il testo, prima della chiusura voce.</span></li>
+    <li><span class="ol-tag">[join] [cont] [cambio] [para] [scena]</span><span class="ol-note">Giunzione — prima di [fine].</span></li>
+    <li><span class="ol-tag">[/V1_emo] / [/V2_emo]</span><span class="ol-note">Tag voce chiusura.</span></li>
+    <li><span class="ol-tag">[fine]</span><span class="ol-note">Chiude il blocco. Sempre per ultimo.</span></li>
+  </ul>
+</section>
+
+<!-- ═══ 10. ESEMPI ═══ -->
+<section class="section" id="esempi">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2 class="section-title">Esempi Pratici</h2>
+  </div>
+
+  <div class="esempio">
+    <div class="esempio-title"><span class="es-num">01</span> Dialogo semplice con due voci</div>
+    <div class="code-block"><pre><span class="ct">[inizio]</span><span class="cv1">[V1_serio]</span>
+  <span class="txt">E in quest'altra parte era giusto il ragionamento?</span><span class="cp">[p3][b]</span><span class="cj">[para]</span>
+<span class="cv1">[/V1_serio]</span><span class="ct">[fine]</span>
+
+<span class="ct">[inizio]</span><span class="cv2">[V2_riflessivo]</span>
+  <span class="txt">Dicevamo così noi:</span><span class="cp">[p2]</span><span class="cj">[cont]</span>
+<span class="cv2">[/V2_riflessivo]</span><span class="ct">[fine]</span>
+
+<span class="ct">[inizio]</span><span class="cv2">[V2_riflessivo]</span>
+  <span class="txt">che il giusto non può fare ingiustizia.</span><span class="cp">[p3]</span><span class="cj">[para]</span>
+<span class="cv2">[/V2_riflessivo]</span><span class="ct">[fine]</span></pre></div>
+  </div>
+
+  <div class="esempio">
+    <div class="esempio-title"><span class="es-num">02</span> Climax emotivo con velocità e volume</div>
+    <div class="code-block"><pre><span class="ct">[inizio]</span><span class="cv1">[V1_arrabbiato]</span><span class="cs">[vv]</span><span class="cff">[ff]</span>
+  <span class="txt">No! Non è possibile!</span><span class="ce">[e2]</span><span class="cp">[p3]</span><span class="cj">[para]</span>
+<span class="cv1">[/V1_arrabbiato]</span><span class="ct">[fine]</span>
+
+<span class="ct">[inizio]</span><span class="cv1">[V1_riflessivo]</span><span class="cs">[v-]</span><span class="cff">[f-]</span>
+  <span class="txt">Eppure... forse aveva ragione.</span><span class="cp">[p3][b]</span><span class="cj">[para]</span>
+<span class="cv1">[/V1_riflessivo]</span><span class="ct">[fine]</span></pre></div>
+  </div>
+
+  <div class="esempio">
+    <div class="esempio-title"><span class="es-num">03</span> Pensiero interiore (pianissimo, lentissimo)</div>
+    <div class="code-block"><pre><span class="ct">[inizio]</span><span class="cv2">[V2_calmo]</span><span class="cs">[vvv]</span><span class="cff">[pp]</span>
+  <span class="txt">(tra sé) Forse questo era l'inizio della fine.</span><span class="cp">[p3]</span><span class="cj">[scena]</span>
+<span class="cv2">[/V2_calmo]</span><span class="ct">[fine]</span>
+
+<span class="cm">// 2 secondi di silenzio netto</span>
+
+<span class="ct">[inizio]</span><span class="cv1">[V1_serio]</span>
+  <span class="txt">Il giorno dopo, tutto era cambiato.</span><span class="cp">[p3]</span><span class="cj">[para]</span>
+<span class="cv1">[/V1_serio]</span><span class="ct">[fine]</span></pre></div>
+  </div>
+
+  <div class="esempio">
+    <div class="esempio-title"><span class="es-num">04</span> Frase lunga divisa con [join]</div>
+    <div class="code-block"><pre><span class="cm">// "Ho detto che era necessario farlo" → due blocchi, zero pausa udibile</span>
+
+<span class="ct">[inizio]</span><span class="cv1">[V1_deciso]</span>
+  <span class="txt">Ho detto che</span><span class="cj">[join]</span>
+<span class="cv1">[/V1_deciso]</span><span class="ct">[fine]</span>
+
+<span class="ct">[inizio]</span><span class="cv1">[V1_deciso]</span>
+  <span class="txt">era necessario farlo.</span><span class="cp">[p3]</span><span class="cj">[para]</span>
+<span class="cv1">[/V1_deciso]</span><span class="ct">[fine]</span></pre></div>
+  </div>
+
+  <div class="esempio">
+    <div class="esempio-title"><span class="es-num">05</span> Combinazione massima</div>
+    <div class="code-block"><pre><span class="ct">[inizio]</span><span class="cv1">[V1_arrabbiato]</span><span class="cs">[vv]</span><span class="cff">[ff]</span>
+  <span class="txt">Ascoltami bene:</span><span class="cp">[p2]</span><span class="ce">[e2]</span><span class="cj">[cont]</span>
+<span class="cv1">[/V1_arrabbiato]</span><span class="ct">[fine]</span>
+
+<span class="ct">[inizio]</span><span class="cv1">[V1_deciso]</span><span class="cs">[v+]</span><span class="cff">[ff]</span>
+  <span class="txt">non tornerò mai più.</span><span class="cp">[p3][b]</span><span class="cj">[scena]</span>
+<span class="cv1">[/V1_deciso]</span><span class="ct">[fine]</span></pre></div>
+  </div>
+</section>
+
+<!-- ═══ 11. RIEPILOGO ═══ -->
+<section class="section" id="riepilogo">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <h2 class="section-title">Riepilogo Completo di Tutti i Tag</h2>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Categoria</th><th>Tag</th><th>Valore</th><th>Note</th></tr>
+    </thead>
+    <tbody>
+      <tr><td style="color:var(--text-dim);font-size:12px">Struttura</td><td class="td-tag" style="color:var(--accent)">[inizio] [fine]</td><td class="td-val">—</td><td class="td-note">Delimitatori blocco. Obbligatori.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Voce</td><td class="td-tag" style="color:#74b9ff">[v1] [v2]</td><td class="td-val">default</td><td class="td-note">Voce senza emozione specifica.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Voce+Emo</td><td class="td-tag" style="color:#74b9ff">[V1_emo] [V2_emo]</td><td class="td-val">vedi §3</td><td class="td-note">Voce con stato emotivo.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Solo Emo</td><td class="td-tag" style="color:var(--verde)">[emo]</td><td class="td-val">vedi §3</td><td class="td-note">Emozione su V1 (auto).</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Pausa</td><td class="td-tag" style="color:var(--accent)">[p1]</td><td class="td-val">0.20s</td><td class="td-note">Virgola, respiro leggero.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Pausa</td><td class="td-tag" style="color:var(--accent2)">[p2]</td><td class="td-val">0.40s</td><td class="td-note">Due punti, punto e virgola.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Pausa</td><td class="td-tag" style="color:var(--viola)">[p3]</td><td class="td-val">0.70s</td><td class="td-note">Punto, ?, !</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Breath</td><td class="td-tag" style="color:var(--verde)">[b]</td><td class="td-val">0.90s</td><td class="td-note">Respiro reale tra frasi importanti.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Giunzione</td><td class="td-tag" style="color:var(--teal)">[join]</td><td class="td-val">overlap</td><td class="td-note">Stessa frase, nessuna pausa.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Giunzione</td><td class="td-tag" style="color:var(--accent2)">[cont]</td><td class="td-val">0.12s</td><td class="td-note">Stessa battuta, respiro minimo.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Giunzione</td><td class="td-tag" style="color:var(--viola)">[cambio]</td><td class="td-val">0.35s</td><td class="td-note">Cambio voce V1→V2.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Giunzione</td><td class="td-tag" style="color:var(--arancio)">[para]</td><td class="td-val">0.90s</td><td class="td-note">Nuovo paragrafo.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Giunzione</td><td class="td-tag" style="color:var(--rosso)">[scena]</td><td class="td-val">2.00s</td><td class="td-note">Cambio scena, stacco secco.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Enfasi</td><td class="td-tag" style="color:var(--arancio)">[e1]</td><td class="td-val">+0.10 exag</td><td class="td-note">Enfasi leggera.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Enfasi</td><td class="td-tag" style="color:var(--rosso)">[e2]</td><td class="td-val">+0.25 exag</td><td class="td-note">Enfasi forte, climax.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Velocità</td><td class="td-tag" style="color:var(--verde)">[vv]</td><td class="td-val">×1.40</td><td class="td-note">Molto veloce (+40%).</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Velocità</td><td class="td-tag" style="color:#55efc4">[v+]</td><td class="td-val">×1.20</td><td class="td-note">Veloce (+20%).</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Velocità</td><td class="td-tag" style="color:var(--arancio)">[v-]</td><td class="td-val">×0.82</td><td class="td-note">Lento (−18%).</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Velocità</td><td class="td-tag" style="color:var(--rosso)">[vvv]</td><td class="td-val">×0.65</td><td class="td-note">Molto lento (−35%).</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Volume</td><td class="td-tag" style="color:var(--rosso)">[ff]</td><td class="td-val">×1.30</td><td class="td-note">Forte (+30%).</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Volume</td><td class="td-tag" style="color:var(--arancio)">[f+]</td><td class="td-val">×1.15</td><td class="td-note">Leggermente forte (+15%).</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Volume</td><td class="td-tag" style="color:var(--accent2)">[f-]</td><td class="td-val">×0.75</td><td class="td-note">Leggermente piano (−25%).</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Volume</td><td class="td-tag" style="color:var(--viola)">[pp]</td><td class="td-val">×0.50</td><td class="td-note">Pianissimo (−50%).</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Legacy</td><td class="td-tag" style="color:var(--text-dim)">[pausa]</td><td class="td-val">0.50s</td><td class="td-note">Compatibilità versioni precedenti.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Legacy</td><td class="td-tag" style="color:var(--text-dim)">[pausa_lunga]</td><td class="td-val">1.20s</td><td class="td-note">Compatibilità versioni precedenti.</td></tr>
+      <tr><td style="color:var(--text-dim);font-size:12px">Legacy</td><td class="td-tag" style="color:var(--text-dim)">[silenzio]</td><td class="td-val">2.00s</td><td class="td-note">Compatibilità versioni precedenti.</td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);text-align:center;color:var(--text-dim);font-size:13px;">
+    ChatterText v2.0 &nbsp;—&nbsp; © 2026 Gerardo D'Orrico &nbsp;—&nbsp; Guida al Sistema di Tag
+  </div>
+</section>
+
+</main>
+</div>
+
+</body>
+</html>
