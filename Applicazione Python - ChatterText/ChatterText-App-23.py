@@ -35,7 +35,8 @@ GIUNZIONI (7 livelli):
   [lungo]  1.80s fade+sil+fade pausa riflessiva
   [scena]  2.40s hard          cambio scena/capitolo (stacco percepibile)
 """
-
+import os
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 import tkinter as tk
 from tkinter import scrolledtext, messagebox, filedialog, ttk
 import os, subprocess, threading, sys, re, json, pathlib, time
@@ -675,10 +676,15 @@ def build_python_script(chunks, exag, cfg, temp, v1, v2, epreset, devmode="auto"
 "    else: eta=''",
 "    pct=int(i/len(tc)*100)",
 "    bar=chr(9608)*(pct//5)+chr(9617)*(20-pct//5)",
-"    print(f'\\n [{bar}] {pct}%{eta}')",
-"    print(f' Chunk {i+1}/{len(tc)} [{vo.upper()}]{'['+em+']' if em else ''}{'['+ek+']' if ek else ''}{'['+jk.strip(chr(91)+chr(93))+']' if jk else ''}')",
-"    print(f'   {repr(txt[:80])}{'...' if len(txt)>80 else ''}')",
-"    if tp>0: print(f'   pausa: {tp:.2f}s (gauss)')",
+"    _em_s='['+em+']' if em else ''",
+"    _ek_s='['+ek+']' if ek else ''",
+"    _jk_s='['+jk.strip('[]')+']' if jk else ''",
+"    _tail='...' if len(txt)>80 else ''",
+"    _rep=repr(txt[:80])",
+"    print('\\n [{}] {}%{}'.format(bar,pct,eta))",
+"    print(' Chunk {}/{} [{}]{}{}{}'.format(i+1,len(tc),vo.upper(),_em_s,_ek_s,_jk_s))",
+"    print('   {}{}'.format(_rep,_tail))",
+"    if tp>0: print('   pausa: {:.2f}s (gauss)'.format(tp))",
 "    if len(txt.split())<5: print('   ATTENZIONE: chunk corto!')",
 "    vp=AUDIO_V2 if (vo=='v2' and HAS2) else AUDIO_V1",
 "    p=pp(em,ek); ok=False",
@@ -692,7 +698,7 @@ def build_python_script(chunks, exag, cfg, temp, v1, v2, epreset, devmode="auto"
 "            sil=torch.zeros((wav.shape[0],int(model.sr*tp)))",
 "            wav=torch.cat([wav,sil],dim=-1)",
 "        segs.append(wav); ok=True; print('   OK!')",
-"    except Exception as e: print(f'   ERR:{e} retry...')",
+"    except Exception as e: print('   ERR:{} retry...'.format(e))",
 "    if not ok:",
 "        try:",
 "            wav=model.generate(txt,language_id='it',audio_prompt_path=vp,",
