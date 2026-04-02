@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Guida rapida – Attivare Chatterbox su un nuovo PC</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.5; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    code, pre { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.95em; }
+    pre { background: #f4f4f4; padding: 0.75rem 1rem; border-radius: 4px; overflow-x: auto; }
+    h1, h2, h3 { margin-top: 1.8rem; }
+    h1 { border-bottom: 2px solid #ddd; padding-bottom: 0.4rem; }
+    .note { background: #fff8e1; border-left: 4px solid #ffb300; padding: 0.75rem 1rem; margin: 1rem 0; }
+    .ok { background: #e8f5e9; border-left: 4px solid #43a047; padding: 0.75rem 1rem; margin: 1rem 0; }
+  </style>
+</head>
+<body>
+
+<h1>Guida rapida: attivare Chatterbox su un nuovo PC</h1>
+
+<p>
+Questa guida spiega come attivare Chatterbox su un nuovo PC partendo dalla cartella
+<code>chattertext</code> sincronizzata da GitHub. È pensata per Windows e per l’uso con
+Mambaforge/Miniforge (o equivalente).
+</p>
+
+<div class="note">
+  <strong>Nota:</strong> tutti i comandi vanno eseguiti in <strong>Prompt dei comandi</strong> (cmd.exe),
+  non in PowerShell.
+</div>
+
+<hr>
+
+<h2>1. Prerequisiti</h2>
+
+<ol>
+  <li><strong>Git</strong> installato (per clonare/sincronizzare il repository).</li>
+  <li><strong>Mambaforge / Miniforge / Conda</strong> installato (consigliato Mambaforge).</li>
+  <li>Una GPU NVIDIA (opzionale ma consigliata) se si vuole usare CUDA.</li>
+</ol>
+
+<div class="note">
+  Se la cartella <code>chattertext</code> è già stata clonata/sincronizzata da GitHub,
+  puoi saltare il punto 2.
+</div>
+
+<hr>
+
+<h2>2. Clonare o aggiornare la cartella chattertext da GitHub</h2>
+
+<h3>2.1 Clonare per la prima volta</h3>
+
+<pre><code>cd D:\Siti GitHub
+git clone &lt;URL_DEL_TUO_REPO&gt; chattertext
+</code></pre>
+
+<h3>2.2 Aggiornare una cartella già esistente</h3>
+
+<pre><code>cd D:\Siti GitHub\chattertext
+git pull
+</code></pre>
+
+<hr>
+
+<h2>3. Creare l’ambiente chatterbox</h2>
+
+<p>Su un nuovo PC, crea un ambiente pulito chiamato <code>chatterbox</code> con Python 3.11:</p>
+
+<pre><code>mamba create -n chatterbox python=3.11
+</code></pre>
+
+<p>Non è necessario usare <code>mamba activate</code>; useremo sempre <code>mamba run</code>.</p>
+
+<hr>
+
+<h2>4. Installare Chatterbox in modalità editable</h2>
+
+<p>Posizionati nella cartella del progetto:</p>
+
+<pre><code>cd D:\Siti GitHub\chattertext
+</code></pre>
+
+<p>Installa il pacchetto:</p>
+
+<pre><code>mamba run -n chatterbox pip install -e .
+</code></pre>
+
+<div class="note">
+  Questo comando installa <code>chatterbox-tts</code> e tutte le dipendenze
+  (librosa, diffusers, ecc.) nell’ambiente <code>chatterbox</code>.
+</div>
+
+<hr>
+
+<h2>5. Installare PyTorch con CUDA (opzionale ma consigliato)</h2>
+
+<p>Se il PC ha una GPU NVIDIA e vuoi usare CUDA 11.8:</p>
+
+<pre><code>mamba run -n chatterbox pip install torch==2.6.0+cu118 torchaudio==2.6.0+cu118 --index-url https://download.pytorch.org/whl/cu118
+</code></pre>
+
+<p>Verifica che la GPU sia visibile:</p>
+
+<pre><code>mamba run -n chatterbox python -c "import torch; print(torch.cuda.is_available(), torch.version.cuda)"
+</code></pre>
+
+<div class="ok">
+  Se il comando stampa qualcosa come <code>True 11.8</code>, la GPU è attiva e CUDA funziona.
+</div>
+
+<hr>
+
+<h2>6. Disattivare il watermarker (patch necessaria)</h2>
+
+<p>
+Per evitare errori dovuti al modulo <code>PerthImplicitWatermarker</code>, è necessario
+usare il <code>DummyWatermarker</code>.
+</p>
+
+<ol>
+  <li>Apri il file:
+    <pre><code>src\chatterbox\mtl_tts.py</code></pre>
+  </li>
+  <li>Cerca la riga (o simile):
+    <pre><code>self.watermarker = perth.PerthImplicitWatermarker()</code></pre>
+  </li>
+  <li>Sostituiscila con:
+    <pre><code>self.watermarker = perth.DummyWatermarker()</code></pre>
+  </li>
+  <li>Salva il file.</li>
+</ol>
+
+<div class="note">
+  Questa modifica disattiva il watermark nascosto nell’audio, ma non influisce sulla qualità
+  o sul funzionamento del TTS. Per uso personale e produzione di audiolibri è più che sufficiente.
+</div>
+
+<hr>
+
+<h2>7. Testare il modello</h2>
+
+<p>Per verificare che tutto funzioni, puoi eseguire uno script di test, ad esempio:</p>
+
+<pre><code>mamba run -n chatterbox python chatterbox_auto.py
+</code></pre>
+
+<p>Oppure, se hai uno script principale diverso, adatta il nome del file:</p>
+
+<pre><code>mamba run -n chatterbox python ChatterText-App-23.py
+</code></pre>
+
+<div class="ok">
+  Se viene generato un file audio senza errori, l’ambiente sul nuovo PC è configurato correttamente.
+</div>
+
+<hr>
+
+<h2>8. Creare un launcher comodo (facoltativo)</h2>
+
+<h3>8.1 File batch (.bat)</h3>
+
+<p>Crea un file <code>launch_chatterbox.bat</code> nella cartella del progetto con questo contenuto:</p>
+
+<pre><code>@echo off
+cd /d D:\Siti GitHub\chattertext
+mamba run -n chatterbox pythonw ChatterText-App-23.py
+</code></pre>
+
+<h3>8.2 Launcher invisibile (.vbs)</h3>
+
+<p>Crea un file <code>launcher.vbs</code> accanto al .bat:</p>
+
+<pre><code>Set WshShell = CreateObject("WScript.Shell")
+WshShell.Run """D:\Siti GitHub\chattertext\launch_chatterbox.bat""", 0, False
+</code></pre>
+
+<p>Avviando <code>launcher.vbs</code> l’app parte senza mostrare la console.</p>
+
+<hr>
+
+<h2>9. Prompt testuale riassuntivo (per uso futuro)</h2>
+
+<p>Se in futuro vuoi chiedere a un assistente di ricostruire questi passaggi, puoi usare un prompt come questo:</p>
+
+<pre><code>Ho una cartella di progetto chiamata "chattertext" sincronizzata da GitHub su Windows.
+Voglio creare un nuovo ambiente chiamato "chatterbox" con Python 3.11 usando mamba,
+installare il progetto con "pip install -e .", installare torch+torchaudio con CUDA 11.8,
+disattivare il PerthImplicitWatermarker usando DummyWatermarker in mtl_tts.py, e creare
+un launcher .bat/.vbs che avvii ChatterText-App-23.py senza mostrare la console.
+Genera una guida passo passo in italiano, con i comandi esatti da eseguire in cmd.exe.
+</code></pre>
+
+<hr>
+
+<p>
+Questa pagina può essere salvata direttamente nella cartella del progetto (ad esempio come
+<code>GUIDA_SETUP_CHATTERBOX.html</code>) e aperta in qualsiasi browser sul nuovo PC.
+</p>
+
+</body>
+</html>

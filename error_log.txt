@@ -1,0 +1,14 @@
+
+============================================================
+Timestamp: 2025-11-19 08:32:48.734956
+Chunk #0
+Error: ChatterboxMultilingualTTS.generate() got an unexpected keyword argument 'max_length'
+Text: Già da tempo Siddharta prendeva parte alle conversazioni dei saggi, si esercitava con Govinda nell'arte oratoria, nonché nello esercizio delle facoltà di osservazione e nella pratica della concentrazione interiore. Già egli sapeva come si pronuncia impercettibilmente lOm, la parola suprema, sapeva assorbirla in sé stesso pronunciandola silenziosamente nell'atto di inspirare, sapeva emetterla silenziosamente nell'atto di espirare, con l'anima raccolta, la fronte raggiante dello splendore che emana da uno spirito luminoso.
+============================================================
+
+============================================================
+Timestamp: 2025-11-19 08:32:48.736455
+Chunk #1
+Error: ChatterboxMultilingualTTS.generate() got an unexpected keyword argument 'max_length'
+Text: Già egli sapeva, nelle profondità del proprio essere, riconoscere l'Atman, indistruttibile, uno con la totalità del mondo.
+============================================================
