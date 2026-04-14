@@ -1,5 +1,6 @@
-# Script generato da ChatterText v2.3
-# Pause gaussiane 6L clamp±40% + giunzioni 7L + dynamic_pause semantica+emozione
+# Script generato da ChatterText v2.6
+# V1..V5 configurabili | V6/V7 segnaposto -> fallback automatico V1
+# Pause gaussiane 6L + giunzioni 12L + dynamic_pause
 import os,re,sys,random,torch,torchaudio as ta,pathlib,time
 if sys.platform=='win32':
     import io
@@ -21,13 +22,23 @@ print('Caricamento modello...')
 model=ChatterboxMultilingualTTS.from_pretrained(device=DEVICE.type)
 print('Modello su {}!'.format(DEVICE.type.upper()))
 chunks=[
-  "Ciao prova finale, del nostro programma di lettura. buona notte"
+  "Che ne dice? Tre punti: gite motoscafo, Che ne dice? Tre punti: gite motoscafo,"
 ]
-AUDIO_V1="2.Voci/3l14n.wav"
-AUDIO_V2="2.Voci/3l14n.wav"
-HAS2=False
-for p in ([AUDIO_V1,AUDIO_V2] if HAS2 else [AUDIO_V1]):
-    if not os.path.exists(p): print(f'NON TROVATO: {p}'); exit(1)
+AUDIO_V1="2.Voci/OresteV1.wav"
+AUDIO_V2="2.Voci/stefano.wav"
+AUDIO_V3="2.Voci/OresteV1.wav"
+AUDIO_V4="2.Voci/OresteV1.wav"
+AUDIO_V5="2.Voci/brasi-potente.wav"
+AUDIO_V6="2.Voci/OresteV1.wav"
+AUDIO_V7="2.Voci/OresteV1.wav"
+HAS2=True
+HAS3=False
+HAS4=False
+HAS5=True
+HAS6=False
+HAS7=False
+for p,lbl,en in [(AUDIO_V1,'V1',True),(AUDIO_V2,'V2',HAS2),(AUDIO_V3,'V3',HAS3),(AUDIO_V4,'V4',HAS4),(AUDIO_V5,'V5',HAS5),(AUDIO_V6,'V6',HAS6),(AUDIO_V7,'V7',HAS7)]:
+    if en and not os.path.exists(p): print(f'NON TROVATO [{lbl}]: {p}'); exit(1)
 EPRESET={
     "calmo": {
         "exaggeration": 0.35,
@@ -108,30 +119,27 @@ EPRESET={
     }
 }
 DEF_P={'exaggeration':0.62,'cfg_weight':0.7,'temperature':0.58,'top_p':0.75,'min_p':0.15}
-# PAUSE MAP: (base, sigma) per random.gauss
-# max(0.05, gauss(base,sigma)) -> naturalezza anti-robotica
 PM={
     '[p1]':(0.18,0.03), '[p2]':(0.40,0.05), '[p3]':(0.65,0.07),
     '[b]': (1.00,0.10), '[bd]':(1.60,0.15), '[cap]':(2.00,0.20),
     '[pausa]':(0.50,0.05),'[pausa_lunga]':(1.20,0.10),'[silenzio]':(2.00,0.15),
 }
-# Clamp gaussiana: risultato sempre tra 60% e 140% del valore base.
-# Evita pause negative o 'freeze' da campionamento estremo.
-# Range effettivo: p1=[0.11-0.25s], p2=[0.24-0.56s], p3=[0.39-0.91s],
-#                  b=[0.60-1.40s], bd=[0.96-2.24s], cap=[1.20-2.80s]
 def gp(tag):
     b,s=PM.get(tag.lower(),(0.40,0.05))
     raw=random.gauss(b,s)
     return max(b*0.60, min(raw, b*1.40))
-# GIUNZIONI 7 livelli
-JM={'[join]':(0.00,'overlap'),'[cont]':(0.12,'smooth'),'[cambio]':(0.50,'cambio'),
+# GIUNZIONI 12 livelli (cambio6/7 per voci segnaposto)
+JM={'[join]':(0.00,'overlap'),'[cont]':(0.12,'smooth'),
+    '[cambio]':(0.50,'cambio'),'[cambio3]':(0.50,'cambio'),
+    '[cambio4]':(0.50,'cambio'),'[cambio5]':(0.50,'cambio'),
+    '[cambio6]':(0.50,'cambio'),'[cambio7]':(0.50,'cambio'),
     '[para]':(0.90,'silence'),'[stacco]':(1.40,'fade_sil_fade'),
     '[lungo]':(1.80,'fade_sil_fade'),'[scena]':(2.40,'hard')}
 EP={'e1':{'exaggeration_delta':0.10,'cfg_weight_delta':-0.05},'e2':{'exaggeration_delta':0.25,'cfg_weight_delta':-0.12}}
 EN=r"calmo|appassionato|arrabbiato|triste|ironico|sussurrato|riflessivo|deciso|preoccupato|gentile|serio"
 PR=re.compile(r'(\[p[123]\]|\[b(?:d)?\]|\[cap\]|\[pausa(?:_lunga)?\]|\[silenzio\])',re.IGNORECASE)
 ER=re.compile(r'\[e[12]\]',re.IGNORECASE)
-JR=re.compile(r'\[(?:join|cont|cambio|para|stacco|lungo|scena)\]',re.IGNORECASE)
+JR=re.compile(r'\[(?:join|cont|cambio|cambio3|cambio4|cambio5|cambio6|cambio7|para|stacco|lungo|scena)\]',re.IGNORECASE)
 def pc(chunk):
     rp=PR.findall(chunk)
     ps=[(p,gp(p)) for p in rp]; tp=sum(d for _,d in ps)
@@ -139,16 +147,17 @@ def pc(chunk):
     jt=JR.findall(chunk); jk=jt[-1].lower() if jt else None
     def si(t):
         t=PR.sub('',t); t=ER.sub('',t); t=JR.sub('',t); return t.strip()
-    m=re.search(r'\[(v1|v2)_(' +EN+r')\]',chunk,re.IGNORECASE)
+    # Gestisce v1..v7 (v6/v7 -> fallback v1 nel routing)
+    m=re.search(r'\[(v1|v2|v3|v4|v5|v6|v7)_(' +EN+r')\]',chunk,re.IGNORECASE)
     if m:
         v,e=m.group(1).lower(),m.group(2).lower()
-        cl=re.sub(r'\[(?:v1|v2)_(?:'+EN+r')\]','',chunk,flags=re.IGNORECASE)
-        cl=re.sub(r'\[/(?:v1|v2)_(?:'+EN+r')\]','',cl,flags=re.IGNORECASE)
+        cl=re.sub(r'\[(?:v1|v2|v3|v4|v5|v6|v7)_(?:'+EN+r')\]','',chunk,flags=re.IGNORECASE)
+        cl=re.sub(r'\[/(?:v1|v2|v3|v4|v5|v6|v7)_(?:'+EN+r')\]','',cl,flags=re.IGNORECASE)
         return si(cl),v,e,ps,tp,ek,jk
-    m=re.search(r'\[(v1|v2)\]',chunk,re.IGNORECASE)
+    m=re.search(r'\[(v1|v2|v3|v4|v5|v6|v7)\]',chunk,re.IGNORECASE)
     if m:
         v=m.group(1).lower()
-        cl=re.sub(r'\[/?(?:v1|v2)\]','',chunk,flags=re.IGNORECASE)
+        cl=re.sub(r'\[/?(?:v1|v2|v3|v4|v5|v6|v7)\]','',chunk,flags=re.IGNORECASE)
         return si(cl),v,None,ps,tp,ek,jk
     m=re.search(r'\[('+EN+r')\]',chunk,re.IGNORECASE)
     if m:
@@ -196,7 +205,14 @@ for i,(txt,vo,em,ps,tp,ek,jk) in enumerate(tc):
     print('   {}{}'.format(_rep,_tail))
     if tp>0: print('   pausa: {:.2f}s (gauss)'.format(tp))
     if len(txt.split())<5: print('   ATTENZIONE: chunk corto!')
-    vp=AUDIO_V2 if (vo=='v2' and HAS2) else AUDIO_V1
+    # Routing: v7->V7, v6->V6, v5->V5, v4->V4, v3->V3, v2->V2 (se configurati), default V1
+    if   vo=='v7' and HAS7: vp=AUDIO_V7
+    elif vo=='v6' and HAS6: vp=AUDIO_V6
+    elif vo=='v5' and HAS5: vp=AUDIO_V5
+    elif vo=='v4' and HAS4: vp=AUDIO_V4
+    elif vo=='v3' and HAS3: vp=AUDIO_V3
+    elif vo=='v2' and HAS2: vp=AUDIO_V2
+    else:                   vp=AUDIO_V1
     p=pp(em,ek); ok=False
     try:
         wav=model.generate(txt,language_id='it',audio_prompt_path=vp,
@@ -239,45 +255,28 @@ REFL=[
 PHIL=[
         "verita" ,"giustizia" ,"anima" ,"essere" ,"nulla" ,"infinito" ,"eternita" ,"ragione" ,"sapienza" ,"virtu" ,"bene" ,"male" ,"conoscenza" ,"ignoranza" ,"logos"
     ]
-# ============================================================
-# dynamic_pause() v2.3 — AVANZATA
-# Fallback se il chunk non ha tag di giunzione esplicito.
-# Pipeline: punteggiatura -> lunghezza -> semantica -> emozione
-#           -> clamp gaussiano ±40% del base.
-# Il clamp garantisce range [60%,140%] del valore base,
-# eliminando pause negative o 'freeze' da campionamento estremo.
-# ============================================================
 def dyn_pause(txt, emo=None):
     t=txt.strip(); lo=t.lower(); ln=len(t); lc=t[-1:] if t else ''
-    # 1. BASE dalla punteggiatura finale (allineata alla scala pause inline)
-    if t.endswith('...'): base,sig=1.50,0.15   # sospensione -> livello [bd]
-    elif lc in '?!':     base,sig=1.00,0.12   # domanda/esclamazione -> [b]
-    elif lc=='.':        base,sig=0.42,0.06   # punto normale -> [p2]
-    elif lc==':':        base,sig=0.70,0.08   # due punti -> tra [p3] e [b]
-    elif lc==';':        base,sig=0.60,0.07   # punto e virgola -> [p3]
-    elif lc==',':        base,sig=0.20,0.03   # virgola -> [p1]
-    else:                base,sig=0.18,0.03   # flusso continuo
-    # 2. Scala per lunghezza (chunk piu lunghi richiedono piu respiro)
+    if t.endswith('...'): base,sig=1.50,0.15
+    elif lc in '?!':     base,sig=1.00,0.12
+    elif lc=='.':        base,sig=0.42,0.06
+    elif lc==':':        base,sig=0.70,0.08
+    elif lc==';':        base,sig=0.60,0.07
+    elif lc==',':        base,sig=0.20,0.03
+    else:                base,sig=0.18,0.03
     if ln>500:   base*=1.50
     elif ln>300: base*=1.30
     elif ln>150: base*=1.12
     elif ln<60:  base*=0.80
-    # 3. Moltiplicatori semantici
-    if any(lo.startswith(s) for s in SCENE):  base*=1.28  # transizione narrativa
-    if any(w in lo for w in PHIL):            base*=1.45  # concetto filosofico
-    if any(w in lo for w in CONCS):           base*=1.38  # cambio argomento
-    if any(w in lo for w in REFL):            base*=1.30  # momento riflessivo
-    if any(w in lo for w in EMOW):            base*=1.18  # contenuto emotivo
-    # 4. Dialogo -> ritmo piu serrato
+    if any(lo.startswith(s) for s in SCENE):  base*=1.28
+    if any(w in lo for w in PHIL):            base*=1.45
+    if any(w in lo for w in CONCS):           base*=1.38
+    if any(w in lo for w in REFL):            base*=1.30
+    if any(w in lo for w in EMOW):            base*=1.18
     if any(v in lo for v in DIALOG):          base*=0.75
-    # 5. Emozione del chunk -> adatta il ritmo alla voce
-    # riflessivo/calmo/triste/preoccupato: pause piu lunghe per peso emotivo
-    # arrabbiato/deciso: ritmo serrato, poche pause
-    # sussurrato: leggermente piu lento, vocalita intima
     if emo in ('riflessivo','calmo','triste','preoccupato'):  base*=1.18
     elif emo in ('arrabbiato','deciso'):                      base*=0.72
     elif emo=='sussurrato':                                   base*=1.10
-    # 6. Clamp gaussiano: risultato sempre nel range [60%, 140%] del base
     raw=random.gauss(base, sig)
     return max(base*0.60, min(raw, base*1.40))
 def te(wav,sr,tdb=-45,mms=30):
@@ -299,9 +298,6 @@ def ov(s1,s2,sr,oms=80):
 def af(wav,sr,fms=14):
     f=int(sr*fms/1000); wav=wav.clone()
     wav[...,:f]*=torch.linspace(0,1,f); wav[...,-f:]*=torch.linspace(1,0,f); return wav
-# fade_sil_fade: usato da [stacco] e [lungo]
-# Fade-out netto -> silenzio puro -> fade-in morbido
-# Crea separazione musicale tra pensieri/concetti distinti
 def fsf(s1,s2,sr,ss,foms=80,fims=60):
     fl=int(sr*foms/1000); il=int(sr*fims/1000)
     sl=max(0,int(sr*ss)-fl-il)
@@ -342,6 +338,10 @@ print(f'\n FILE: {out}')
 print(f'   Durata: {dur:.1f}s ({dur/60:.1f} min)')
 print(f'   Tempo:  {tot:.1f}s ({tot/60:.1f} min)')
 print(f'   Device: {DEVICE.type.upper()}')
+voci_attive=[('V2',HAS2),('V3',HAS3),('V4',HAS4),('V5',HAS5),('V6',HAS6),('V7',HAS7)]
+voci_str=' | '.join(n for n,a in voci_attive if a) or '-'
+v67note=' (V6/V7 non config->V1)' if not HAS6 or not HAS7 else ''
+print(f'   Voci: V1 + {voci_str}{v67note}')
 print(f'   OK: {len(segs)}/{len(chunks)}')
 if fail: print(f'   FAIL: {fail}')
 print('\nProcesso completato!')
