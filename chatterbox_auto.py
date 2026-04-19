@@ -22,19 +22,20 @@ print('Caricamento modello...')
 model=ChatterboxMultilingualTTS.from_pretrained(device=DEVICE.type)
 print('Modello su {}!'.format(DEVICE.type.upper()))
 chunks=[
-  "Che ne dice? Tre punti: gite motoscafo, Che ne dice? Tre punti: gite motoscafo,"
+  "Nel campo mèzzo grìgio e mèzzo nèro,[p2] rèsta un aràtro senza buòi,[p1] che pàre dimenticàto,[p1] tra il vapór leggèro. [p3] E cadenzàto dalla góra viène[p1] lo sciabordàre delle lavandàre,[p1] con tónfi spèssi[p1] e lùnghe cantilène.",
+  "[p3] Il vènto sòffia e nèvica la fràsca,[p1] e tù non tórni ancóra al tuo paése! [p2] quàndo partìsti,[p1] còme son rimàsta! [p2] còme laràtro in mèzzo alla maggése."
 ]
-AUDIO_V1="2.Voci/OresteV1.wav"
-AUDIO_V2="2.Voci/stefano.wav"
-AUDIO_V3="2.Voci/OresteV1.wav"
-AUDIO_V4="2.Voci/OresteV1.wav"
-AUDIO_V5="2.Voci/brasi-potente.wav"
-AUDIO_V6="2.Voci/OresteV1.wav"
-AUDIO_V7="2.Voci/OresteV1.wav"
-HAS2=True
+AUDIO_V1="2.Voci/2Emanuela.wav"
+AUDIO_V2="2.Voci/2Emanuela.wav"
+AUDIO_V3="2.Voci/2Emanuela.wav"
+AUDIO_V4="2.Voci/2Emanuela.wav"
+AUDIO_V5="2.Voci/2Emanuela.wav"
+AUDIO_V6="2.Voci/2Emanuela.wav"
+AUDIO_V7="2.Voci/2Emanuela.wav"
+HAS2=False
 HAS3=False
 HAS4=False
-HAS5=True
+HAS5=False
 HAS6=False
 HAS7=False
 for p,lbl,en in [(AUDIO_V1,'V1',True),(AUDIO_V2,'V2',HAS2),(AUDIO_V3,'V3',HAS3),(AUDIO_V4,'V4',HAS4),(AUDIO_V5,'V5',HAS5),(AUDIO_V6,'V6',HAS6),(AUDIO_V7,'V7',HAS7)]:
@@ -118,7 +119,7 @@ EPRESET={
         "min_p": 0.15
     }
 }
-DEF_P={'exaggeration':0.62,'cfg_weight':0.7,'temperature':0.58,'top_p':0.75,'min_p':0.15}
+DEF_P={'exaggeration':0.82,'cfg_weight':0.7,'temperature':0.68,'top_p':0.75,'min_p':0.15}
 PM={
     '[p1]':(0.18,0.03), '[p2]':(0.40,0.05), '[p3]':(0.65,0.07),
     '[b]': (1.00,0.10), '[bd]':(1.60,0.15), '[cap]':(2.00,0.20),
