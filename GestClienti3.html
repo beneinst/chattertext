@@ -688,56 +688,6 @@ body {
 .av-purple { background: rgba(167,139,250,0.2); color: var(--purple); }
 .av-red { background: rgba(239,68,68,0.2); color: var(--red); }
 
-#btn-documenti {
-  background: transparent;
-  border: 1.5px solid #f97316;
-  color: #f97316;
-  border-radius: var(--radius);
-  padding: 7px 13px;
-  font-size: 13px; font-weight: 500;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  display: flex; align-items: center; gap: 6px;
-  flex-shrink: 0;
-  transition: background 0.15s;
-}
-#btn-documenti:active { background: rgba(249,115,22,0.12); }
-
-/* ── RESPONSIVE HEADER < 600px ── */
-@media (max-width: 600px) {
-  #header {
-    flex-wrap: wrap;
-    padding: 10px 12px 8px;
-    gap: 8px;
-  }
-  #logo {
-    font-size: 16px;
-  }
-  #header-count {
-    flex: 1; /* spinge i pulsanti a destra nella prima riga */
-  }
-  /* Pulsanti backup + documenti + nuovo vanno su seconda riga, larghezza piena */
-  #btn-backup,
-  #btn-documenti,
-  #btn-nuovo {
-    flex: 1;
-    justify-content: center;
-    order: 3;
-    min-width: 0;
-  }
-  /* Prima riga: logo + count */
-  #logo { order: 0; }
-  #header-count { order: 1; }
-  /* Seconda riga: i tre pulsanti affiancati */
-  #btn-backup { 
-    order: 3;
-    flex: 0 0 auto;
-    width: 38px;
-  }
-  #btn-documenti { order: 4; }
-  #btn-nuovo { order: 5; }
-}
-
 /* Scrollbar */
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -754,9 +704,9 @@ body {
     <button id="btn-backup" onclick="openBackupPanel()" title="Backup / Ripristino">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     </button>
-    <button id="btn-documenti" onclick="openDocEditorStandalone()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-      Documenti
+    <button onclick="openDocEditorStandalone()" style="background:var(--amber-bg);border:1px solid var(--amber);color:var(--amber);border-radius:var(--radius);padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;flex-shrink:0;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Fattura / Preventivo
     </button>
     <button id="btn-nuovo" onclick="openNuovoCliente()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -785,7 +735,7 @@ body {
     </div>
     <button id="btn-new-doc" onclick="openDocEditor(null)" title="Nuova fattura / preventivo" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:6px 11px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'DM Sans',sans-serif;flex-shrink:0;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-      Fattura
+      Fattura / Preventivo
     </button>
     <button id="btn-delete-scheda" onclick="confermaElimina()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
@@ -2164,6 +2114,7 @@ function _buildStandaloneHTML(d) {
     </table></div>
     <div class="clr"></div>
     ${d.note?`<div class="note"><strong>Note:</strong><br>${d.note}</div>`:''}
+    <div class="ftr">Documento generato con ClientiPRO</div>
   </div>
   <button class="print-btn" onclick="window.print()">🖨 Stampa / Salva PDF</button>
   </body></html>`;
