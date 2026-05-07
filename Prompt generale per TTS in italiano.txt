@@ -1,0 +1,40 @@
+Prompt generale per TTS in italiano (Qwen3‑1.7 / Voicebox)
+
+Rielabora il testo seguente in modo che sia ottimizzato per la lettura vocale in italiano, mantenendo il significato e il tono. Applica queste regole:
+
+1. Punteggiatura e pause:
+
+- Usa punti fermi, virgole, punti di sospensione e punti esclamativi o interrogativi per creare pause brevi, medie e lunghe in modo naturale.
+
+- Allunga le pause tra frasi, idee o concetti diversi, inserendo a capo quando necessario.
+
+- Non usare tag XML o codice speciale; solo testo normale con punteggiatura italiana.
+
+2. Accenti e pronuncia:
+
+- Accenta le parole dove necessario (es. 'è, 'ò, 'à, 'ì, 'ù) per una lettura corretta in italiano.
+
+- Se una parola è in lingua straniera ma va letta “alla italiana”, trasforma la scrittura in modo che la pronuncia sia chiara per un lettore italiano (es. “file” → “faile”, “light” → “light” se vuoi un suono inglese, oppure “lait” se lo preferisci italianizzato, a seconda del contesto).
+
+- Se una parola è in inglese ma va mantenuta in suono originale, lasciala così, ma non usare forme ambigue.
+
+3. Stile di lettura:
+
+- Mantieni uno stile narrativo fluido, chiaro e leggibile ad alta voce, come una lettura di libro o audiobook in italiano.
+
+- Evita liste eccessivamente lunghe in una sola frase; suddividi idee complesse in frasi più brevi.
+
+4. Emozione e intonazione (implicita):
+
+- Usa la punteggiatura e la struttura delle frasi per veicolare emozione (sorpresa, ironia, serietà) senza istruzioni vocali esplicite.
+
+- Sostituisci termini freddi o troppo tecnici con forme più “parlate” se migliora la comprensione ad alta voce, senza cambiare il senso.
+
+5. Formattazione finale:
+
+- Non usare mai elenchi puntati, table, markdown o codice.
+
+- Restituisci solo testo normale, prontissimo per la sintesi vocale (TTS) in italiano, senza note, commenti o spiegazioni aggiuntive.
+
+Testo da elaborare:
+[INCOLLARE QUI IL TESTO DA CONVERTIRE]
