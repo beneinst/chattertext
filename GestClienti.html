@@ -1,0 +1,2357 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ClientiPRO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="favicon1.ico" />
+<style>
+:root {
+  --bg0: #0d0f14;
+  --bg1: #13161e;
+  --bg2: #1a1e2a;
+  --bg3: #222736;
+  --bg4: #2a2f40;
+  --border: #2e3448;
+  --border2: #3d4460;
+  --text1: #e8eaf0;
+  --text2: #9aa0b8;
+  --text3: #636a85;
+  --accent: #5b7cff;
+  --accent2: #7c94ff;
+  --accent-bg: rgba(91,124,255,0.12);
+  --green: #3ecf8e;
+  --green-bg: rgba(62,207,142,0.12);
+  --amber: #f59e0b;
+  --amber-bg: rgba(245,158,11,0.12);
+  --red: #ef4444;
+  --red-bg: rgba(239,68,68,0.12);
+  --purple: #a78bfa;
+  --purple-bg: rgba(167,139,250,0.12);
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  font-size: 15px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg0);
+  color: var(--text1);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+#header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(13,15,20,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+}
+#logo {
+  font-weight: 600; font-size: 17px; color: var(--text1);
+  letter-spacing: -0.3px;
+}
+#logo span { color: var(--accent2); }
+#header-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; color: var(--text3);
+  background: var(--bg3); border-radius: 20px;
+  padding: 2px 8px;
+}
+#btn-nuovo {
+  margin-left: auto;
+  background: var(--accent);
+  color: #fff; border: none;
+  border-radius: var(--radius);
+  padding: 8px 14px; font-size: 13px; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  font-family: 'DM Sans', sans-serif;
+}
+#btn-nuovo:active { opacity: 0.8; transform: scale(0.97); }
+#btn-nuovo svg { width: 14px; height: 14px; }
+
+/* ── SEARCH BAR ── */
+#search-bar {
+  padding: 10px 16px;
+  background: var(--bg0);
+  border-bottom: 1px solid var(--border);
+}
+#search-bar input {
+  width: 100%; background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 12px 9px 36px;
+  color: var(--text1); font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23636a85' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 11px center;
+}
+#search-bar input:focus { border-color: var(--border2); }
+#search-bar input::placeholder { color: var(--text3); }
+
+/* ── CLIENT LIST ── */
+#lista-clienti {
+  padding: 12px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.cliente-card {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  display: flex; align-items: center; gap: 12px;
+}
+.cliente-card:active { background: var(--bg2); border-color: var(--border2); }
+.cliente-avatar {
+  width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 14px;
+}
+.cliente-info { flex: 1; min-width: 0; }
+.cliente-nome { font-weight: 500; font-size: 15px; color: var(--text1); }
+.cliente-sub { font-size: 12px; color: var(--text3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cliente-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; color: var(--text3);
+  background: var(--bg3); border-radius: 20px;
+  padding: 2px 8px; flex-shrink: 0;
+}
+.cliente-badge {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+}
+
+#empty-state {
+  text-align: center; padding: 60px 20px; display: none;
+}
+#empty-state h3 { font-size: 16px; color: var(--text2); font-weight: 500; }
+#empty-state p { font-size: 13px; color: var(--text3); margin-top: 6px; }
+
+/* ── MODALE / SCHEDA ── */
+#overlay {
+  display: none; position: fixed;
+  inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 200;
+}
+#scheda {
+  display: none; position: fixed;
+  inset: 0; z-index: 300;
+  background: var(--bg0);
+  overflow-y: auto;
+  flex-direction: column;
+}
+#scheda.open { display: flex; }
+
+/* ── SCHEDA HEADER ── */
+#scheda-header {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(13,15,20,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+}
+#btn-back {
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text2); border-radius: var(--radius);
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+#btn-back:active { opacity: 0.7; }
+#scheda-title-wrap { flex: 1; min-width: 0; }
+#scheda-title { font-weight: 600; font-size: 16px; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#scheda-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
+#btn-edit-scheda, #btn-save-scheda, #btn-delete-scheda {
+  border: 1px solid var(--border); background: var(--bg2);
+  color: var(--text2); border-radius: var(--radius);
+  padding: 6px 12px; font-size: 13px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  display: flex; align-items: center; gap: 5px;
+  flex-shrink: 0;
+}
+#btn-save-scheda { background: var(--accent); color: #fff; border-color: var(--accent); display: none; }
+#btn-delete-scheda { border-color: var(--red-bg); color: var(--red); display: none; }
+#btn-edit-scheda:active, #btn-save-scheda:active, #btn-delete-scheda:active { opacity: 0.7; }
+
+/* ── SCHEDA HERO ── */
+#scheda-hero {
+  padding: 20px 16px 14px;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; gap: 8px;
+}
+#scheda-avatar {
+  width: 64px; height: 64px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 22px; margin-bottom: 2px;
+}
+#scheda-hero h2 { font-size: 20px; font-weight: 600; }
+#scheda-hero p { font-size: 13px; color: var(--text3); }
+
+/* ── TABS ── */
+#tabs-bar {
+  display: flex; border-bottom: 1px solid var(--border);
+  padding: 0 16px; overflow-x: auto; gap: 0;
+  scrollbar-width: none;
+}
+#tabs-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  background: none; border: none; color: var(--text3);
+  font-size: 13px; font-weight: 500;
+  padding: 10px 14px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap; transition: color 0.15s;
+  margin-bottom: -1px;
+}
+.tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+.tab-content { display: none; padding: 16px; }
+.tab-content.active { display: block; }
+
+/* ── SEZIONE DATI ── */
+.section-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: 11px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 12px;
+}
+.field-row {
+  display: flex; align-items: flex-start;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.field-row:last-child { border-bottom: none; }
+.field-label { font-size: 12px; color: var(--text3); min-width: 110px; padding-top: 2px; }
+.field-value { font-size: 14px; color: var(--text1); flex: 1; }
+.field-input {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 5px 9px;
+  color: var(--text1); font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  width: 100%; outline: none;
+  transition: border-color 0.15s;
+}
+.field-input:focus { border-color: var(--accent); }
+.field-input[readonly] { background: transparent; border-color: transparent; padding: 0; cursor: default; }
+
+/* ── NOTE TEXTAREA ── */
+.note-area {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px;
+  color: var(--text1); font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  width: 100%; outline: none; resize: vertical;
+  min-height: 80px; transition: border-color 0.15s;
+}
+.note-area:focus { border-color: var(--accent); }
+.note-area[readonly] { background: var(--bg1); border-color: transparent; }
+
+/* ── FATTURE / INTERVENTI ── */
+.list-item {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px;
+  margin-bottom: 8px;
+}
+.list-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.list-item-title { font-weight: 500; font-size: 14px; flex: 1; }
+.badge {
+  font-size: 11px; font-weight: 500; padding: 2px 8px;
+  border-radius: 20px; flex-shrink: 0;
+}
+.badge-green { background: var(--green-bg); color: var(--green); }
+.badge-amber { background: var(--amber-bg); color: var(--amber); }
+.badge-red { background: var(--red-bg); color: var(--red); }
+.badge-blue { background: var(--accent-bg); color: var(--accent2); }
+.list-item-meta { font-size: 12px; color: var(--text3); }
+
+.btn-add {
+  width: 100%; padding: 10px;
+  background: var(--bg2); border: 1px dashed var(--border2);
+  border-radius: var(--radius); color: var(--text3);
+  font-size: 13px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background 0.15s;
+}
+.btn-add:active { background: var(--bg3); }
+
+.btn-danger-sm {
+  background: none; border: none; color: var(--red);
+  font-size: 11px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  padding: 2px 0; opacity: 0.7;
+}
+.btn-danger-sm:active { opacity: 0.4; }
+
+/* ── IMMAGINI ── */
+.img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.img-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.img-card img {
+  width: 100%; aspect-ratio: 4/3;
+  object-fit: cover; display: block;
+}
+.img-card-body { padding: 8px; }
+.img-caption { font-size: 12px; color: var(--text2); }
+.img-date { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.img-card .btn-danger-sm { margin-top: 4px; }
+
+.upload-area {
+  border: 1.5px dashed var(--border2); border-radius: var(--radius);
+  padding: 24px; text-align: center; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  margin-bottom: 12px;
+}
+.upload-area:active { background: var(--bg2); border-color: var(--accent); }
+.upload-area p { font-size: 13px; color: var(--text3); margin-top: 6px; }
+
+/* ── DOCUMENTI PDF ── */
+.doc-item {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 8px;
+}
+.doc-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--red-bg); display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0;
+  font-size: 11px; font-weight: 700; color: var(--red);
+  font-family: 'DM Mono', monospace;
+}
+.doc-info { flex: 1; min-width: 0; }
+.doc-name { font-size: 13px; color: var(--text1); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.btn-download {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text2); border-radius: 7px;
+  padding: 5px 10px; font-size: 12px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  display: flex; align-items: center; gap: 5px;
+  flex-shrink: 0;
+}
+.btn-download:active { opacity: 0.7; }
+
+/* ── MODAL FORM ── */
+#modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75); z-index: 500;
+  align-items: flex-end; justify-content: center;
+}
+#modal-overlay.open { display: flex; }
+#modal-box {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: 20px 16px;
+  width: 100%; max-height: 85vh; overflow-y: auto;
+}
+#modal-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+.modal-field { margin-bottom: 12px; }
+.modal-label { font-size: 12px; color: var(--text3); margin-bottom: 5px; display: block; }
+.modal-input {
+  width: 100%; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 9px 12px; color: var(--text1); font-size: 14px;
+  font-family: 'DM Sans', sans-serif; outline: none;
+}
+.modal-input:focus { border-color: var(--accent); }
+.modal-select {
+  width: 100%; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 9px 12px; color: var(--text1); font-size: 14px;
+  font-family: 'DM Sans', sans-serif; outline: none;
+  -webkit-appearance: none;
+}
+.modal-textarea {
+  width: 100%; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 9px 12px; color: var(--text1); font-size: 14px;
+  font-family: 'DM Sans', sans-serif; outline: none;
+  resize: vertical; min-height: 80px;
+}
+.modal-btn-row { display: flex; gap: 8px; margin-top: 16px; }
+.modal-btn-primary {
+  flex: 1; background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius);
+  padding: 11px; font-size: 14px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+}
+.modal-btn-cancel {
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text2); border-radius: var(--radius);
+  padding: 11px 18px; font-size: 14px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+#btn-backup {
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text2); border-radius: var(--radius);
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; margin-left: auto; flex-shrink: 0;
+}
+#btn-backup:active { opacity: 0.7; }
+#btn-nuovo { flex-shrink: 0; }
+
+/* ── BACKUP PANEL ── */
+#backup-panel {
+  display: none; position: fixed; inset: 0; z-index: 400;
+  background: rgba(0,0,0,0.75); align-items: flex-end; justify-content: center;
+}
+#backup-panel.open { display: flex; }
+#backup-box {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: 22px 16px 32px; width: 100%; max-height: 80vh; overflow-y: auto;
+}
+#backup-box h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+#backup-box .bp-sub { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+.bp-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px;
+}
+.bp-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.bp-card-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.bp-card-icon.green { background: var(--green-bg); }
+.bp-card-icon.blue { background: var(--accent-bg); }
+.bp-card-title { font-size: 14px; font-weight: 500; }
+.bp-card-desc { font-size: 12px; color: var(--text3); margin-bottom: 12px; line-height: 1.5; }
+.bp-btn {
+  width: 100%; padding: 10px; border-radius: var(--radius);
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; border: none;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.bp-btn.export { background: var(--green); color: #0a2e1f; }
+.bp-btn.import { background: var(--accent); color: #fff; }
+.bp-btn.export-full { background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); }
+.bp-btn:active { opacity: 0.8; transform: scale(0.98); }
+.bp-close { width:100%; padding:10px; background:transparent; border:1px solid var(--border); border-radius:var(--radius); color:var(--text3); font-size:14px; cursor:pointer; font-family:'DM Sans',sans-serif; margin-top:4px; }
+.bp-info { font-size: 11px; color: var(--text3); margin-top: 8px; text-align: center; line-height: 1.5; }
+
+/* ── IMPORT CONFIRM ── */
+#confirm-box {
+  display: none; position: fixed;
+  inset: 0; z-index: 600;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.8);
+}
+#confirm-box.open { display: flex; }
+#confirm-inner {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); padding: 24px 20px;
+  width: calc(100% - 32px); max-width: 320px;
+  text-align: center;
+}
+#confirm-inner h3 { font-size: 16px; margin-bottom: 8px; }
+#confirm-inner p { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+#confirm-inner .modal-btn-row { justify-content: center; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text1); padding: 9px 18px;
+  border-radius: 20px; font-size: 13px;
+  z-index: 900; pointer-events: none;
+  opacity: 0; transition: opacity 0.2s;
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; }
+
+/* ── SEZIONI UPLOAD INLINE ── */
+.upload-section-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 12px; overflow: hidden;
+}
+.upload-section-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 16px; cursor: pointer;
+  user-select: none;
+}
+.upload-section-header:active { background: var(--bg2); }
+.upload-section-icon {
+  width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.upload-section-icon.red { background: var(--red-bg); }
+.upload-section-icon.amber { background: var(--amber-bg); }
+.upload-section-label { flex: 1; }
+.upload-section-label strong { font-size: 14px; font-weight: 500; display: block; }
+.upload-section-label span { font-size: 11px; color: var(--text3); }
+.upload-section-chevron {
+  transition: transform 0.2s;
+  color: var(--text3);
+}
+.upload-section-chevron.open { transform: rotate(180deg); }
+.upload-section-body {
+  display: none; padding: 0 14px 14px;
+  border-top: 1px solid var(--border);
+}
+.upload-section-body.open { display: block; }
+
+/* upload row: file + testo + pulsante */
+.upl-add-row {
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--bg2); border: 1px dashed var(--border2);
+  border-radius: var(--radius); padding: 12px; margin-top: 12px;
+}
+.upl-add-row .upl-file-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px;
+  color: var(--text2); font-size: 13px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.upl-add-row .upl-file-btn:active { opacity: 0.7; }
+.upl-filename {
+  font-size: 12px; color: var(--accent2);
+  word-break: break-all; display: none;
+}
+.upl-text-input {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px;
+  color: var(--text1); font-size: 13px;
+  font-family: 'DM Sans', sans-serif; outline: none;
+  resize: vertical; min-height: 58px; width: 100%;
+}
+.upl-text-input:focus { border-color: var(--accent); }
+.upl-confirm-btn {
+  background: var(--accent); color: #fff; border: none;
+  border-radius: 8px; padding: 8px 14px; font-size: 13px;
+  font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  align-self: flex-end;
+}
+.upl-confirm-btn:active { opacity: 0.8; }
+
+/* item list inside section */
+.upl-item {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 11px 12px;
+  margin-top: 8px; display: flex; gap: 10px; align-items: flex-start;
+}
+.upl-item-icon {
+  width: 32px; height: 32px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; font-family: 'DM Mono', monospace;
+  flex-shrink: 0;
+}
+.upl-item-icon.doc { background: var(--red-bg); color: var(--red); }
+.upl-item-icon.img-icon { background: var(--amber-bg); color: var(--amber); }
+.upl-item-body { flex: 1; min-width: 0; }
+.upl-item-name { font-size: 13px; font-weight: 500; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.upl-item-note { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.4; }
+.upl-item-date { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.upl-item-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+.upl-img-thumb {
+  width: 100%; border-radius: 7px; margin-top: 8px;
+  max-height: 180px; object-fit: cover; display: block;
+}
+
+/* ── DOC EDITOR ── */
+.dtype-btn {
+  flex: 1; padding: 9px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text2); font-size: 14px; font-weight: 500;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.dtype-btn.active-dtype {
+  background: var(--accent-bg); border-color: var(--accent);
+  color: var(--accent2);
+}
+.doc-input {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  padding: 5px 9px !important;
+  color: var(--text1) !important;
+  cursor: text !important;
+  pointer-events: auto !important;
+}
+.doc-input:focus { border-color: var(--accent) !important; outline: none !important; }
+.doc-input[readonly] {
+  background: var(--bg2) !important;
+  border-color: var(--border) !important;
+  padding: 5px 9px !important;
+  cursor: text !important;
+}
+
+.doc-row-wrap {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px;
+  margin-bottom: 8px;
+}
+.doc-row-top { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.doc-row-desc {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 7px; padding: 6px 9px;
+  color: var(--text1); font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none;
+}
+.doc-row-desc:focus { border-color: var(--accent); }
+.doc-row-num {
+  width: 68px; flex-shrink: 0;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 7px; padding: 6px 8px; text-align: center;
+  color: var(--text1); font-size: 13px; font-family: 'DM Mono', monospace; outline: none;
+}
+.doc-row-num:focus { border-color: var(--accent); }
+.doc-row-total {
+  font-family: 'DM Mono', monospace; font-size: 13px;
+  color: var(--text1); min-width: 72px; text-align: right; flex-shrink: 0;
+}
+.doc-row-del {
+  background: none; border: none; color: var(--red);
+  cursor: pointer; font-size: 16px; flex-shrink: 0; padding: 0 2px;
+  opacity: 0.7;
+}
+.doc-row-del:active { opacity: 0.4; }
+
+/* ── PRINT STYLES ── */
+@media print {
+  body > *:not(#print-area) { display: none !important; }
+  #print-area { display: block !important; }
+}
+.print-doc {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px; color: #111;
+  max-width: 720px; margin: 0 auto; padding: 32px 28px;
+  background: #fff;
+}
+.print-doc .pd-header { display: flex; justify-content: space-between; margin-bottom: 28px; border-bottom: 2px solid #111; padding-bottom: 16px; }
+.print-doc .pd-emit { flex: 1; }
+.print-doc .pd-emit h1 { font-size: 22px; margin: 0 0 4px; }
+.print-doc .pd-emit p { margin: 1px 0; color: #555; font-size: 11px; }
+.print-doc .pd-docinfo { text-align: right; }
+.print-doc .pd-docinfo .pd-tipo { font-size: 18px; font-weight: 700; color: #1a3aff; text-transform: uppercase; }
+.print-doc .pd-docinfo .pd-tipo.preventivo { color: #d97706; }
+.print-doc .pd-docinfo p { margin: 2px 0; font-size: 11px; color: #555; }
+.print-doc .pd-parties { display: flex; gap: 24px; margin-bottom: 24px; }
+.print-doc .pd-party { flex: 1; background: #f8f8f8; border-radius: 6px; padding: 12px 14px; }
+.print-doc .pd-party h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #888; margin: 0 0 6px; }
+.print-doc .pd-party p { margin: 2px 0; font-size: 11px; }
+.print-doc .pd-party .pname { font-size: 13px; font-weight: 700; color: #111; }
+.print-doc .pd-oggetto { margin-bottom: 16px; font-size: 13px; font-weight: 600; color: #333; }
+.print-doc table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+.print-doc table th { background: #111; color: #fff; padding: 7px 10px; font-size: 11px; text-align: left; }
+.print-doc table th:last-child, .print-doc table td:last-child { text-align: right; }
+.print-doc table td { padding: 7px 10px; font-size: 12px; border-bottom: 1px solid #eee; }
+.print-doc table tr:nth-child(even) td { background: #fafafa; }
+.print-doc .pd-totali { float: right; width: 240px; }
+.print-doc .pd-totali table { margin: 0; }
+.print-doc .pd-totali td { font-size: 12px; padding: 5px 8px; border: none; }
+.print-doc .pd-totali .tot-row td { font-size: 14px; font-weight: 700; border-top: 2px solid #111; }
+.print-doc .pd-clear { clear: both; }
+.print-doc .pd-note { margin-top: 32px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 11px; color: #666; }
+.print-doc .pd-footer { margin-top: 40px; text-align: center; font-size: 10px; color: #aaa; border-top: 1px solid #eee; padding-top: 10px; }
+
+/* ── LISTA DOCUMENTI GENERATI ── */
+.doc-gen-item {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 8px;
+}
+.doc-gen-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; font-family: 'DM Mono', monospace;
+  flex-shrink: 0;
+}
+.doc-gen-icon.fattura { background: var(--accent-bg); color: var(--accent2); }
+.doc-gen-icon.preventivo { background: var(--amber-bg); color: var(--amber); }
+
+/* ── AVATAR COLORS ── */
+.av-blue { background: rgba(91,124,255,0.2); color: var(--accent2); }
+.av-green { background: rgba(62,207,142,0.2); color: var(--green); }
+.av-amber { background: rgba(245,158,11,0.2); color: var(--amber); }
+.av-purple { background: rgba(167,139,250,0.2); color: var(--purple); }
+.av-red { background: rgba(239,68,68,0.2); color: var(--red); }
+
+#btn-documenti {
+  background: transparent;
+  border: 1.5px solid #f97316;
+  color: #f97316;
+  border-radius: var(--radius);
+  padding: 7px 13px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+#btn-documenti:active { background: rgba(249,115,22,0.12); }
+
+/* ── RESPONSIVE HEADER < 600px ── */
+@media (max-width: 600px) {
+  #header {
+    flex-wrap: wrap;
+    padding: 10px 12px 8px;
+    gap: 8px;
+  }
+  #logo {
+    font-size: 16px;
+  }
+  #header-count {
+    flex: 1; /* spinge i pulsanti a destra nella prima riga */
+  }
+  /* Pulsanti backup + documenti + nuovo vanno su seconda riga, larghezza piena */
+  #btn-backup,
+  #btn-documenti,
+  #btn-nuovo {
+    flex: 1;
+    justify-content: center;
+    order: 3;
+    min-width: 0;
+  }
+  /* Prima riga: logo + count */
+  #logo { order: 0; }
+  #header-count { order: 1; }
+  /* Seconda riga: i tre pulsanti affiancati */
+  #btn-backup { 
+    order: 3;
+    flex: 0 0 auto;
+    width: 38px;
+  }
+  #btn-documenti { order: 4; }
+  #btn-nuovo { order: 5; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- MAIN LIST VIEW -->
+<div id="main-view">
+  <div id="header">
+    <div id="logo">Clienti<span>PRO</span></div>
+    <div id="header-count">0 clienti</div>
+    <button id="btn-backup" onclick="openBackupPanel()" title="Backup / Ripristino">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </button>
+    <button id="btn-documenti" onclick="openDocEditorStandalone()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Documenti
+    </button>
+    <button id="btn-nuovo" onclick="openNuovoCliente()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nuovo
+    </button>
+  </div>
+  <div id="search-bar">
+    <input type="text" id="search-input" placeholder="Cerca nome, CF, P.IVA, città…" oninput="renderLista()">
+  </div>
+  <div id="lista-clienti"></div>
+  <div id="empty-state">
+    <h3>Nessun cliente trovato</h3>
+    <p>Aggiungi il primo cliente con il pulsante "Nuovo"</p>
+  </div>
+</div>
+
+<!-- SCHEDA CLIENTE -->
+<div id="scheda">
+  <div id="scheda-header">
+    <button id="btn-back" onclick="chiudiScheda()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div id="scheda-title-wrap">
+      <div id="scheda-title">—</div>
+      <div id="scheda-num">—</div>
+    </div>
+    <button id="btn-new-doc" onclick="openDocEditor(null)" title="Nuova fattura / preventivo" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:6px 11px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'DM Sans',sans-serif;flex-shrink:0;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Fattura
+    </button>
+    <button id="btn-delete-scheda" onclick="confermaElimina()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </button>
+    <button id="btn-edit-scheda" onclick="toggleEdit()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Modifica
+    </button>
+    <button id="btn-save-scheda" onclick="salvaScheda()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Salva
+    </button>
+  </div>
+
+  <!-- HERO -->
+  <div id="scheda-hero">
+    <div id="scheda-avatar" class="av-blue">CP</div>
+    <h2 id="scheda-hero-nome">—</h2>
+    <p id="scheda-hero-sub">—</p>
+  </div>
+
+  <!-- TABS -->
+  <div id="tabs-bar">
+    <button class="tab-btn active" onclick="switchTab('anagrafica', this)">Anagrafica</button>
+    <button class="tab-btn" onclick="switchTab('fiscale', this)">Dati Fiscali</button>
+    <button class="tab-btn" onclick="switchTab('fatture', this)">Fatture</button>
+    <button class="tab-btn" onclick="switchTab('interventi', this)">Interventi</button>
+    <button class="tab-btn" onclick="switchTab('media', this)">Media</button>
+    <button class="tab-btn" onclick="switchTab('documenti', this)">Documenti</button>
+  </div>
+
+  <!-- TAB: ANAGRAFICA -->
+  <div id="tab-anagrafica" class="tab-content active">
+    <div class="section-card">
+      <div class="section-title">Dati di contatto</div>
+      <div class="field-row"><span class="field-label">Nome</span><input class="field-input" id="f-nome" readonly></div>
+      <div class="field-row"><span class="field-label">Cognome</span><input class="field-input" id="f-cognome" readonly></div>
+      <div class="field-row"><span class="field-label">Ragione sociale</span><input class="field-input" id="f-ragione" readonly></div>
+      <div class="field-row"><span class="field-label">Telefono</span><input class="field-input" id="f-tel" type="tel" readonly></div>
+      <div class="field-row"><span class="field-label">Cellulare</span><input class="field-input" id="f-cell" type="tel" readonly></div>
+      <div class="field-row"><span class="field-label">Email</span><input class="field-input" id="f-email" type="email" readonly></div>
+      <div class="field-row"><span class="field-label">PEC</span><input class="field-input" id="f-pec" type="email" readonly></div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Indirizzo</div>
+      <div class="field-row"><span class="field-label">Via / N°</span><input class="field-input" id="f-via" readonly></div>
+      <div class="field-row"><span class="field-label">CAP</span><input class="field-input" id="f-cap" readonly></div>
+      <div class="field-row"><span class="field-label">Città</span><input class="field-input" id="f-citta" readonly></div>
+      <div class="field-row"><span class="field-label">Provincia</span><input class="field-input" id="f-prov" readonly></div>
+      <div class="field-row"><span class="field-label">Nazione</span><input class="field-input" id="f-nazione" readonly></div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Note generali</div>
+      <textarea class="note-area" id="f-note" readonly placeholder="Note sul cliente…"></textarea>
+    </div>
+
+    <!-- SEZIONE: DOCUMENTI FISCALI -->
+    <div class="upload-section-card">
+      <div class="upload-section-header" onclick="toggleUploadSection('sec-fiscali',this)">
+        <div class="upload-section-icon red">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="upload-section-label">
+          <strong>Documenti fiscali</strong>
+          <span>PDF, Word, fatture e documenti contabili</span>
+        </div>
+        <svg class="upload-section-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="upload-section-body" id="sec-fiscali">
+        <div id="upl-fiscali-list"></div>
+        <div class="upl-add-row">
+          <button class="upl-file-btn" onclick="document.getElementById('upl-fiscali-file').click()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Seleziona file
+          </button>
+          <span class="upl-filename" id="upl-fiscali-fname"></span>
+          <textarea class="upl-text-input" id="upl-fiscali-note" placeholder="Descrizione o note sul documento…"></textarea>
+          <button class="upl-confirm-btn" onclick="aggiungiUplFiscali()">Aggiungi documento</button>
+        </div>
+        <input type="file" id="upl-fiscali-file" accept=".pdf,.doc,.docx,.xls,.xlsx" style="display:none" onchange="previewUplFile(this,'upl-fiscali-fname')">
+      </div>
+    </div>
+
+    <!-- SEZIONE: FOTO INTERVENTI -->
+    <div class="upload-section-card">
+      <div class="upload-section-header" onclick="toggleUploadSection('sec-fotointerventi',this)">
+        <div class="upload-section-icon amber">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div class="upload-section-label">
+          <strong>Foto interventi</strong>
+          <span>Immagini con note descrittive degli interventi</span>
+        </div>
+        <svg class="upload-section-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="upload-section-body" id="sec-fotointerventi">
+        <div id="upl-foto-list"></div>
+        <div class="upl-add-row">
+          <button class="upl-file-btn" onclick="document.getElementById('upl-foto-file').click()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Seleziona immagine
+          </button>
+          <span class="upl-filename" id="upl-foto-fname"></span>
+          <textarea class="upl-text-input" id="upl-foto-note" placeholder="Descrizione o note sulla foto…"></textarea>
+          <button class="upl-confirm-btn" onclick="aggiungiUplFoto()">Aggiungi foto</button>
+        </div>
+        <input type="file" id="upl-foto-file" accept="image/*" style="display:none" onchange="previewUplFile(this,'upl-foto-fname')">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB: FISCALE -->
+  <div id="tab-fiscale" class="tab-content">
+    <div class="section-card">
+      <div class="section-title">Dati Fiscali</div>
+      <div class="field-row"><span class="field-label">Codice Fiscale</span><input class="field-input" id="f-cf" readonly style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.5px;"></div>
+      <div class="field-row"><span class="field-label">Partita IVA</span><input class="field-input" id="f-piva" readonly style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.5px;"></div>
+      <div class="field-row"><span class="field-label">SDI / Cod. destinatario</span><input class="field-input" id="f-sdi" readonly style="font-family:'DM Mono',monospace;"></div>
+      <div class="field-row"><span class="field-label">Regime fiscale</span><input class="field-input" id="f-regime" readonly></div>
+      <div class="field-row"><span class="field-label">Tipo cliente</span><input class="field-input" id="f-tipo" readonly></div>
+      <div class="field-row"><span class="field-label">IBAN</span><input class="field-input" id="f-iban" readonly style="font-family:'DM Mono',monospace;font-size:12px;"></div>
+      <div class="field-row"><span class="field-label">Banca</span><input class="field-input" id="f-banca" readonly></div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Indirizzo fiscale (se diverso)</div>
+      <div class="field-row"><span class="field-label">Via / N°</span><input class="field-input" id="f-via-fisc" readonly></div>
+      <div class="field-row"><span class="field-label">CAP</span><input class="field-input" id="f-cap-fisc" readonly></div>
+      <div class="field-row"><span class="field-label">Città</span><input class="field-input" id="f-citta-fisc" readonly></div>
+      <div class="field-row"><span class="field-label">Provincia</span><input class="field-input" id="f-prov-fisc" readonly></div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Note fiscali</div>
+      <textarea class="note-area" id="f-note-fisc" readonly placeholder="Note su aspetti fiscali…"></textarea>
+    </div>
+    <!-- DOCUMENTI GENERATI (fatture/preventivi) -->
+    <div style="margin-top:4px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Fatture e preventivi generati</div>
+      <div id="lista-docs-generati"></div>
+      <button class="btn-add" onclick="openDocEditor(null)" style="margin-top:4px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuova fattura / preventivo
+      </button>
+    </div>
+  </div>
+
+  <!-- TAB: FATTURE -->
+  <div id="tab-fatture" class="tab-content">
+    <div id="lista-fatture"></div>
+    <button class="btn-add" onclick="openModalFattura()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Aggiungi fattura
+    </button>
+  </div>
+
+  <!-- TAB: INTERVENTI -->
+  <div id="tab-interventi" class="tab-content">
+    <div id="lista-interventi"></div>
+    <button class="btn-add" onclick="openModalIntervento()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Aggiungi intervento
+    </button>
+  </div>
+
+  <!-- TAB: MEDIA -->
+  <div id="tab-media" class="tab-content">
+    <div class="upload-area" onclick="document.getElementById('upload-img').click()">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin:0 auto;display:block;"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <p>Tocca per aggiungere immagine</p>
+    </div>
+    <input type="file" id="upload-img" accept="image/*" multiple style="display:none" onchange="handleImgUpload(this)">
+    <div class="img-grid" id="media-grid"></div>
+  </div>
+
+  <!-- TAB: DOCUMENTI -->
+  <div id="tab-documenti" class="tab-content">
+    <div class="upload-area" onclick="document.getElementById('upload-pdf').click()">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin:0 auto;display:block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      <p>Tocca per aggiungere PDF o documento</p>
+    </div>
+    <input type="file" id="upload-pdf" accept=".pdf,.doc,.docx,.xls,.xlsx" multiple style="display:none" onchange="handleDocUpload(this)">
+    <div id="doc-list"></div>
+  </div>
+</div>
+
+<!-- MODAL NUOVO CLIENTE -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-title">Nuovo cliente</div>
+    <div id="modal-body"></div>
+    <div class="modal-btn-row">
+      <button class="modal-btn-cancel" onclick="closeModal()">Annulla</button>
+      <button class="modal-btn-primary" id="modal-confirm-btn" onclick="modalConfirm()">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<!-- BACKUP / RIPRISTINO PANEL -->
+<div id="backup-panel">
+  <div id="backup-box">
+    <h2>Backup &amp; Ripristino</h2>
+    <p class="bp-sub">Esporta i tuoi dati o importa un backup precedente</p>
+
+    <!-- EXPORT DATI -->
+    <div class="bp-card">
+      <div class="bp-card-header">
+        <div class="bp-card-icon green">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+        <div class="bp-card-title">Esporta dati (JSON)</div>
+      </div>
+      <p class="bp-card-desc">Scarica tutti i dati testuali: anagrafiche, dati fiscali, fatture, interventi e note. I file binari (immagini, PDF) sono esclusi per contenere le dimensioni.</p>
+      <button class="bp-btn export" onclick="esportaDati()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Scarica backup dati
+      </button>
+      <p class="bp-info" id="export-info"></p>
+    </div>
+
+    <!-- EXPORT COMPLETO -->
+    <div class="bp-card">
+      <div class="bp-card-header">
+        <div class="bp-card-icon green">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+        <div class="bp-card-title">Esporta tutto (con file)</div>
+      </div>
+      <p class="bp-card-desc">Include anche immagini e documenti come base64. Il file può essere grande se ci sono molti allegati.</p>
+      <button class="bp-btn export-full" onclick="esportaCompleto()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Scarica backup completo
+      </button>
+    </div>
+
+    <!-- IMPORT -->
+    <div class="bp-card">
+      <div class="bp-card-header">
+        <div class="bp-card-icon blue">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="bp-card-title">Importa da backup</div>
+      </div>
+      <p class="bp-card-desc">Carica un file JSON esportato in precedenza. I dati esistenti verranno <strong style="color:var(--amber)">uniti</strong> a quelli importati (nessun dato viene cancellato).</p>
+      <button class="bp-btn import" onclick="document.getElementById('import-file').click()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Seleziona file JSON
+      </button>
+      <p class="bp-info" id="import-info"></p>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importaDati(this)">
+    </div>
+
+    <button class="bp-close" onclick="document.getElementById('backup-panel').classList.remove('open')">Chiudi</button>
+  </div>
+</div>
+
+<!-- DOCUMENT EDITOR (FATTURA / PREVENTIVO) -->
+<div id="doc-editor" style="display:none;position:fixed;inset:0;z-index:600;background:var(--bg0);overflow-y:auto;flex-direction:column;">
+  <!-- Editor Header -->
+  <div style="position:sticky;top:0;z-index:10;background:rgba(13,15,20,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:12px 16px;">
+    <button onclick="closeDocEditor()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div style="flex:1;">
+      <div id="doc-editor-title" style="font-size:16px;font-weight:600;">Nuovo documento</div>
+      <div id="doc-editor-sub" style="font-size:11px;color:var(--text3);">Compila i campi e genera il PDF</div>
+    </div>
+    <button onclick="salvaEStampa()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Salva e Stampa PDF
+    </button>
+  </div>
+
+  <div style="padding:16px;max-width:700px;margin:0 auto;width:100%;">
+
+    <!-- TIPO DOCUMENTO -->
+    <div class="section-card" style="margin-bottom:12px;">
+      <div class="section-title">Tipo documento</div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button id="dtype-fattura" onclick="setDocType('fattura')" class="dtype-btn active-dtype">Fattura</button>
+        <button id="dtype-preventivo" onclick="setDocType('preventivo')" class="dtype-btn">Preventivo</button>
+      </div>
+    </div>
+
+    <!-- DATI EMITTENTE -->
+    <div class="section-card" style="margin-bottom:12px;">
+      <div class="section-title">Chi emette</div>
+      <div class="field-row"><span class="field-label">Nome / Ragione soc.</span><input class="field-input doc-input" id="de-emit-nome" placeholder="La tua ragione sociale"></div>
+      <div class="field-row"><span class="field-label">P.IVA / CF</span><input class="field-input doc-input" id="de-emit-piva" placeholder="IT00000000000"></div>
+      <div class="field-row"><span class="field-label">Indirizzo</span><input class="field-input doc-input" id="de-emit-via" placeholder="Via Roma 1, 20100 Milano (MI)"></div>
+      <div class="field-row"><span class="field-label">Tel / Email</span><input class="field-input doc-input" id="de-emit-contatto" placeholder="info@esempio.it"></div>
+    </div>
+
+    <!-- DATI DESTINATARIO -->
+    <div class="section-card" style="margin-bottom:12px;">
+      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Destinatario</span>
+        <button id="btn-fill-dest" onclick="fillDestinatario()" style="background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent2);border-radius:6px;padding:3px 9px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Auto-compila</button>
+      </div>
+      <div class="field-row"><span class="field-label">Nome / Ragione soc.</span><input class="field-input doc-input" id="de-dest-nome" placeholder="Ragione sociale cliente"></div>
+      <div id="de-dest-fiscali">
+        <div class="field-row"><span class="field-label">P.IVA</span><input class="field-input doc-input" id="de-dest-piva" placeholder="IT00000000000"></div>
+        <div class="field-row"><span class="field-label">Cod. Fiscale</span><input class="field-input doc-input" id="de-dest-cf" placeholder="RSSMRA80A01H501U"></div>
+        <div class="field-row"><span class="field-label">SDI</span><input class="field-input doc-input" id="de-dest-sdi" placeholder="0000000"></div>
+        <div class="field-row"><span class="field-label">PEC</span><input class="field-input doc-input" id="de-dest-pec" placeholder="pec@esempio.it"></div>
+      </div>
+      <div class="field-row"><span class="field-label">Indirizzo</span><input class="field-input doc-input" id="de-dest-via" placeholder="Via, CAP, Città (Prov)"></div>
+      <div class="field-row"><span class="field-label">Email</span><input class="field-input doc-input" id="de-dest-email" placeholder="cliente@esempio.it"></div>
+    </div>
+
+    <!-- INTESTAZIONE DOCUMENTO -->
+    <div class="section-card" style="margin-bottom:12px;">
+      <div class="section-title">Documento</div>
+      <div class="field-row"><span class="field-label">Numero</span><input class="field-input doc-input" id="de-num" placeholder="2024/001"></div>
+      <div class="field-row"><span class="field-label">Data</span><input class="field-input doc-input" id="de-data" type="date"></div>
+      <div class="field-row" id="de-scadenza-row"><span class="field-label">Scadenza pagam.</span><input class="field-input doc-input" id="de-scadenza" type="date"></div>
+      <div class="field-row" id="de-validita-row" style="display:none;"><span class="field-label">Validità offerta</span><input class="field-input doc-input" id="de-validita" placeholder="30 giorni"></div>
+      <div class="field-row"><span class="field-label">Oggetto</span><input class="field-input doc-input" id="de-oggetto" placeholder="Es. Prestazione professionale…"></div>
+    </div>
+
+    <!-- RIGHE -->
+    <div class="section-card" style="margin-bottom:12px;">
+      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Voci / Prestazioni</span>
+        <button onclick="addDocRow()" style="background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent2);border-radius:6px;padding:3px 9px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Riga</button>
+      </div>
+      <div id="doc-rows" style="margin-top:8px;"></div>
+      <div style="margin-top:4px;font-size:11px;color:var(--text3);text-align:center;">Trascina per riordinare le righe</div>
+    </div>
+
+    <!-- TOTALI -->
+    <div class="section-card" style="margin-bottom:12px;">
+      <div class="section-title">Totali</div>
+      <div class="field-row"><span class="field-label">Imponibile</span><span id="tot-imponibile" style="font-family:'DM Mono',monospace;font-size:14px;color:var(--text1);">€ 0,00</span></div>
+      <div class="field-row"><span class="field-label">IVA 22%</span><span id="tot-iva" style="font-family:'DM Mono',monospace;font-size:14px;color:var(--text1);">€ 0,00</span></div>
+      <div class="field-row" style="border-top:2px solid var(--border2);margin-top:4px;padding-top:8px;">
+        <span class="field-label" style="font-weight:600;color:var(--text1);">Totale</span>
+        <span id="tot-totale" style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--green);">€ 0,00</span>
+      </div>
+    </div>
+
+    <!-- NOTE / CONDIZIONI -->
+    <div class="section-card" style="margin-bottom:24px;">
+      <div class="section-title">Note / Condizioni di pagamento</div>
+      <textarea class="note-area" id="de-note" placeholder="Es. Pagamento a 30 giorni dalla ricezione della fattura. Coordinate bancarie: IBAN IT00…"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT PREVIEW (hidden, used only for PDF generation) -->
+<div id="print-frame" style="display:none;"></div>
+
+<!-- CONFIRM DELETE -->
+<div id="confirm-box">
+  <div id="confirm-inner">
+    <h3>Elimina cliente</h3>
+    <p>Questa azione è irreversibile. Tutti i dati del cliente verranno eliminati.</p>
+    <div class="modal-btn-row">
+      <button class="modal-btn-cancel" onclick="document.getElementById('confirm-box').classList.remove('open')">Annulla</button>
+      <button class="modal-btn-primary" style="background:var(--red);border-color:var(--red)" onclick="eliminaCliente()">Elimina</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM NUOVO CLIENTE DA DOC -->
+<div id="confirm-new-client" style="display:none;position:fixed;inset:0;z-index:700;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);">
+  <div style="background:var(--bg1);border:1px solid var(--border);border-radius:var(--radius-xl);padding:24px 20px;width:calc(100% - 32px);max-width:340px;">
+    <h3 style="font-size:16px;margin-bottom:8px;">Crea nuovo cliente?</h3>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:6px;">Il documento è stato salvato. Vuoi creare un nuovo cliente con i dati del destinatario inseriti?</p>
+    <p id="confirm-nc-dest" style="font-size:13px;color:var(--text1);font-weight:500;margin-bottom:20px;"></p>
+    <div style="display:flex;gap:8px;">
+      <button onclick="document.getElementById('confirm-new-client').style.display='none'" style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);padding:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">No, grazie</button>
+      <button onclick="creaClienteDaDoc()" style="flex:1;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">Crea cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// DATA LAYER
+// ============================================================
+const STORAGE_KEY = 'clientipro_v1';
+let db = { clienti: [], nextId: 1 };
+let currentId = null;
+let editMode = false;
+let modalMode = null; // 'nuovo_cliente' | 'fattura' | 'intervento' | 'caption'
+let tempMediaIndex = null;
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) db = JSON.parse(raw);
+  } catch(e) {}
+}
+function saveDB() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch(e) {}
+}
+function getCliente(id) { return db.clienti.find(c => c.id === id); }
+function nextClienteNum() {
+  const n = db.nextId;
+  db.nextId++;
+  saveDB();
+  return String(n).padStart(4, '0');
+}
+
+const AVATAR_CLASSES = ['av-blue','av-green','av-amber','av-purple','av-red'];
+function avatarClass(id) { return AVATAR_CLASSES[id % AVATAR_CLASSES.length]; }
+function initials(c) {
+  const n = (c.nome || c.ragione || '?').charAt(0).toUpperCase();
+  const cog = (c.cognome || '').charAt(0).toUpperCase();
+  return cog ? n + cog : n + (c.ragione||'?').charAt(1).toUpperCase();
+}
+
+// ============================================================
+// LISTA CLIENTI
+// ============================================================
+function renderLista() {
+  const q = (document.getElementById('search-input').value||'').toLowerCase().trim();
+  const lista = document.getElementById('lista-clienti');
+  const empty = document.getElementById('empty-state');
+  const counter = document.getElementById('header-count');
+  counter.textContent = db.clienti.length + ' client' + (db.clienti.length===1?'e':'i');
+
+  const filtered = db.clienti.filter(c => {
+    if(!q) return true;
+    const haystack = [c.nome,c.cognome,c.ragione,c.cf,c.piva,c.citta,c.email,c.cell,c.tel].join(' ').toLowerCase();
+    return haystack.includes(q);
+  });
+
+  if(filtered.length === 0) {
+    lista.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  lista.innerHTML = filtered.map(c => {
+    const num = c.numero || '#'+c.id;
+    const nome = [c.nome, c.cognome].filter(Boolean).join(' ') || c.ragione || 'Cliente';
+    const sub = c.citta ? c.citta + (c.piva ? ' · P.IVA '+c.piva : '') : (c.piva || c.email || '');
+    return `<div class="cliente-card" onclick="openScheda(${c.id})">
+      <div class="cliente-avatar ${avatarClass(c.id)}">${initials(c)}</div>
+      <div class="cliente-info">
+        <div class="cliente-nome">${nome}</div>
+        <div class="cliente-sub">${sub || '—'}</div>
+      </div>
+      <div class="cliente-num">${num}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// NUOVO CLIENTE MODAL
+// ============================================================
+function openNuovoCliente() {
+  modalMode = 'nuovo_cliente';
+  document.getElementById('modal-title').textContent = 'Nuovo cliente';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-field"><label class="modal-label">Nome</label><input class="modal-input" id="mn-nome" placeholder="Mario"></div>
+    <div class="modal-field"><label class="modal-label">Cognome</label><input class="modal-input" id="mn-cognome" placeholder="Rossi"></div>
+    <div class="modal-field"><label class="modal-label">Ragione sociale (se azienda)</label><input class="modal-input" id="mn-ragione" placeholder="Rossi Srl"></div>
+    <div class="modal-field"><label class="modal-label">Partita IVA</label><input class="modal-input" id="mn-piva" placeholder="IT12345678901"></div>
+    <div class="modal-field"><label class="modal-label">Cellulare</label><input class="modal-input" id="mn-cell" type="tel" placeholder="+39 333 1234567"></div>
+    <div class="modal-field"><label class="modal-label">Email</label><input class="modal-input" id="mn-email" type="email" placeholder="mario@esempio.it"></div>
+    <div class="modal-field"><label class="modal-label">Città</label><input class="modal-input" id="mn-citta" placeholder="Milano"></div>
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('mn-nome').focus(), 100);
+}
+
+function modalConfirm() {
+  if(modalMode === 'nuovo_cliente') {
+    const nome = document.getElementById('mn-nome').value.trim();
+    const cognome = document.getElementById('mn-cognome').value.trim();
+    const ragione = document.getElementById('mn-ragione').value.trim();
+    if(!nome && !ragione) { showToast('Inserisci almeno un nome o ragione sociale'); return; }
+    const id = db.clienti.length ? Math.max(...db.clienti.map(c=>c.id))+1 : 1;
+    const c = {
+      id, numero: nextClienteNum(),
+      nome, cognome, ragione,
+      piva: document.getElementById('mn-piva').value.trim(),
+      cell: document.getElementById('mn-cell').value.trim(),
+      email: document.getElementById('mn-email').value.trim(),
+      citta: document.getElementById('mn-citta').value.trim(),
+      tel:'',pec:'',via:'',cap:'',prov:'',nazione:'Italia',
+      cf:'',sdi:'',regime:'',tipo:'',iban:'',banca:'',
+      viaFisc:'',capFisc:'',cittaFisc:'',provFisc:'',
+      note:'',noteFisc:'',
+      fatture:[], interventi:[], media:[], documenti:[]
+    };
+    db.clienti.push(c);
+    saveDB();
+    closeModal();
+    renderLista();
+    showToast('Cliente aggiunto ✓');
+    openScheda(id);
+  } else if(modalMode === 'fattura') {
+    saveFattura();
+  } else if(modalMode === 'intervento') {
+    saveIntervento();
+  } else if(modalMode === 'caption') {
+    saveCaption();
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  modalMode = null;
+}
+
+// ============================================================
+// SCHEDA CLIENTE
+// ============================================================
+function openScheda(id) {
+  currentId = id;
+  editMode = false;
+  const c = getCliente(id);
+  if(!c) return;
+
+  // Header
+  const nome = [c.nome,c.cognome].filter(Boolean).join(' ') || c.ragione || 'Cliente';
+  document.getElementById('scheda-title').textContent = nome;
+  document.getElementById('scheda-num').textContent = 'N° ' + c.numero;
+
+  // Hero
+  document.getElementById('scheda-hero-nome').textContent = nome;
+  document.getElementById('scheda-hero-sub').textContent = c.ragione ? (c.nome ? 'Referente: '+[c.nome,c.cognome].join(' ') : c.ragione) : (c.citta || '');
+  const av = document.getElementById('scheda-avatar');
+  av.className = 'cliente-avatar ' + avatarClass(id);
+  av.textContent = initials(c);
+  document.getElementById('scheda-avatar').style.width = '64px';
+  document.getElementById('scheda-avatar').style.height = '64px';
+  document.getElementById('scheda-avatar').style.fontSize = '22px';
+
+  fillFields(c);
+  renderFatture(c);
+  renderInterventi(c);
+  renderMedia(c);
+  renderDocs(c);
+  renderUplFiscali(c);
+  renderUplFoto(c);
+  renderDocsGenerati(c);
+
+  setReadonly(true);
+  document.getElementById('btn-edit-scheda').style.display = 'flex';
+  document.getElementById('btn-save-scheda').style.display = 'none';
+  document.getElementById('btn-delete-scheda').style.display = 'flex';
+
+  switchTab('anagrafica', document.querySelector('.tab-btn'));
+  document.getElementById('scheda').classList.add('open');
+  document.getElementById('scheda').scrollTop = 0;
+}
+
+function chiudiScheda() {
+  document.getElementById('scheda').classList.remove('open');
+  currentId = null;
+  editMode = false;
+  renderLista();
+}
+
+function fillFields(c) {
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val||''; };
+  set('f-nome', c.nome); set('f-cognome', c.cognome); set('f-ragione', c.ragione);
+  set('f-tel', c.tel); set('f-cell', c.cell); set('f-email', c.email); set('f-pec', c.pec);
+  set('f-via', c.via); set('f-cap', c.cap); set('f-citta', c.citta); set('f-prov', c.prov); set('f-nazione', c.nazione);
+  set('f-note', c.note);
+  set('f-cf', c.cf); set('f-piva', c.piva); set('f-sdi', c.sdi);
+  set('f-regime', c.regime); set('f-tipo', c.tipo); set('f-iban', c.iban); set('f-banca', c.banca);
+  set('f-via-fisc', c.viaFisc); set('f-cap-fisc', c.capFisc); set('f-citta-fisc', c.cittaFisc); set('f-prov-fisc', c.provFisc);
+  set('f-note-fisc', c.noteFisc);
+}
+
+function collectFields() {
+  const g = id => (document.getElementById(id)||{}).value||'';
+  return {
+    nome: g('f-nome'), cognome: g('f-cognome'), ragione: g('f-ragione'),
+    tel: g('f-tel'), cell: g('f-cell'), email: g('f-email'), pec: g('f-pec'),
+    via: g('f-via'), cap: g('f-cap'), citta: g('f-citta'), prov: g('f-prov'), nazione: g('f-nazione'),
+    note: g('f-note'),
+    cf: g('f-cf'), piva: g('f-piva'), sdi: g('f-sdi'),
+    regime: g('f-regime'), tipo: g('f-tipo'), iban: g('f-iban'), banca: g('f-banca'),
+    viaFisc: g('f-via-fisc'), capFisc: g('f-cap-fisc'), cittaFisc: g('f-citta-fisc'), provFisc: g('f-prov-fisc'),
+    noteFisc: g('f-note-fisc'),
+  };
+}
+
+function setReadonly(ro) {
+  document.querySelectorAll('#scheda .field-input:not(.doc-input), #scheda .note-area').forEach(el => {
+    el.readOnly = ro;
+    if(ro) { el.style.background='transparent'; el.style.borderColor='transparent'; el.style.padding='0'; }
+    else { el.style.background=''; el.style.borderColor=''; el.style.padding=''; }
+  });
+}
+
+function toggleEdit() {
+  editMode = true;
+  setReadonly(false);
+  document.getElementById('btn-edit-scheda').style.display = 'none';
+  document.getElementById('btn-save-scheda').style.display = 'flex';
+  document.querySelector('#f-nome').focus();
+}
+
+function salvaScheda() {
+  const c = getCliente(currentId);
+  if(!c) return;
+  const fields = collectFields();
+  Object.assign(c, fields);
+  saveDB();
+  editMode = false;
+  setReadonly(true);
+  document.getElementById('btn-edit-scheda').style.display = 'flex';
+  document.getElementById('btn-save-scheda').style.display = 'none';
+  // Update hero + header
+  const nome = [c.nome,c.cognome].filter(Boolean).join(' ') || c.ragione || 'Cliente';
+  document.getElementById('scheda-title').textContent = nome;
+  document.getElementById('scheda-hero-nome').textContent = nome;
+  document.getElementById('scheda-avatar').textContent = initials(c);
+  showToast('Salvato ✓');
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  // Scroll tabs bar to show active
+  if(btn) btn.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+}
+
+// ============================================================
+// FATTURE
+// ============================================================
+function renderFatture(c) {
+  const el = document.getElementById('lista-fatture');
+  if(!c.fatture || c.fatture.length===0) { el.innerHTML='<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">Nessuna fattura registrata</p>'; return; }
+  el.innerHTML = c.fatture.map((f,i) => {
+    const statusClass = f.stato==='Pagata'?'badge-green': f.stato==='Scaduta'?'badge-red':'badge-amber';
+    return `<div class="list-item">
+      <div class="list-item-header">
+        <span class="list-item-title">${f.numero}</span>
+        <span class="badge ${statusClass}">${f.stato}</span>
+      </div>
+      <div class="list-item-meta">Data: ${f.data} · Importo: <strong style="color:var(--text1)">€ ${f.importo}</strong></div>
+      ${f.descr ? `<div class="list-item-meta" style="margin-top:4px">${f.descr}</div>` : ''}
+      <button class="btn-danger-sm" onclick="eliminaFattura(${i})">✕ Elimina</button>
+    </div>`;
+  }).join('');
+}
+
+function openModalFattura() {
+  modalMode = 'fattura';
+  document.getElementById('modal-title').textContent = 'Aggiungi fattura';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-field"><label class="modal-label">N° Fattura</label><input class="modal-input" id="mf-num" placeholder="2024/001"></div>
+    <div class="modal-field"><label class="modal-label">Data</label><input class="modal-input" id="mf-data" type="date"></div>
+    <div class="modal-field"><label class="modal-label">Importo (€)</label><input class="modal-input" id="mf-importo" type="number" step="0.01" placeholder="0.00"></div>
+    <div class="modal-field"><label class="modal-label">Stato</label>
+      <select class="modal-select" id="mf-stato">
+        <option>Da pagare</option><option>Pagata</option><option>Scaduta</option><option>Parziale</option>
+      </select>
+    </div>
+    <div class="modal-field"><label class="modal-label">Descrizione</label><textarea class="modal-textarea" id="mf-descr" placeholder="Oggetto fattura…"></textarea></div>
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('mf-data').valueAsDate = new Date();
+}
+
+function saveFattura() {
+  const c = getCliente(currentId);
+  const num = document.getElementById('mf-num').value.trim();
+  if(!num) { showToast('Inserisci il numero fattura'); return; }
+  c.fatture.push({
+    numero: num,
+    data: document.getElementById('mf-data').value,
+    importo: parseFloat(document.getElementById('mf-importo').value||0).toFixed(2),
+    stato: document.getElementById('mf-stato').value,
+    descr: document.getElementById('mf-descr').value.trim()
+  });
+  saveDB(); closeModal(); renderFatture(c); showToast('Fattura aggiunta ✓');
+}
+
+function eliminaFattura(i) {
+  const c = getCliente(currentId);
+  c.fatture.splice(i,1); saveDB(); renderFatture(c);
+}
+
+// ============================================================
+// INTERVENTI
+// ============================================================
+function renderInterventi(c) {
+  const el = document.getElementById('lista-interventi');
+  if(!c.interventi || c.interventi.length===0) { el.innerHTML='<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">Nessun intervento registrato</p>'; return; }
+  el.innerHTML = c.interventi.map((iv,i) => {
+    const statusClass = iv.stato==='Completato'?'badge-green': iv.stato==='In corso'?'badge-blue':'badge-amber';
+    return `<div class="list-item">
+      <div class="list-item-header">
+        <span class="list-item-title">${iv.titolo}</span>
+        <span class="badge ${statusClass}">${iv.stato}</span>
+      </div>
+      <div class="list-item-meta">Data: ${iv.data}${iv.tecnico ? ' · Tecnico: '+iv.tecnico : ''}</div>
+      ${iv.note ? `<div class="list-item-meta" style="margin-top:4px;white-space:pre-wrap">${iv.note}</div>` : ''}
+      <button class="btn-danger-sm" onclick="eliminaIntervento(${i})">✕ Elimina</button>
+    </div>`;
+  }).join('');
+}
+
+function openModalIntervento() {
+  modalMode = 'intervento';
+  document.getElementById('modal-title').textContent = 'Aggiungi intervento';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-field"><label class="modal-label">Titolo intervento</label><input class="modal-input" id="mi-titolo" placeholder="Es. Installazione impianto…"></div>
+    <div class="modal-field"><label class="modal-label">Data</label><input class="modal-input" id="mi-data" type="date"></div>
+    <div class="modal-field"><label class="modal-label">Tecnico / Responsabile</label><input class="modal-input" id="mi-tecnico" placeholder="Nome tecnico"></div>
+    <div class="modal-field"><label class="modal-label">Stato</label>
+      <select class="modal-select" id="mi-stato">
+        <option>Da fare</option><option>In corso</option><option>Completato</option><option>Annullato</option>
+      </select>
+    </div>
+    <div class="modal-field"><label class="modal-label">Note</label><textarea class="modal-textarea" id="mi-note" placeholder="Descrizione lavori, materiali usati…"></textarea></div>
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('mi-data').valueAsDate = new Date();
+}
+
+function saveIntervento() {
+  const c = getCliente(currentId);
+  const titolo = document.getElementById('mi-titolo').value.trim();
+  if(!titolo) { showToast('Inserisci il titolo'); return; }
+  c.interventi.push({
+    titolo,
+    data: document.getElementById('mi-data').value,
+    tecnico: document.getElementById('mi-tecnico').value.trim(),
+    stato: document.getElementById('mi-stato').value,
+    note: document.getElementById('mi-note').value.trim()
+  });
+  saveDB(); closeModal(); renderInterventi(c); showToast('Intervento aggiunto ✓');
+}
+
+function eliminaIntervento(i) {
+  const c = getCliente(currentId);
+  c.interventi.splice(i,1); saveDB(); renderInterventi(c);
+}
+
+// ============================================================
+// MEDIA (IMMAGINI)
+// ============================================================
+function renderMedia(c) {
+  const grid = document.getElementById('media-grid');
+  if(!c.media || c.media.length===0) { grid.innerHTML=''; return; }
+  grid.innerHTML = c.media.map((m,i) => `
+    <div class="img-card">
+      <img src="${m.data}" alt="${m.caption||''}">
+      <div class="img-card-body">
+        <div class="img-caption">${m.caption||'—'}</div>
+        <div class="img-date">${m.date||''}</div>
+        <button class="btn-danger-sm" onclick="eliminaMedia(${i})">✕ Rimuovi</button>
+        <button class="btn-danger-sm" style="color:var(--accent2);margin-left:8px" onclick="editCaption(${i})">✎ Caption</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function handleImgUpload(input) {
+  const c = getCliente(currentId);
+  const files = Array.from(input.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      c.media.push({ data: e.target.result, caption: '', date: new Date().toLocaleDateString('it-IT') });
+      loaded++;
+      if(loaded === files.length) { saveDB(); renderMedia(c); showToast(files.length+' immagine/i aggiunta/e'); }
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function eliminaMedia(i) {
+  const c = getCliente(currentId);
+  c.media.splice(i,1); saveDB(); renderMedia(c);
+}
+
+function editCaption(i) {
+  tempMediaIndex = i;
+  modalMode = 'caption';
+  const c = getCliente(currentId);
+  document.getElementById('modal-title').textContent = 'Modifica didascalia';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-field"><label class="modal-label">Didascalia immagine</label>
+    <textarea class="modal-textarea" id="mc-caption" placeholder="Descrizione immagine…">${c.media[i].caption||''}</textarea></div>
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function saveCaption() {
+  const c = getCliente(currentId);
+  c.media[tempMediaIndex].caption = document.getElementById('mc-caption').value.trim();
+  saveDB(); closeModal(); renderMedia(c); showToast('Didascalia salvata ✓');
+}
+
+// ============================================================
+// DOCUMENTI PDF
+// ============================================================
+function renderDocs(c) {
+  const el = document.getElementById('doc-list');
+  if(!c.documenti || c.documenti.length===0) { el.innerHTML='<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0;">Nessun documento</p>'; return; }
+  el.innerHTML = c.documenti.map((d,i) => `
+    <div class="doc-item">
+      <div class="doc-icon">${d.ext.toUpperCase()}</div>
+      <div class="doc-info">
+        <div class="doc-name">${d.name}</div>
+        <div class="doc-meta">${d.date} · ${d.size}</div>
+      </div>
+      <button class="btn-download" onclick="downloadDoc(${i})">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Scarica
+      </button>
+      <button class="btn-danger-sm" onclick="eliminaDoc(${i})" style="margin-left:6px">✕</button>
+    </div>
+  `).join('');
+}
+
+function handleDocUpload(input) {
+  const c = getCliente(currentId);
+  const files = Array.from(input.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const ext = file.name.split('.').pop().toLowerCase();
+      const size = file.size < 1024*1024 ? (file.size/1024).toFixed(0)+' KB' : (file.size/1024/1024).toFixed(1)+' MB';
+      c.documenti.push({
+        name: file.name, ext, size,
+        data: e.target.result,
+        date: new Date().toLocaleDateString('it-IT')
+      });
+      loaded++;
+      if(loaded === files.length) { saveDB(); renderDocs(c); showToast(files.length+' documento/i aggiunto/i'); }
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function downloadDoc(i) {
+  const c = getCliente(currentId);
+  const d = c.documenti[i];
+  const a = document.createElement('a');
+  a.href = d.data; a.download = d.name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function eliminaDoc(i) {
+  const c = getCliente(currentId);
+  c.documenti.splice(i,1); saveDB(); renderDocs(c);
+}
+
+// ============================================================
+// SEZIONI UPLOAD COLLASSABILI
+// ============================================================
+function toggleUploadSection(id, headerEl) {
+  const body = document.getElementById(id);
+  const chevron = headerEl.querySelector('.upload-section-chevron');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+
+function previewUplFile(input, spanId) {
+  const span = document.getElementById(spanId);
+  if(input.files && input.files[0]) {
+    span.textContent = input.files[0].name;
+    span.style.display = 'block';
+  }
+}
+
+// --- DOCUMENTI FISCALI ---
+function renderUplFiscali(c) {
+  const el = document.getElementById('upl-fiscali-list');
+  if(!c.uplFiscali || c.uplFiscali.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = c.uplFiscali.map((d,i) => `
+    <div class="upl-item">
+      <div class="upl-item-icon doc">${d.ext.toUpperCase()}</div>
+      <div class="upl-item-body">
+        <div class="upl-item-name">${d.name}</div>
+        ${d.note ? `<div class="upl-item-note">${d.note}</div>` : ''}
+        <div class="upl-item-date">${d.date} · ${d.size}</div>
+      </div>
+      <div class="upl-item-actions">
+        <button class="btn-download" onclick="downloadUplFiscali(${i})">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+        <button class="btn-danger-sm" onclick="eliminaUplFiscali(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function aggiungiUplFiscali() {
+  const c = getCliente(currentId);
+  const input = document.getElementById('upl-fiscali-file');
+  const note = document.getElementById('upl-fiscali-note').value.trim();
+  if(!input.files || !input.files[0]) { showToast('Seleziona prima un file'); return; }
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    const size = file.size < 1024*1024 ? (file.size/1024).toFixed(0)+' KB' : (file.size/1024/1024).toFixed(1)+' MB';
+    if(!c.uplFiscali) c.uplFiscali = [];
+    c.uplFiscali.push({ name: file.name, ext, size, note, data: e.target.result, date: new Date().toLocaleDateString('it-IT') });
+    saveDB(); renderUplFiscali(c);
+    input.value = '';
+    document.getElementById('upl-fiscali-fname').textContent = '';
+    document.getElementById('upl-fiscali-fname').style.display = 'none';
+    document.getElementById('upl-fiscali-note').value = '';
+    showToast('Documento aggiunto ✓');
+  };
+  reader.readAsDataURL(file);
+}
+
+function downloadUplFiscali(i) {
+  const c = getCliente(currentId);
+  const d = c.uplFiscali[i];
+  const a = document.createElement('a');
+  a.href = d.data; a.download = d.name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function eliminaUplFiscali(i) {
+  const c = getCliente(currentId);
+  c.uplFiscali.splice(i,1); saveDB(); renderUplFiscali(c);
+}
+
+// --- FOTO INTERVENTI ---
+function renderUplFoto(c) {
+  const el = document.getElementById('upl-foto-list');
+  if(!c.uplFoto || c.uplFoto.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = c.uplFoto.map((d,i) => `
+    <div class="upl-item" style="flex-direction:column;gap:0">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div class="upl-item-icon img-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div class="upl-item-body">
+          <div class="upl-item-name">${d.name}</div>
+          ${d.note ? `<div class="upl-item-note">${d.note}</div>` : ''}
+          <div class="upl-item-date">${d.date}</div>
+        </div>
+        <div class="upl-item-actions">
+          <button class="btn-download" onclick="downloadUplFoto(${i})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+          <button class="btn-danger-sm" onclick="eliminaUplFoto(${i})">✕</button>
+        </div>
+      </div>
+      <img class="upl-img-thumb" src="${d.data}" alt="${d.note||''}">
+    </div>
+  `).join('');
+}
+
+function aggiungiUplFoto() {
+  const c = getCliente(currentId);
+  const input = document.getElementById('upl-foto-file');
+  const note = document.getElementById('upl-foto-note').value.trim();
+  if(!input.files || !input.files[0]) { showToast('Seleziona prima un\'immagine'); return; }
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    if(!c.uplFoto) c.uplFoto = [];
+    c.uplFoto.push({ name: file.name, note, data: e.target.result, date: new Date().toLocaleDateString('it-IT') });
+    saveDB(); renderUplFoto(c);
+    input.value = '';
+    document.getElementById('upl-foto-fname').textContent = '';
+    document.getElementById('upl-foto-fname').style.display = 'none';
+    document.getElementById('upl-foto-note').value = '';
+    showToast('Foto aggiunta ✓');
+  };
+  reader.readAsDataURL(file);
+}
+
+function downloadUplFoto(i) {
+  const c = getCliente(currentId);
+  const d = c.uplFoto[i];
+  const a = document.createElement('a');
+  a.href = d.data; a.download = d.name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function eliminaUplFoto(i) {
+  const c = getCliente(currentId);
+  c.uplFoto.splice(i,1); saveDB(); renderUplFoto(c);
+}
+
+// ============================================================
+// ELIMINA CLIENTE
+// ============================================================
+function confermaElimina() {
+  document.getElementById('confirm-box').classList.add('open');
+}
+function eliminaCliente() {
+  db.clienti = db.clienti.filter(c => c.id !== currentId);
+  saveDB();
+  document.getElementById('confirm-box').classList.remove('open');
+  chiudiScheda();
+  renderLista();
+  showToast('Cliente eliminato');
+}
+
+// ============================================================
+// DOCUMENT EDITOR (FATTURA / PREVENTIVO)
+// ============================================================
+let docEditorClientId = null;
+let docRowCount = 0;
+let currentDocType = 'fattura';
+let editingDocIndex = null; // null = nuovo, number = modifica
+
+function openDocEditorStandalone() {
+  // Apre editor senza cliente associato (dalla home)
+  openDocEditor(null, null);
+}
+
+function openDocEditor(docIndex, clientId) {
+  // clientId: se passato esplicitamente; altrimenti usa currentId (da scheda)
+  // null = standalone (home)
+  docEditorClientId = (clientId !== undefined) ? clientId : currentId;
+  editingDocIndex = docIndex;
+  currentDocType = 'fattura';
+
+  // Reset form
+  ['de-emit-nome','de-emit-piva','de-emit-via','de-emit-contatto',
+   'de-dest-nome','de-dest-piva','de-dest-cf','de-dest-sdi','de-dest-pec','de-dest-via','de-dest-email',
+   'de-num','de-oggetto','de-validita','de-note'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  document.getElementById('doc-rows').innerHTML = '';
+  docRowCount = 0;
+  document.getElementById('de-data').valueAsDate = new Date();
+  const sc = new Date(); sc.setDate(sc.getDate()+30);
+  document.getElementById('de-scadenza').value = sc.toISOString().slice(0,10);
+
+  setDocType('fattura');
+
+  // Mostra/nascondi pulsante auto-compila in base a se c'è un cliente
+  const btnFill = document.getElementById('btn-fill-dest');
+  if(btnFill) btnFill.style.display = docEditorClientId ? 'inline-flex' : 'none';
+
+  if(docIndex !== null && docEditorClientId) {
+    const c = getCliente(docEditorClientId);
+    if(c && c.docsGenerati && c.docsGenerati[docIndex]) {
+      const d = c.docsGenerati[docIndex];
+      setDocType(d.tipo);
+      ['emit-nome','emit-piva','emit-via','emit-contatto',
+       'dest-nome','dest-piva','dest-cf','dest-sdi','dest-pec','dest-via','dest-email',
+       'num','oggetto','validita','note'].forEach(k => {
+        const el = document.getElementById('de-'+k);
+        if(el && d[k] !== undefined) el.value = d[k]||'';
+      });
+      document.getElementById('de-data').value = d.data||'';
+      document.getElementById('de-scadenza').value = d.scadenza||'';
+      (d.righe||[]).forEach(r => addDocRow(r));
+    }
+  } else {
+    addDocRow(); addDocRow();
+  }
+
+  updateTotals();
+  document.querySelectorAll('#doc-editor input, #doc-editor textarea').forEach(el => {
+    el.readOnly = false;
+  });
+  document.getElementById('doc-editor').style.display = 'flex';
+  document.getElementById('doc-editor').scrollTop = 0;
+  document.getElementById('doc-editor-title').textContent = docIndex !== null ? 'Modifica documento' : 'Nuovo documento';
+  const sub = docEditorClientId
+    ? 'Documento per: ' + (getCliente(docEditorClientId) ? ([getCliente(docEditorClientId).ragione, getCliente(docEditorClientId).nome].filter(Boolean).join(' ') || 'Cliente') : '—')
+    : 'Documento libero — nessun cliente associato';
+  document.getElementById('doc-editor-sub').textContent = sub;
+}
+
+function closeDocEditor() {
+  document.getElementById('doc-editor').style.display = 'none';
+}
+
+function setDocType(tipo) {
+  currentDocType = tipo;
+  document.getElementById('dtype-fattura').className = 'dtype-btn' + (tipo==='fattura'?' active-dtype':'');
+  document.getElementById('dtype-preventivo').className = 'dtype-btn' + (tipo==='preventivo'?' active-dtype':'');
+  // Fiscali del destinatario: solo fattura
+  document.getElementById('de-dest-fiscali').style.display = tipo==='fattura' ? 'block' : 'none';
+  document.getElementById('de-scadenza-row').style.display = tipo==='fattura' ? 'flex' : 'none';
+  document.getElementById('de-validita-row').style.display = tipo==='preventivo' ? 'flex' : 'none';
+  document.getElementById('doc-editor-sub').textContent = tipo==='fattura'
+    ? 'Fattura — dati fiscali completi'
+    : 'Preventivo — compila il destinatario o lascia libero';
+}
+
+function fillDestinatario() {
+  const c = getCliente(docEditorClientId);
+  if(!c) return;
+  const nome = [c.ragione, [c.nome,c.cognome].filter(Boolean).join(' ')].filter(Boolean).join(' / ');
+  const via = [c.viaFisc||c.via, c.capFisc||c.cap, c.cittaFisc||c.citta, c.provFisc||c.prov].filter(Boolean).join(', ');
+  document.getElementById('de-dest-nome').value = nome||'';
+  document.getElementById('de-dest-piva').value = c.piva||'';
+  document.getElementById('de-dest-cf').value = c.cf||'';
+  document.getElementById('de-dest-sdi').value = c.sdi||'';
+  document.getElementById('de-dest-pec').value = c.pec||'';
+  document.getElementById('de-dest-via').value = via||'';
+  document.getElementById('de-dest-email').value = c.email||'';
+  showToast('Dati destinatario compilati ✓');
+}
+
+function addDocRow(data) {
+  docRowCount++;
+  const idx = docRowCount;
+  const desc = data ? data.desc||'' : '';
+  const qty = data ? data.qty||1 : 1;
+  const price = data ? data.price||'' : '';
+  const div = document.createElement('div');
+  div.className = 'doc-row-wrap'; div.id = 'dr-'+idx;
+  div.innerHTML = `
+    <div class="doc-row-top">
+      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;flex-shrink:0;">${String(idx).padStart(2,'0')}</span>
+      <input class="doc-row-desc" placeholder="Descrizione voce / prestazione" value="${desc}" oninput="updateTotals()">
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <span style="font-size:11px;color:var(--text3);flex-shrink:0;">Qtà</span>
+      <input class="doc-row-num" type="number" min="0" step="any" value="${qty}" oninput="updateTotals()">
+      <span style="font-size:11px;color:var(--text3);flex-shrink:0;">€ Unitario</span>
+      <input class="doc-row-num" type="number" min="0" step="0.01" value="${price}" placeholder="0,00" oninput="updateTotals()">
+      <span class="doc-row-total" id="dr-tot-${idx}">€ 0,00</span>
+      <button class="doc-row-del" onclick="removeDocRow('dr-${idx}')">×</button>
+    </div>
+  `;
+  document.getElementById('doc-rows').appendChild(div);
+  updateTotals();
+}
+
+function removeDocRow(id) {
+  const el = document.getElementById(id);
+  if(el) el.remove();
+  updateTotals();
+}
+
+function getDocRows() {
+  const rows = [];
+  document.querySelectorAll('.doc-row-wrap').forEach(wrap => {
+    const inputs = wrap.querySelectorAll('input');
+    // inputs: [desc, qty, price]
+    const desc = inputs[0] ? inputs[0].value.trim() : '';
+    const qty = parseFloat(inputs[1] ? inputs[1].value : 0) || 0;
+    const price = parseFloat(inputs[2] ? inputs[2].value : 0) || 0;
+    const tot = qty * price;
+    const id = wrap.id;
+    rows.push({ desc, qty, price, tot, id });
+    // Update row total display
+    const totEl = document.getElementById(id.replace('dr-','dr-tot-'));
+    if(totEl) totEl.textContent = '€ ' + tot.toFixed(2).replace('.',',');
+  });
+  return rows;
+}
+
+function updateTotals() {
+  const rows = getDocRows();
+  const imponibile = rows.reduce((s,r) => s + r.tot, 0);
+  const iva = imponibile * 0.22;
+  const totale = imponibile + iva;
+  document.getElementById('tot-imponibile').textContent = '€ ' + imponibile.toFixed(2).replace('.',',');
+  document.getElementById('tot-iva').textContent = '€ ' + iva.toFixed(2).replace('.',',');
+  document.getElementById('tot-totale').textContent = '€ ' + totale.toFixed(2).replace('.',',');
+}
+
+function collectDocData() {
+  const g = id => (document.getElementById(id)||{}).value||'';
+  const rows = getDocRows();
+  const imponibile = rows.reduce((s,r) => s + r.tot, 0);
+  const iva = imponibile * 0.22;
+  return {
+    tipo: currentDocType,
+    'emit-nome': g('de-emit-nome'), 'emit-piva': g('de-emit-piva'),
+    'emit-via': g('de-emit-via'), 'emit-contatto': g('de-emit-contatto'),
+    'dest-nome': g('de-dest-nome'), 'dest-piva': g('de-dest-piva'),
+    'dest-cf': g('de-dest-cf'), 'dest-sdi': g('de-dest-sdi'),
+    'dest-pec': g('de-dest-pec'), 'dest-via': g('de-dest-via'), 'dest-email': g('de-dest-email'),
+    num: g('de-num'), data: g('de-data'), scadenza: g('de-scadenza'),
+    validita: g('de-validita'), oggetto: g('de-oggetto'), note: g('de-note'),
+    righe: rows.map(r => ({desc:r.desc, qty:r.qty, price:r.price, tot:r.tot})),
+    imponibile, iva, totale: imponibile+iva,
+    savedAt: new Date().toLocaleDateString('it-IT')
+  };
+}
+
+function _getOrCreateClienteForDoc(d) {
+  // Se c'è un cliente associato, usa quello
+  if(docEditorClientId) {
+    const c = getCliente(docEditorClientId);
+    if(c) return c;
+  }
+  // Altrimenti: se il destinatario ha un nome, crea un nuovo cliente
+  const destNome = d['dest-nome'] ? d['dest-nome'].trim() : '';
+  if(!destNome) return null;
+
+  // Cerca se esiste già un cliente con lo stesso nome/piva
+  const existing = db.clienti.find(c =>
+    (d['dest-piva'] && c.piva === d['dest-piva']) ||
+    ([c.ragione, [c.nome,c.cognome].filter(Boolean).join(' ')].filter(Boolean).join(' / ') === destNome)
+  );
+  if(existing) return existing;
+
+  // Crea nuovo cliente con i dati del destinatario
+  const id = db.clienti.length ? Math.max(...db.clienti.map(c=>c.id))+1 : 1;
+  const partiNome = destNome.split(' ');
+  const nuovoCliente = {
+    id, numero: nextClienteNum(),
+    nome: partiNome[0]||'', cognome: partiNome.slice(1).join(' ')||'',
+    ragione: d['dest-nome']||'',
+    piva: d['dest-piva']||'', cf: d['dest-cf']||'',
+    sdi: d['dest-sdi']||'', pec: d['dest-pec']||'',
+    email: d['dest-email']||'',
+    via: d['dest-via']||'', cap:'', citta:'', prov:'', nazione:'Italia',
+    tel:'', cell:'', regime:'', tipo:'', iban:'', banca:'',
+    viaFisc:'', capFisc:'', cittaFisc:'', provFisc:'',
+    note:'', noteFisc:'',
+    fatture:[], interventi:[], media:[], documenti:[],
+    uplFiscali:[], uplFoto:[], docsGenerati:[]
+  };
+  db.clienti.push(nuovoCliente);
+  renderLista();
+  showToast('Nuovo cliente creato: ' + destNome);
+  return nuovoCliente;
+}
+
+function _salvaSuCliente(d, cliente) {
+  if(!cliente) return;
+  if(!cliente.docsGenerati) cliente.docsGenerati = [];
+  if(!cliente.documenti) cliente.documenti = [];
+
+  // Registra in docsGenerati
+  if(editingDocIndex !== null && docEditorClientId === cliente.id) {
+    cliente.docsGenerati[editingDocIndex] = d;
+  } else {
+    cliente.docsGenerati.push(d);
+    editingDocIndex = cliente.docsGenerati.length - 1;
+  }
+
+  // Genera HTML del documento e salvalo come file scaricabile in documenti
+  const htmlContent = _buildStandaloneHTML(d);
+  const blob = new Blob([htmlContent], {type:'text/html'});
+  const reader = new FileReader();
+  reader.onload = e => {
+    const label = (d.tipo==='fattura'?'Fattura':'Preventivo') + '_' + (d.num||'doc').replace(/[\/\\:]/g,'-') + '.html';
+    // Rimuovi eventuale vecchio file con lo stesso nome
+    cliente.documenti = cliente.documenti.filter(doc => doc.name !== label);
+    cliente.documenti.push({
+      name: label,
+      ext: 'html',
+      size: Math.round(blob.size/1024) + ' KB',
+      data: e.target.result,
+      date: new Date().toLocaleDateString('it-IT'),
+      isGenerato: true
+    });
+    saveDB();
+    // Aggiorna UI se siamo nella scheda del cliente
+    if(currentId === cliente.id) {
+      renderDocsGenerati(cliente);
+      renderDocs(cliente);
+    }
+  };
+  reader.readAsDataURL(blob);
+  saveDB();
+}
+
+function saveDocToClient() {
+  const d = collectDocData();
+  if(!d.num) { showToast('Inserisci il numero documento'); return; }
+  const cliente = _getOrCreateClienteForDoc(d);
+  if(!cliente) { showToast('Aggiungi almeno il nome del destinatario o associa un cliente'); return; }
+  docEditorClientId = cliente.id;
+  _salvaSuCliente(d, cliente);
+  closeDocEditor();
+  showToast((d.tipo==='fattura'?'Fattura':'Preventivo') + ' salvata ✓');
+}
+
+function salvaEStampa() {
+  const d = collectDocData();
+  if(!d.num) { showToast('Inserisci il numero documento'); return; }
+  const cliente = _getOrCreateClienteForDoc(d);
+  if(cliente) {
+    docEditorClientId = cliente.id;
+    _salvaSuCliente(d, cliente);
+  }
+  printDoc(d);
+  if(cliente) {
+    closeDocEditor();
+    showToast((d.tipo==='fattura'?'Fattura':'Preventivo') + ' salvata e inviata alla stampa ✓');
+  }
+}
+
+function stampaPDF() {
+  // Solo stampa, senza salvare (ma avvisa se non salvato)
+  const d = collectDocData();
+  if(!d.num) { showToast('Inserisci il numero documento prima di stampare'); return; }
+  printDoc(d);
+}
+
+function generateDocPDF() { stampaPDF(); } // alias legacy
+
+function previewDocPDF(i) {
+  const c = getCliente(currentId);
+  if(c && c.docsGenerati && c.docsGenerati[i]) printDoc(c.docsGenerati[i]);
+}
+
+function _buildStandaloneHTML(d) {
+  // Versione standalone del PDF (per il file scaricabile)
+  const tipo = d.tipo === 'fattura' ? 'Fattura' : 'Preventivo';
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${tipo} N° ${d.num}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#f0f0f0;padding:20px;font-family:Arial,Helvetica,sans-serif;}
+    .wrap{max-width:720px;margin:0 auto;background:#fff;padding:32px 28px;box-shadow:0 2px 16px rgba(0,0,0,.15);}
+    .hdr{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:16px;margin-bottom:24px;}
+    .emit h1{font-size:22px;margin:0 0 4px;} .emit p,.dinfo p{margin:1px 0;color:#555;font-size:11px;}
+    .dinfo{text-align:right;} .tipo{font-size:18px;font-weight:700;text-transform:uppercase;margin-bottom:6px;}
+    .tipo.fattura{color:#1a3aff;} .tipo.preventivo{color:#d97706;}
+    .parties{display:flex;gap:20px;margin-bottom:20px;}
+    .party{flex:1;background:#f8f8f8;border-radius:6px;padding:12px;}
+    .party h3{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#888;margin:0 0 6px;}
+    .party p{margin:2px 0;font-size:11px;} .pname{font-size:13px;font-weight:700;}
+    .ogg{margin-bottom:16px;font-size:13px;font-weight:600;color:#333;}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+    th{background:#111;color:#fff;padding:7px 10px;font-size:11px;text-align:left;}
+    th:last-child,td:last-child{text-align:right;}
+    td{padding:7px 10px;font-size:12px;border-bottom:1px solid #eee;}
+    tr:nth-child(even) td{background:#fafafa;}
+    .tots{float:right;width:240px;} .tots table{margin:0;} .tots td{padding:5px 8px;border:none;font-size:12px;}
+    .tot-row td{font-size:14px;font-weight:700;border-top:2px solid #111;}
+    .clr{clear:both;} .note{margin-top:32px;padding-top:12px;border-top:1px solid #ddd;font-size:11px;color:#666;}
+    .ftr{margin-top:40px;text-align:center;font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:10px;}
+    .print-btn{position:fixed;bottom:24px;right:24px;background:#1a3aff;color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(26,58,255,.4);}
+    @media print{body{background:#fff;padding:0;} .print-btn{display:none;} .wrap{box-shadow:none;}}
+  </style></head><body>
+  <div class="wrap">
+    <div class="hdr">
+      <div class="emit">
+        <h1>${d['emit-nome']||'—'}</h1>
+        <p>${d['emit-piva']||''}</p><p>${d['emit-via']||''}</p><p>${d['emit-contatto']||''}</p>
+      </div>
+      <div class="dinfo">
+        <div class="tipo ${d.tipo}">${tipo}</div>
+        <p><strong>N°</strong> ${d.num||'—'}</p>
+        <p><strong>Data:</strong> ${d.data||'—'}</p>
+        ${d.tipo==='fattura'&&d.scadenza?`<p>Scad.: <strong>${d.scadenza}</strong></p>`:''}
+        ${d.tipo==='preventivo'&&d.validita?`<p>Validità: <strong>${d.validita}</strong></p>`:''}
+      </div>
+    </div>
+    <div class="parties">
+      <div class="party"><h3>Emittente</h3><p class="pname">${d['emit-nome']||'—'}</p><p>${d['emit-piva']||''}</p><p>${d['emit-via']||''}</p></div>
+      <div class="party"><h3>Destinatario</h3><p class="pname">${d['dest-nome']||'—'}</p>
+        ${d.tipo==='fattura'?`${d['dest-piva']?`<p><strong>P.IVA:</strong> ${d['dest-piva']}</p>`:''}${d['dest-cf']?`<p><strong>C.F.:</strong> ${d['dest-cf']}</p>`:''}${d['dest-sdi']?`<p><strong>SDI:</strong> ${d['dest-sdi']}</p>`:''}${d['dest-pec']?`<p><strong>PEC:</strong> ${d['dest-pec']}</p>`:''}` : ''}
+        <p>${d['dest-via']||''}</p><p>${d['dest-email']||''}</p>
+      </div>
+    </div>
+    ${d.oggetto?`<div class="ogg">Oggetto: ${d.oggetto}</div>`:''}
+    <table>
+      <thead><tr><th>#</th><th>Descrizione</th><th style="text-align:right">Qtà</th><th style="text-align:right">Prezzo unit.</th><th style="text-align:right">Totale</th></tr></thead>
+      <tbody>${(d.righe||[]).map((r,i)=>`<tr><td>${i+1}</td><td>${r.desc||'—'}</td><td style="text-align:right">${r.qty}</td><td style="text-align:right">€ ${parseFloat(r.price||0).toFixed(2)}</td><td style="text-align:right">€ ${parseFloat(r.tot||0).toFixed(2)}</td></tr>`).join('')}</tbody>
+    </table>
+    <div class="tots"><table>
+      <tr><td>Imponibile:</td><td style="text-align:right">€ ${parseFloat(d.imponibile||0).toFixed(2)}</td></tr>
+      <tr><td>IVA 22%:</td><td style="text-align:right">€ ${parseFloat(d.iva||0).toFixed(2)}</td></tr>
+      <tr class="tot-row"><td><strong>Totale:</strong></td><td style="text-align:right"><strong>€ ${parseFloat(d.totale||0).toFixed(2)}</strong></td></tr>
+    </table></div>
+    <div class="clr"></div>
+    ${d.note?`<div class="note"><strong>Note:</strong><br>${d.note}</div>`:''}
+  </div>
+  <button class="print-btn" onclick="window.print()">🖨 Stampa / Salva PDF</button>
+  </body></html>`;
+}
+
+function printDoc(d) {
+  const w = window.open('', '_blank', 'width=820,height=960');
+  if(!w) { showToast('Abilita i popup per generare il PDF'); return; }
+  w.document.write(_buildStandaloneHTML(d));
+  w.document.close();
+}
+function renderDocsGenerati(c) {
+  const el = document.getElementById('lista-docs-generati');
+  if(!el) return;
+  if(!c.docsGenerati || c.docsGenerati.length===0) {
+    el.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:16px 0;">Nessun documento generato</p>';
+    return;
+  }
+  el.innerHTML = c.docsGenerati.map((d,i) => `
+    <div class="doc-gen-item">
+      <div class="doc-gen-icon ${d.tipo}">${d.tipo==='fattura'?'FAT':'PRV'}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:var(--text1);">${d.tipo==='fattura'?'Fattura':'Preventivo'} N° ${d.num}</div>
+        <div style="font-size:12px;color:var(--text3);">${d.data} · <strong style="color:var(--green)">€ ${(d.totale||0).toFixed(2).replace('.',',')}</strong>${d['dest-nome']?' · '+d['dest-nome']:''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;">
+        <button class="btn-download" onclick="previewDocPDF(${i})" title="Stampa PDF">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Stampa
+        </button>
+        <button class="btn-download" onclick="openDocEditor(${i}, ${c.id})" title="Modifica" style="color:var(--accent2);border-color:var(--accent);">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+          Modifica
+        </button>
+        <button class="btn-danger-sm" onclick="eliminaDocGenerato(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function eliminaDocGenerato(i) {
+  const c = getCliente(currentId);
+  c.docsGenerati.splice(i,1);
+  // Rimuovi anche il file HTML corrispondente dai documenti
+  if(c.documenti) {
+    const label = (c.docsGenerati[i] ? (c.docsGenerati[i].tipo==='fattura'?'Fattura':'Preventivo')+'_'+(c.docsGenerati[i].num||'doc').replace(/[\/\\:]/g,'-')+'.html' : null);
+    if(label) c.documenti = c.documenti.filter(d => d.name !== label);
+  }
+  saveDB(); renderDocsGenerati(c); renderDocs(c);
+}
+
+// ============================================================
+// BACKUP & RIPRISTINO JSON
+// ============================================================
+function openBackupPanel() {
+  // Aggiorna info export
+  const n = db.clienti.length;
+  const fatture = db.clienti.reduce((s,c) => s + (c.fatture||[]).length, 0);
+  const interventi = db.clienti.reduce((s,c) => s + (c.interventi||[]).length, 0);
+  document.getElementById('export-info').textContent =
+    n + ' client' + (n===1?'e':'i') + ' · ' + fatture + ' fatture · ' + interventi + ' interventi';
+  document.getElementById('backup-panel').classList.add('open');
+}
+
+function buildExportData(includeFiles) {
+  const data = {
+    _version: 1,
+    _exportDate: new Date().toISOString(),
+    _app: 'ClientiPRO',
+    nextId: db.nextId,
+    clienti: db.clienti.map(c => {
+      const out = Object.assign({}, c);
+      if (!includeFiles) {
+        // Mantieni solo i metadati testuali degli allegati, scarta i blob
+        if (out.uplFiscali) out.uplFiscali = out.uplFiscali.map(d => ({
+          name: d.name, ext: d.ext, size: d.size, note: d.note, date: d.date
+          // data (base64) escluso
+        }));
+        if (out.uplFoto) out.uplFoto = out.uplFoto.map(d => ({
+          name: d.name, note: d.note, date: d.date
+        }));
+        if (out.media) out.media = out.media.map(d => ({
+          caption: d.caption, date: d.date
+        }));
+        if (out.documenti) out.documenti = out.documenti.map(d => ({
+          name: d.name, ext: d.ext, size: d.size, date: d.date
+        }));
+      }
+      return out;
+    })
+  };
+  return data;
+}
+
+function esportaDati() {
+  const data = buildExportData(false);
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const ts = new Date().toISOString().slice(0,10);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'clientipro_backup_' + ts + '.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Backup dati scaricato ✓');
+}
+
+function esportaCompleto() {
+  const data = buildExportData(true);
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const ts = new Date().toISOString().slice(0,10);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'clientipro_completo_' + ts + '.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Backup completo scaricato ✓');
+}
+
+function importaDati(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.clienti || !Array.isArray(imported.clienti)) {
+        document.getElementById('import-info').textContent = '✕ File non valido: manca il campo clienti.';
+        return;
+      }
+      // Merge: aggiunge clienti importati che non esistono già (per id)
+      const existingIds = new Set(db.clienti.map(c => c.id));
+      let aggiunti = 0, aggiornati = 0;
+      imported.clienti.forEach(ic => {
+        if (existingIds.has(ic.id)) {
+          // Aggiorna solo i campi testuali, preserva i file locali esistenti
+          const local = db.clienti.find(c => c.id === ic.id);
+          const keepFields = ['media','documenti','uplFiscali','uplFoto'];
+          keepFields.forEach(f => { if (local[f] && local[f].length > 0) ic[f] = local[f]; });
+          Object.assign(local, ic);
+          aggiornati++;
+        } else {
+          db.clienti.push(ic);
+          aggiunti++;
+        }
+      });
+      // Aggiorna nextId se il file importato è più avanti
+      if (imported.nextId && imported.nextId > db.nextId) db.nextId = imported.nextId;
+      saveDB();
+      renderLista();
+      const msg = aggiunti + ' aggiunt' + (aggiunti===1?'o':'i') + ', ' + aggiornati + ' aggiornat' + (aggiornati===1?'o':'i');
+      document.getElementById('import-info').textContent = '✓ Importazione completata: ' + msg;
+      showToast('Importazione completata ✓');
+    } catch(err) {
+      document.getElementById('import-info').textContent = '✕ Errore nella lettura del file JSON.';
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// Close modal on backdrop click
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if(e.target === this) closeModal();
+});
+document.getElementById('confirm-box').addEventListener('click', function(e) {
+  if(e.target === this) this.classList.remove('open');
+});
+
+// ============================================================
+// INIT
+// ============================================================
+loadDB();
+renderLista();
+</script>
+</body>
+</html>
