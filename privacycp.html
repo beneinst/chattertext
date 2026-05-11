@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — ClientiPRO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --bg1: #13161e;
+    --bg2: #1a1e2a;
+    --border: #2e3448;
+    --text1: #e8eaf0;
+    --text2: #9aa0b8;
+    --text3: #636a85;
+    --accent: #5b7cff;
+    --accent2: #7c94ff;
+    --green: #3ecf8e;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text1);
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+
+  header {
+    background: rgba(13,15,20,0.95);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    backdrop-filter: blur(12px);
+    z-index: 10;
+  }
+
+  .logo {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  .logo span { color: var(--accent2); }
+
+  .badge {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text3);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  main {
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: -0.4px;
+  }
+
+  .page-subtitle {
+    color: var(--text3);
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+
+  /* Highlight box */
+  .highlight-box {
+    background: rgba(62,207,142,0.08);
+    border: 1px solid rgba(62,207,142,0.25);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin-bottom: 36px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .highlight-box svg { flex-shrink: 0; margin-top: 2px; }
+  .highlight-box p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+  .highlight-box strong { color: var(--green); }
+
+  /* Sections */
+  section {
+    margin-bottom: 36px;
+  }
+
+  h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text1);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h2 .num {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text3);
+    font-size: 11px;
+    font-weight: 600;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 10px;
+  }
+
+  ul {
+    list-style: none;
+    margin: 8px 0 10px;
+    padding: 0;
+  }
+
+  ul li {
+    font-size: 14px;
+    color: var(--text2);
+    padding: 5px 0 5px 20px;
+    position: relative;
+  }
+
+  ul li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 13px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.6;
+  }
+
+  .info-card {
+    background: var(--bg1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 10px;
+  }
+  .info-card p { margin: 0; }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .tag {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .tag.no {
+    border-color: rgba(239,68,68,0.3);
+    color: #f87171;
+    background: rgba(239,68,68,0.06);
+  }
+  .tag.no::before { content: '✕'; font-size: 10px; }
+  .tag.yes {
+    border-color: rgba(62,207,142,0.3);
+    color: var(--green);
+    background: rgba(62,207,142,0.06);
+  }
+  .tag.yes::before { content: '✓'; font-size: 10px; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px;
+    text-align: center;
+  }
+  footer p { font-size: 12px; color: var(--text3); margin: 0; }
+  footer p + p { margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Clienti<span>PRO</span></div>
+  <div class="badge">Privacy Policy</div>
+</header>
+
+<main>
+  <div class="page-title">Informativa sulla Privacy</div>
+  <div class="page-subtitle">Ultimo aggiornamento: Maggio 2025 &nbsp;·&nbsp; Versione 1.0</div>
+
+  <!-- BOX PRINCIPALE -->
+  <div class="highlight-box">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    <p>
+      <strong>ClientiPRO non raccoglie, non trasmette e non condivide alcun dato personale.</strong>
+      Tutti i dati inseriti nell'app vengono salvati esclusivamente sul dispositivo dell'utente
+      e non vengono mai inviati a server esterni, terze parti o servizi di analisi.
+    </p>
+  </div>
+
+  <!-- 1. TITOLARE -->
+  <section>
+    <h2><span class="num">1</span> Titolare del trattamento</h2>
+    <p>
+      ClientiPRO è un'applicazione sviluppata per uso privato e professionale come strumento
+      di gestione clienti. Il titolare del trattamento coincide con l'utente stesso, che
+      opera in piena autonomia sui propri dati, interamente archiviati sul proprio dispositivo.
+    </p>
+  </section>
+
+  <!-- 2. DATI RACCOLTI -->
+  <section>
+    <h2><span class="num">2</span> Dati trattati dall'applicazione</h2>
+    <p>
+      L'utente può inserire nell'app informazioni relative ai propri clienti, tra cui:
+    </p>
+    <ul>
+      <li>Dati anagrafici e di contatto (nome, cognome, indirizzo, telefono, email)</li>
+      <li>Dati fiscali (Codice Fiscale, Partita IVA, SDI, IBAN)</li>
+      <li>Documenti commerciali (fatture e preventivi generati dall'app)</li>
+      <li>Appunti, note e descrizioni di interventi tecnici</li>
+      <li>Immagini e file PDF caricati dall'utente come riferimento</li>
+    </ul>
+    <p>
+      Tutti questi dati sono trattati <strong>esclusivamente in locale</strong>, all'interno
+      della memoria del dispositivo su cui è installata l'app (tramite WebView / localStorage).
+      Nessuno di questi dati viene trasmesso all'esterno in alcuna forma.
+    </p>
+  </section>
+
+  <!-- 3. COSA NON FACCIAMO -->
+  <section>
+    <h2><span class="num">3</span> Cosa l'app non fa</h2>
+    <div class="tag-row">
+      <span class="tag no">Raccolta dati personali</span>
+      <span class="tag no">Trasmissione a server</span>
+      <span class="tag no">Pubblicità</span>
+      <span class="tag no">Tracciamento utente</span>
+      <span class="tag no">Analytics / statistiche</span>
+      <span class="tag no">Servizi di terze parti</span>
+      <span class="tag no">Cookie di profilazione</span>
+      <span class="tag no">Accesso a contatti del telefono</span>
+      <span class="tag no">Accesso alla fotocamera</span>
+      <span class="tag no">Connessione a internet</span>
+    </div>
+    <div class="tag-row" style="margin-top:14px;">
+      <span class="tag yes">Dati solo sul dispositivo</span>
+      <span class="tag yes">Nessun account richiesto</span>
+      <span class="tag yes">Funziona offline</span>
+      <span class="tag yes">Export backup locale (JSON)</span>
+    </div>
+  </section>
+
+  <!-- 4. ARCHIVIAZIONE -->
+  <section>
+    <h2><span class="num">4</span> Archiviazione dei dati</h2>
+    <p>
+      I dati inseriti dall'utente vengono salvati mediante la tecnologia
+      <strong>localStorage</strong> del browser WebView integrato nell'applicazione Android.
+      Questa memoria è:
+    </p>
+    <ul>
+      <li>Locale al dispositivo e all'applicazione</li>
+      <li>Accessibile solo da ClientiPRO, non da altre app</li>
+      <li>Eliminata automaticamente in caso di disinstallazione dell'app</li>
+      <li>Non sincronizzata con nessun servizio cloud o account online</li>
+    </ul>
+    <p>
+      L'utente può esportare i propri dati in qualsiasi momento tramite la funzione
+      di backup integrata (formato JSON), e reimportarli su un altro dispositivo.
+    </p>
+  </section>
+
+  <!-- 5. PERMESSI -->
+  <section>
+    <h2><span class="num">5</span> Permessi dell'applicazione</h2>
+    <p>
+      L'app richiede il minor numero possibile di permessi di sistema. In particolare:
+    </p>
+    <div class="info-card">
+      <p>
+        L'unico permesso che potrebbe essere richiesto è l'accesso alla
+        <strong>memoria del dispositivo</strong>, limitatamente alla funzione di
+        upload di immagini e PDF da parte dell'utente e al salvataggio del file
+        di backup. Tale accesso è sempre soggetto all'approvazione esplicita
+        dell'utente e non viene utilizzato per nessun altro scopo.
+      </p>
+    </div>
+  </section>
+
+  <!-- 6. TERZE PARTI -->
+  <section>
+    <h2><span class="num">6</span> Terze parti e servizi esterni</h2>
+    <p>
+      ClientiPRO non integra SDK di terze parti, librerie di analisi, sistemi
+      pubblicitari, reti di tracciamento o qualsiasi altro servizio esterno.
+      L'applicazione non effettua chiamate di rete verso server di proprietà
+      dello sviluppatore né verso servizi di terze parti.
+    </p>
+  </section>
+
+  <!-- 7. MINORI -->
+  <section>
+    <h2><span class="num">7</span> Minori</h2>
+    <p>
+      ClientiPRO è un'applicazione destinata esclusivamente a uso professionale
+      da parte di adulti. L'app non raccoglie consapevolmente dati relativi a
+      persone di età inferiore ai 18 anni.
+    </p>
+  </section>
+
+  <!-- 8. DIRITTI -->
+  <section>
+    <h2><span class="num">8</span> Diritti dell'utente</h2>
+    <p>
+      Poiché tutti i dati risiedono esclusivamente sul dispositivo dell'utente,
+      quest'ultimo ha il controllo totale su di essi in qualsiasi momento:
+    </p>
+    <ul>
+      <li>Può visualizzare, modificare o eliminare qualsiasi dato all'interno dell'app</li>
+      <li>Può esportare una copia completa dei propri dati tramite la funzione di backup</li>
+      <li>Può eliminare tutti i dati disinstallando l'applicazione</li>
+    </ul>
+    <p>
+      Non esiste alcun trattamento di dati da parte dello sviluppatore su cui esercitare
+      diritti di accesso, rettifica o cancellazione, in quanto nessun dato
+      viene mai ricevuto o conservato al di fuori del dispositivo.
+    </p>
+  </section>
+
+  <!-- 9. MODIFICHE -->
+  <section>
+    <h2><span class="num">9</span> Modifiche alla presente informativa</h2>
+    <p>
+      Eventuali aggiornamenti alla presente informativa sulla privacy saranno pubblicati
+      su questa pagina. In caso di modifiche sostanziali, la data di "Ultimo aggiornamento"
+      verrà aggiornata di conseguenza. L'uso continuato dell'applicazione dopo tali
+      modifiche costituisce accettazione della nuova versione dell'informativa.
+    </p>
+  </section>
+
+  <!-- 10. CONTATTI -->
+  <section>
+    <h2><span class="num">10</span> Contatti</h2>
+    <p>
+      Per qualsiasi domanda relativa alla presente informativa sulla privacy o al
+      trattamento dei dati all'interno dell'applicazione ClientiPRO, è possibile
+      contattare lo sviluppatore tramite la pagina dell'app su Google Play Store.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <p>ClientiPRO &nbsp;·&nbsp; Privacy Policy</p>
+  <p>Questa applicazione non raccoglie né trasmette dati personali.</p>
+</footer>
+
+</body>
+</html>
