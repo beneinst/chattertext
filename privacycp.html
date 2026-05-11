@@ -210,7 +210,7 @@
 
 <main>
   <div class="page-title">Informativa sulla Privacy</div>
-  <div class="page-subtitle">Ultimo aggiornamento: Maggio 2025 &nbsp;·&nbsp; Versione 1.0</div>
+  <div class="page-subtitle">Ultimo aggiornamento: Maggio 2026 &nbsp;·&nbsp; Versione 1.1</div>
 
   <!-- BOX PRINCIPALE -->
   <div class="highlight-box">
@@ -265,8 +265,8 @@
       <span class="tag no">Analytics / statistiche</span>
       <span class="tag no">Servizi di terze parti</span>
       <span class="tag no">Cookie di profilazione</span>
-      <span class="tag no">Accesso a contatti del telefono</span>
-      <span class="tag no">Accesso alla fotocamera</span>
+      <span class="tag no">Accesso ai contatti del telefono</span>
+      <span class="tag no">Utilizzo attivo della fotocamera</span>
       <span class="tag no">Connessione a internet</span>
     </div>
     <div class="tag-row" style="margin-top:14px;">
@@ -301,17 +301,37 @@
   <section>
     <h2><span class="num">5</span> Permessi dell'applicazione</h2>
     <p>
-      L'app richiede il minor numero possibile di permessi di sistema. In particolare:
+      L'applicazione dichiara i seguenti permessi di sistema Android:
     </p>
-    <div class="info-card">
+
+    <div class="info-card" style="margin-bottom:10px;border-color:rgba(91,124,255,0.3);">
+      <p style="margin-bottom:6px;"><strong style="color:var(--accent2);">android.permission.CAMERA</strong></p>
       <p>
-        L'unico permesso che potrebbe essere richiesto è l'accesso alla
-        <strong>memoria del dispositivo</strong>, limitatamente alla funzione di
-        upload di immagini e PDF da parte dell'utente e al salvataggio del file
-        di backup. Tale accesso è sempre soggetto all'approvazione esplicita
+        Il permesso alla fotocamera è tecnicamente dichiarato nell'applicazione in quanto
+        il componente WebView di Android può richiederne la presenza per la gestione
+        di input da file e media. <strong>Tuttavia, ClientiPRO non attiva, non utilizza
+        e non accede mai alla fotocamera del dispositivo.</strong> Nessuna foto viene
+        scattata dall'app, nessuna immagine viene acquisita tramite fotocamera e nessun
+        dato proveniente dalla fotocamera viene trattato o trasmesso. L'utente
+        può caricare immagini esclusivamente dalla propria galleria/file manager,
+        selezionandole manualmente.
+      </p>
+    </div>
+
+    <div class="info-card">
+      <p style="margin-bottom:6px;"><strong style="color:var(--text2);">Accesso alla memoria (READ / WRITE EXTERNAL STORAGE)</strong></p>
+      <p>
+        Potrebbe essere richiesto l'accesso alla memoria del dispositivo, limitatamente
+        alla funzione di upload di immagini e PDF selezionati dall'utente e al salvataggio
+        del file di backup. Tale accesso è sempre soggetto all'approvazione esplicita
         dell'utente e non viene utilizzato per nessun altro scopo.
       </p>
     </div>
+
+    <p style="margin-top:12px;">
+      Nessuno dei permessi sopra elencati viene utilizzato per raccogliere, trasmettere
+      o condividere dati personali con lo sviluppatore o con terze parti.
+    </p>
   </section>
 
   <!-- 6. TERZE PARTI -->
