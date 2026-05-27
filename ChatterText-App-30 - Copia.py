@@ -1,37 +1,45 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ChatterText - App Desktop Python v3.0
+ChatterText - App Desktop Python v2.9
 Posizionare nella root di Chatterbox ed eseguire con: python chattertext_app.py
 
-NOVITA v3.0 (Sistema Pause Naturali per Chatterbox):
-  - PAUSE NATURALI (nuovo sistema "Natural Pause Mode"):
-    I tag pausa vengono ora convertiti in punteggiatura reale + newline
-    prima di essere passati a model.generate(). Questo sfrutta il modo
-    in cui Chatterbox internamente gestisce le respirazioni naturali:
-      [p1]  ->  virgola + \\n       (respiro breve, frase continua)
-      [p2]  ->  punto   + \\n       (fine frase naturale)
-      [p3]  ->  punto   + \\n\\n    (riflessione/pausa media)
-      [b]   ->  punto   + \\n\\n    (cambio idea, nuovo paragrafo)
-      [bd]  ->  punto   + \\n\\n\\n  (climax/suspense)
-      [cap] ->  punto   + \\n\\n\\n  (reset/capoverso)
-      [verso] ->  virgola + \\n     (fine verso poetico)
-      [cesura] -> virgola + \\n     (pausa interna verso)
-      [strofa] -> punto   + \\n\\n  (fine strofa)
-      [metro] / [enjambement] -> spazio (quasi nulli, solo ritmo)
-    Il sistema mantiene ANCHE le pause audio in secondi come prima
-    (i due approcci si sommano per la massima naturalezza).
-  - OPZIONE UI "Pause Naturali": checkbox per attivare/disattivare
-    la conversione tag->testo-naturale (default: attivo)
-  - GUIDA AGGIORNATA con spiegazione del nuovo sistema
+NOVITA v2.9 (normalize_text avanzata + accapo come pause):
+  - ACCAPO COME PAUSE (nuovo comportamento in Analizza e Processa):
+    * 1 accapo  (Enter)    -> [p1] pausa breve  ~0.18s  (pausa naturale nel discorso)
+    * 2 accapo  (Invio x2) -> [p2] pausa media  ~0.40s  (fine frase / separatore)
+    * 3+ accapo (Invio x3+)-> [b]  pausa lunga  ~1.00s  (cambio idea / paragrafo)
+    Permette di strutturare le pause semplicemente premendo Invio durante la scrittura.
+    I tag [inizio]/[fine] vengono rispettati (non modificati).
+  - NORMALIZE_TEXT v2.9 - nuove conversioni automatiche:
+    * Simboli valuta:  € -> euro, $ -> dollari, £ -> sterline
+    * Simboli comuni:  % -> percento, & -> e, @ -> at, # -> numero
+    * Simboli matematici: × -> per, ÷ -> diviso, ± -> piu o meno
+    * Simbolo gradi:   37° -> 37 gradi, ma solo dopo numero
+    * Frazioni unicode: ½ -> mezzo, ¼ -> un quarto, ¾ -> tre quarti
+    * Ordinali numerici: 1° 2° 3° -> primo secondo terzo (italiano)
+    * Abbreviazioni comuni IT: dott. sig. prof. ecc. es. vs. nr. art.
+    * Punto e virgola:  ; -> , (Chatterbox spesso lo ignora o fa pausa strana)
+    * Parentesi (testo) -> virgola testo virgola (rende il contenuto leggibile)
+    * Trattino corto tra parole non-dialogo -> virgola (pausa naturale)
+    * Doppio trattino -- -> virgola
+    * Asterischi *testo* -> testo (rimuove markdown enfasi)
+    * Underscore _testo_ -> testo (rimuove markdown enfasi)
+    * Barra / tra parole -> o (es. "e/o" -> "e o")
+    * Numero + spazio + unita comuni: "10 km" gestito correttamente
+  - GUIDA AGGIORNATA: tabella pulizia espansa con tutti i nuovi caratteri
 
-NOVITA v2.9 (integrate):
-  - Accapo come pause (1/2/3+ Enter -> [p1]/[p2]/[b])
-  - normalize_text avanzata: valuta, simboli, abbreviazioni IT, ordinali
-  - 4 stili di lettura: Narrativa/Poesia/Teatro/Audiolibro lungo
-  - Tag poetici: [verso] [strofa] [metro] [enjambement] [cesura]
-  - 7 voci con fallback automatico su V1
-  - Post-processing audio: noise gate, RMS normalize, trim, declick
+NOVITA v2.8 (UI):
+  - Tasto Stop sempre visibile in sezione Parametri
+  - Input text height 14, output log height 20
+  - Volume suono fine generazione -50%
+
+NOVITA v2.7 (modalita poetica + stili lettura):
+  - STILI DI LETTURA: Narrativa / Poesia / Teatro / Audiolibro lungo
+  - TAG POETICI: [verso] [strofa] [metro] [enjambement] [cesura]
+
+NOVITA v2.6:
+  - Aggiunta Voce 6 [v6] / Voce 7 [v7] con fallback automatico su V1
 """
 import os
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
@@ -56,7 +64,6 @@ C = {
     "style_poesia": "#9b59b6",
     "style_teatro": "#e74c3c",
     "style_lungo":  "#00b894",
-    "natural":  "#00cec9",   # colore per il nuovo sistema pause naturali
 }
 EMO_C = {
     "calmo":"#27ae60","appassionato":"#e67e22","arrabbiato":"#c0392b",
@@ -163,110 +170,6 @@ PAUSE_FLAT = {k: v[0] for k, v in PAUSE_MAP.items()}
 ALL_PAUSE_NAMES = ["p1","p2","p3","b","bd","cap","pausa","pausa_lunga","silenzio",
                    "verso","strofa","metro","enjambement","cesura"]
 
-# =========================================================
-# TABELLA PAUSE NATURALI v3.0
-# =========================================================
-# Ogni tag pausa -> (punteggiatura_da_aggiungere, numero_newline)
-# Questa tabella converte i tag in testo reale che Chatterbox
-# interpreta come respirazioni naturali durante la sintesi.
-PAUSE_TO_NATURAL = {
-    # Quasi nulli - solo ritmo metrico, nessun newline
-    "[metro]":       ("",  0),
-    "[enjambement]": ("",  0),
-    # Pause brevi - virgola + 1 newline (respiro, flusso continuo)
-    "[p1]":          (",", 1),
-    "[verso]":       (",", 1),
-    "[cesura]":      (",", 1),
-    # Pause medie - punto + 1 newline (fine frase completa)
-    "[p2]":          (".", 1),
-    "[pausa]":       (".", 1),
-    # Pause medio-lunghe - punto + 2 newline (riflessione/cambio idea)
-    "[p3]":          (".", 2),
-    "[b]":           (".", 2),
-    "[strofa]":      (".", 2),
-    "[pausa_lunga]": (".", 2),
-    # Pause lunghe/drammatiche - punto + 3 newline (climax/capoverso)
-    "[bd]":          (".", 3),
-    "[cap]":         (".", 3),
-    "[silenzio]":    (".", 3),
-}
-
-# Ordine di processing: più specifici/lunghi PRIMA per evitare conflitti
-NATURAL_PAUSE_ORDER = [
-    "[silenzio]", "[cap]", "[bd]",
-    "[pausa_lunga]", "[strofa]", "[b]",
-    "[p3]", "[pausa]", "[p2]",
-    "[cesura]", "[verso]", "[p1]",
-    "[enjambement]", "[metro]",
-]
-
-
-def pauses_to_natural_text(text):
-    """
-    v3.0 - Converte i tag pausa ChatterText in punteggiatura naturale + newline reali.
-
-    Chatterbox TTS usa i newline come guide respiratorie interne: il modello
-    interpreta ogni riga come una unità di respiro. Usando questa conversione
-    PRIMA di chiamare model.generate(), le pause diventano organiche e naturali
-    invece di essere solo silenzio digitale aggiunto in post.
-
-    Strategia di conversione:
-      [p1]/[verso]/[cesura]    -> virgola + \\n      (respiro breve)
-      [p2]/[pausa]             -> punto   + \\n      (fine frase)
-      [p3]/[b]/[strofa]        -> punto   + \\n\\n   (nuovo paragrafo)
-      [bd]/[cap]/[silenzio]    -> punto   + \\n\\n\\n (pausa drammatica)
-      [metro]/[enjambement]    -> spazio              (quasi nullo)
-
-    La punteggiatura NON viene duplicata se già presente nel testo.
-    Questo sistema si SOMMA alle pause audio in secondi (non le sostituisce):
-    ogni pausa beneficia sia della respirazione naturale del modello
-    sia del silenzio audio aggiunto in post-processing.
-    """
-    ORDER = NATURAL_PAUSE_ORDER
-
-    # Prima passata: sostituisci i tag con placeholder numerati
-    # per poter poi risolvere il contesto correttamente
-    for tag in ORDER:
-        if tag not in PAUSE_TO_NATURAL:
-            continue
-        punct, nlcount = PAUSE_TO_NATURAL[tag]
-        pattern = re.compile(re.escape(tag), re.IGNORECASE)
-        placeholder = "__PNLT__{}__NL{}__".format(punct.replace(".", "DOT").replace(",", "COMMA"), nlcount)
-        text = pattern.sub(placeholder, text)
-
-    # Seconda passata: risolvi i placeholder con context check
-    def resolve(m):
-        raw_punct = m.group(1).replace("DOT", ".").replace("COMMA", ",")
-        nlcount_r = int(m.group(2))
-        nl = "\n" * nlcount_r
-
-        # Guarda il testo prima di questo placeholder (già parzialmente risolto)
-        pos = m.start()
-        before = text[:pos].rstrip()
-
-        # Non duplicare punteggiatura se già presente
-        if raw_punct and before and before[-1] in '.,!?:;':
-            return nl if nl else " "
-        else:
-            if raw_punct:
-                return raw_punct + nl
-            else:
-                return nl if nl else " "
-
-    text = re.sub(r'__PNLT__([\w]*)__NL(\d)__', resolve, text)
-
-    # Pulizie finali
-    text = re.sub(r'\n{4,}', '\n\n\n', text)           # max 3 newline consecutivi
-    text = re.sub(r'[ \t]+\n', '\n', text)             # no spazi prima di newline
-    text = re.sub(r'\n[ \t]+', '\n', text)             # no spazi dopo newline
-    text = re.sub(r'([.,!?])\s*([.,])', r'\1', text)   # no punteggiatura doppia
-    text = re.sub(r'[ \t]{2,}', ' ', text)             # spazi multipli -> uno
-    # Virgola/punto orfani con spazio prima: "parola ,\n" -> "parola,\n"
-    text = re.sub(r' +([,.])\n', r'\1\n', text)
-    text = re.sub(r' +([,.])\s*$', r'\1', text)
-    return text.strip()
-
-
 EMPH_PRESETS = {
     "e1": {"exaggeration_delta": +0.10, "cfg_weight_delta": -0.05},
     "e2": {"exaggeration_delta": +0.25, "cfg_weight_delta": -0.12},
@@ -327,59 +230,107 @@ def _protected():
 def normalize_text(text):
     """
     Pulizia testo avanzata v2.9 per Chatterbox TTS.
-    (invariata dalla v2.9 - vedi commenti originali)
+
+    ACCAPO COME PAUSE (gestito PRIMA di questa funzione in process()):
+      1 accapo  -> [p1]  pausa breve  ~0.18s
+      2 accapo  -> [p2]  pausa media  ~0.40s
+      3+ accapo -> [b]   pausa lunga  ~1.00s
+
+    Ordine operazioni interne:
+      1.  Protezione tag ChatterText
+      2.  Virgolette tipografiche -> standard
+      3.  Apostrofi speciali -> standard
+      4.  Trattini em/en -> virgola (dialogo: trattino normale)
+      5.  Trattino corto e doppio trattino -> virgola
+      6.  Trattino di sillabazione a fine riga -> ricongiunge parola
+      7.  Tre puntini / ellipsis -> punto singolo
+      8.  Simboli valuta: € $ £
+      9.  Simboli comuni: % & @ #
+      10. Simboli matematici: × ÷ ± e frazioni ½ ¼ ¾
+      11. Gradi °: dopo numero -> "gradi", standalone -> rimosso
+      12. Ordinali numerici italiani: 1° 2° 3° ... -> primo secondo terzo
+      13. Abbreviazioni italiane comuni
+      14. Parentesi -> virgole
+      15. Punto e virgola -> virgola
+      16. Markdown *testo* _testo_ -> testo
+      17. Barra / tra parole -> o
+      18. Apostrofi + maiuscole dopo articoli
+      19. Parole ALLCAPS -> Prima lettera maiuscola
+      20. Accenti maiuscoli -> minuscoli (italiano)
+      21. Punteggiatura multipla -> singola
+      22. Pulizia caratteri non TTS-safe
+      23. Normalizzazione spazi finali
+      24. Ripristino tag protetti
     """
     tm = {}; idx = [0]; pat = _protected()
 
+    # 1. Proteggi i tag ChatterText (non toccare mai [p1] [v1_calmo] ecc.)
+    #    IMPORTANTE: il placeholder NON deve contenere underscore ne caratteri speciali
+    #    perché i passi successivi (markdown strip, pulizia caratteri) li distruggerebbero.
+    #    "ZZCHT0ZZCHT" è solo alfanumerico -> sopravvive a tutti i passi.
     def sv(m):
         ph = "ZZCHT{}ZZCHT".format(idx[0])
         tm[ph] = m.group(0); idx[0] += 1; return ph
     text = pat.sub(sv, text)
 
-    # Virgolette tipografiche -> standard ASCII
-    text = text.replace('\u201c', '"').replace('\u201d', '"')
-    text = text.replace('\u00ab', '"').replace('\u00bb', '"')
-    text = text.replace('\u201e', '"').replace('\u201a', "'")
-    # Apostrofi speciali -> apostrofo ASCII dritto  <<< PRIMA del charset filter >>>
-    # \u2019 (apostrofo curvo chiuso da Word/iOS/Mac) è il più comune:
-    # se non convertito qui, il charset filter lo rimuove -> "l'anima" diventa "lanima"
-    text = text.replace('\u2019', "'")
-    text = text.replace('\u2018', "'")
-    text = text.replace('\u02bc', "'")
-    text = text.replace('\u02b9', "'")
-    text = text.replace('\u0060', "'")
-    text = text.replace('\u00b4', "'")
-    text = re.sub(r"[\u02bc\u02b9\u0060\u00b4\u2018\u2019]", "'", text)
-    text = re.sub(r"-\s*\n\s*([a-z\u00c0-\u00f9])", r"\1", text)
-    text = re.sub(r"^\s*[\u2014\u2013]\s*", "- ", text, flags=re.MULTILINE)
-    text = re.sub(r"(?<=\w)\s*[\u2014\u2013]\s*(?=\w)", ", ", text)
-    text = re.sub(r"\s*[\u2014\u2013]\s*", ", ", text)
-    text = re.sub(r"\s*--\s*", ", ", text)
-    text = re.sub(r"(?<=\w)\s+-\s+(?=\w)", ", ", text)
-    text = text.replace('\u2026', '.')
-    text = re.sub(r"\.{2,}", '.', text)
-    text = re.sub(r"\.\s*\.\s*\.", '.', text)
-    text = re.sub(r'(\d)\s*€',  r'\1 euro',     text)
-    text = re.sub(r'€\s*(\d)',  r'\1 euro',     text)
-    text = re.sub(r'€',         'euro',          text)
-    text = re.sub(r'(\d)\s*\$', r'\1 dollari',  text)
-    text = re.sub(r'\$\s*(\d)', r'\1 dollari',  text)
+    # 2. Virgolette tipografiche -> virgolette standard ASCII
+    text = text.replace('\u201c', '"').replace('\u201d', '"')   # " "  -> "
+    text = text.replace('\u2018', "'").replace('\u2019', "'")   # ' '  -> '
+    text = text.replace('\u00ab', '"').replace('\u00bb', '"')   # « »  -> "
+    text = text.replace('\u201e', '"').replace('\u201a', "'")   # „ ‚  -> " '
+
+    # 3. Apostrofi speciali -> apostrofo standard
+    text = text.replace('\u02bc', "'").replace('\u02b9', "'")   # ʼ ʹ
+    text = text.replace('\u0060', "'").replace('\u00b4', "'")   # ` ´
+    text = re.sub(r"[\u02bc\u02b9\u0060\u00b4]", "'", text)
+
+    # 4. Trattini em/en (— –) -> virgola o trattino dialogo
+    text = re.sub(r"-\s*\n\s*([a-z\u00c0-\u00f9])", r"\1", text)  # sillabazione a fine riga
+    text = re.sub(r"^\s*[\u2014\u2013]\s*", "- ", text, flags=re.MULTILINE)  # dialogo inizio riga
+    text = re.sub(r"(?<=\w)\s*[\u2014\u2013]\s*(?=\w)", ", ", text)          # tra parole
+    text = re.sub(r"\s*[\u2014\u2013]\s*", ", ", text)                        # resto
+
+    # 5. Doppio trattino -- e trattino corto isolato tra parole -> virgola
+    text = re.sub(r"\s*--\s*", ", ", text)                                    # -- -> ,
+    text = re.sub(r"(?<=\w)\s+-\s+(?=\w)", ", ", text)                       # " - " -> ", "
+
+    # 6. Tre puntini / ellipsis unicode -> punto singolo
+    #    Chatterbox genera una micropausa glitch su "..." invece usa un punto normale.
+    text = text.replace('\u2026', '.')           # ellipsis unicode U+2026
+    text = re.sub(r"\.{2,}", '.', text)          # .. o ... o .... -> .
+    text = re.sub(r"\.\s*\.\s*\.", '.', text)    # . . . -> .
+
+    # 7. Simboli valuta -> parola leggibile
+    # Attenzione: il simbolo può precedere o seguire il numero
+    text = re.sub(r'(\d)\s*€',  r'\1 euro',     text)   # 10€   -> 10 euro
+    text = re.sub(r'€\s*(\d)',  r'\1 euro',     text)   # €10   -> 10 euro
+    text = re.sub(r'€',         'euro',          text)   # euro standalone
+    text = re.sub(r'(\d)\s*\$', r'\1 dollari',  text)   # 10$   -> 10 dollari
+    text = re.sub(r'\$\s*(\d)', r'\1 dollari',  text)   # $10   -> 10 dollari
     text = re.sub(r'\$',        'dollari',       text)
-    text = re.sub(r'(\d)\s*£',  r'\1 sterline', text)
+    text = re.sub(r'(\d)\s*£',  r'\1 sterline', text)   # 10£   -> 10 sterline
     text = re.sub(r'£\s*(\d)',  r'\1 sterline', text)
     text = re.sub(r'£',         'sterline',      text)
-    text = re.sub(r'(\d)\s*%',  r'\1 percento', text)
+
+    # 8. Simboli comuni -> parola
+    text = re.sub(r'(\d)\s*%',  r'\1 percento', text)   # 10%  -> 10 percento
     text = re.sub(r'%',         ' percento',    text)
-    text = re.sub(r'\s*&\s*',   ' e ',          text)
-    text = re.sub(r'#(\d+)',    r'numero \1',   text)
-    text = re.sub(r'#(\w+)',    r'\1',          text)
+    text = re.sub(r'\s*&\s*',   ' e ',          text)   # & -> e
+    text = re.sub(r'#(\d+)',    r'numero \1',   text)   # #5  -> numero 5
+    text = re.sub(r'#(\w+)',    r'\1',          text)   # #hashtag -> hashtag
+    # @ : in indirizzi email lascia, altrimenti "at"
     text = re.sub(r'(?<!\w)@(?!\w)', ' at ', text)
-    text = text.replace('\u00d7', ' per ')
-    text = text.replace('\u00f7', ' diviso ')
-    text = text.replace('\u00b1', ' piu o meno ')
-    text = text.replace('\u00bd', ' mezzo ')
-    text = text.replace('\u00bc', ' un quarto ')
-    text = text.replace('\u00be', ' tre quarti ')
+
+    # 9. Simboli matematici e frazioni unicode
+    text = text.replace('\u00d7', ' per ')      # × -> per
+    text = text.replace('\u00f7', ' diviso ')   # ÷ -> diviso
+    text = text.replace('\u00b1', ' piu o meno ') # ± -> piu o meno
+    text = text.replace('\u00bd', ' mezzo ')    # ½ -> mezzo
+    text = text.replace('\u00bc', ' un quarto ') # ¼ -> un quarto
+    text = text.replace('\u00be', ' tre quarti ') # ¾ -> tre quarti
+
+    # 10. Ordinali numerici italiani (PRIMA del simbolo grado generico)
+    #     1° -> primo, 2° -> secondo, ... 10° -> decimo, poi -> N-esimo
     _ordinali = {
         '1': 'primo',  '2': 'secondo', '3': 'terzo',   '4': 'quarto',
         '5': 'quinto', '6': 'sesto',   '7': 'settimo', '8': 'ottavo',
@@ -388,89 +339,151 @@ def normalize_text(text):
     def _fix_ordinale(m):
         n = m.group(1)
         return _ordinali.get(n, n + '-esimo')
+    # Pattern: numero seguito da ° con/senza spazio, non preceduto da spazio isolato
     text = re.sub(r'\b(\d{1,2})\u00b0(?!\s*[CF\d])', _fix_ordinale, text)
-    text = re.sub(r'(\d+)\s*\u00b0\s*[Cc]', r'\1 gradi', text)
-    text = re.sub(r'(\d+)\s*\u00b0\s*[Ff]', r'\1 gradi', text)
+    # 10.b Gradi di temperatura: 37°C -> 37 gradi, 37° C -> 37 gradi
+    text = re.sub(r'(\d+)\s*\u00b0\s*[Cc]', r'\1 gradi', text)   # °C
+    text = re.sub(r'(\d+)\s*\u00b0\s*[Ff]', r'\1 gradi', text)   # °F
+    # Gradi rimasti (angoli, coordinate): 45° -> 45 gradi
     text = re.sub(r'(\d+)\s*\u00b0', r'\1 gradi', text)
+    # Simbolo grado standalone (raro) -> rimosso
     text = text.replace('\u00b0', '')
+
+    # 11. Abbreviazioni italiane comuni -> forma estesa
+    #     Attenzione: sostituire PRIMA della pulizia caratteri speciali
+    #     Ordine: più specifiche prima
     abbr = [
-        (r'\bDott\.\s*ssa\b', 'dottoressa'), (r'\bDott\.', 'dottor'),
-        (r'\bdott\.\s*ssa\b', 'dottoressa'), (r'\bdott\.', 'dottor'),
-        (r'\bProf\.\s*ssa\b', 'professoressa'), (r'\bProf\.', 'professore'),
-        (r'\bprof\.\s*ssa\b', 'professoressa'), (r'\bprof\.', 'professore'),
-        (r'\bSig\.\s*ra\b', 'signora'), (r'\bSig\.', 'signor'),
-        (r'\bsig\.\s*ra\b', 'signora'), (r'\bsig\.', 'signor'),
-        (r'\bAvv\.', 'avvocato'), (r'\bavv\.', 'avvocato'),
-        (r'\bIng\.', 'ingegnere'), (r'\bing\.', 'ingegnere'),
-        (r'\bArch\.', 'architetto'), (r'\barch\.', 'architetto'),
-        (r'\bGen\.', 'generale'), (r'\bCap\.', 'capitano'),
-        (r'\bNr\.', 'numero'), (r'\bnr\.', 'numero'),
-        (r'\bN\.\s*(?=\d)', 'numero '), (r'\bn\.\s*(?=\d)', 'numero '),
-        (r'\bArt\.', 'articolo'), (r'\bart\.', 'articolo'),
-        (r'\becc\.', 'eccetera'), (r'\bEcc\.', 'eccetera'),
-        (r'\bes\.', 'per esempio'), (r'\bEs\.', 'per esempio'),
-        (r'\bvs\.', 'contro'), (r'\bVs\.', 'contro'),
-        (r'\bcf\.', 'confronta'), (r'\bCf\.', 'confronta'),
-        (r'\bp\.\s*es\.', 'per esempio'),
-        (r'\bvol\.', 'volume'), (r'\bpag\.', 'pagina'),
-        (r'\bcap\.', 'capitolo'),
-        (r'\bott\.', 'ottobre'), (r'\bgen\.', 'gennaio'),
-        (r'\bfeb\.', 'febbraio'), (r'\bmar\.', 'marzo'),
-        (r'\bapr\.', 'aprile'), (r'\bmag\.', 'maggio'),
-        (r'\bgiu\.', 'giugno'), (r'\blug\.', 'luglio'),
-        (r'\bago\.', 'agosto'), (r'\bset\.', 'settembre'),
-        (r'\bnov\.', 'novembre'), (r'\bdic\.', 'dicembre'),
-        (r'\bkm/h\b', 'chilometri orari'), (r'\bkm\b', 'chilometri'),
-        (r'\bm/s\b', 'metri al secondo'), (r'\bcm\b', 'centimetri'),
-        (r'\bmm\b', 'millimetri'), (r'\bkg\b', 'chilogrammi'),
-        (r'\bg\b(?=\s)', 'grammi'), (r'\bml\b', 'millilitri'),
-        (r'\bcal\b', 'calorie'), (r'\bkcal\b', 'kilocalorie'),
+        (r'\bDott\.\s*ssa\b', 'dottoressa'),  # Dott.ssa (prima di dott.)
+        (r'\bDott\.',         'dottor'),
+        (r'\bdott\.\s*ssa\b', 'dottoressa'),
+        (r'\bdott\.',         'dottor'),
+        (r'\bProf\.\s*ssa\b', 'professoressa'),
+        (r'\bProf\.',         'professore'),
+        (r'\bprof\.\s*ssa\b', 'professoressa'),
+        (r'\bprof\.',         'professore'),
+        (r'\bSig\.\s*ra\b',   'signora'),    # Sig.ra
+        (r'\bSig\.',          'signor'),
+        (r'\bsig\.\s*ra\b',   'signora'),
+        (r'\bsig\.',          'signor'),
+        (r'\bAvv\.',          'avvocato'),
+        (r'\bavv\.',          'avvocato'),
+        (r'\bIng\.',          'ingegnere'),
+        (r'\bing\.',          'ingegnere'),
+        (r'\bArch\.',         'architetto'),
+        (r'\barch\.',         'architetto'),
+        (r'\bGen\.',          'generale'),
+        (r'\bCap\.',          'capitano'),
+        (r'\bNr\.',           'numero'),
+        (r'\bnr\.',           'numero'),
+        (r'\bN\.\s*(?=\d)',   'numero '),    # N.5 -> numero 5
+        (r'\bn\.\s*(?=\d)',   'numero '),
+        (r'\bArt\.',          'articolo'),
+        (r'\bart\.',          'articolo'),
+        (r'\becc\.',          'eccetera'),
+        (r'\bEcc\.',          'eccetera'),
+        (r'\bes\.',           'per esempio'),
+        (r'\bEs\.',           'per esempio'),
+        (r'\bvs\.',           'contro'),
+        (r'\bVs\.',           'contro'),
+        (r'\bcf\.',           'confronta'),
+        (r'\bCf\.',           'confronta'),
+        (r'\bp\.\s*es\.',     'per esempio'),  # p.es.
+        (r'\bvol\.',          'volume'),
+        (r'\bpag\.',          'pagina'),
+        (r'\bcap\.',          'capitolo'),     # minuscolo (Cap. = capitano sopra)
+        (r'\bpag\.',          'pagina'),
+        (r'\bott\.',          'ottobre'),      # mesi abbreviati
+        (r'\bgen\.',          'gennaio'),
+        (r'\bfeb\.',          'febbraio'),
+        (r'\bmar\.',          'marzo'),
+        (r'\bapr\.',          'aprile'),
+        (r'\bmag\.',          'maggio'),
+        (r'\bgiu\.',          'giugno'),
+        (r'\blug\.',          'luglio'),
+        (r'\bago\.',          'agosto'),
+        (r'\bset\.',          'settembre'),
+        (r'\bnov\.',          'novembre'),
+        (r'\bdic\.',          'dicembre'),
+        (r'\bkm\b',           'chilometri'),
+        (r'\bkm/h\b',         'chilometri orari'),
+        (r'\bm/s\b',          'metri al secondo'),
+        (r'\bcm\b',           'centimetri'),
+        (r'\bmm\b',           'millimetri'),
+        (r'\bkg\b',           'chilogrammi'),
+        (r'\bg\b(?=\s)',       'grammi'),      # "g" isolata dopo numero
+        (r'\bml\b',           'millilitri'),
+        (r'\bcal\b',          'calorie'),
+        (r'\bkcal\b',         'kilocalorie'),
     ]
     for pattern, repl in abbr:
         text = re.sub(pattern, repl, text)
+
+    # 12. Parentesi tonde: (contenuto) -> , contenuto,
+    #     Rende il contenuto parentetico leggibile senza glitch
     def _fix_parens(m):
         inner = m.group(1).strip()
         if not inner: return ''
+        # Se il contenuto è solo numeri/simboli già convertiti: lascia
         return ', ' + inner + ','
     text = re.sub(r'\(([^)]{1,80})\)', _fix_parens, text)
-    text = re.sub(r'\[[^\]]{1,80}\]', '', text)
+    text = re.sub(r'\[[^\]]{1,80}\]', '', text)   # [note a piè di pagina] -> rimosso
+    # Rimuove parentesi rimaste non chiuse
     text = re.sub(r'[()]', '', text)
+
+    # 13. Punto e virgola -> virgola
+    #     Chatterbox tende a ignorarlo o fare una pausa anomala
     text = text.replace(';', ',')
+
+    # 14. Markdown inline: *testo* **testo** _testo_ -> testo
     text = re.sub(r'\*{1,3}([^*]+?)\*{1,3}', r'\1', text)
     text = re.sub(r'_{1,2}([^_]+?)_{1,2}', r'\1', text)
-    text = re.sub(r'`([^`]+?)`', r'\1', text)
+    text = re.sub(r'`([^`]+?)`', r'\1', text)    # `codice` -> codice
+
+    # 15. Barra / tra parole -> " o " (e/o, e/o -> e o)
     text = re.sub(r'(?<=\w)/(?=\w)', ' o ', text)
+
+    # 16. Apostrofi + maiuscole dopo articoli italiani
     for art in ["l'", "nell'", "dell'", "sull'", "all'", "dall'", "un'"]:
         pat_art = re.compile(re.escape(art) + r'([A-Z])(?!ZCHT)', re.IGNORECASE)
         text = pat_art.sub(lambda m, a=art: a + m.group(1).lower(), text)
+    # Apostrofo + maiuscola generica residua
     text = re.sub(r"'([A-Z])(?=[a-z\u00c0-\u00f9])(?!ZCHT)", lambda m: "'" + m.group(1).lower(), text)
+
+    # 17. Parole TUTTO_MAIUSCOLO (3+ lettere) -> Prima lettera maiuscola
+    #     Evita che Chatterbox deleteri lo spelling (CIA -> Cia)
     def _fix_allcaps(m):
         w = m.group(0)
-        if len(w) >= 3 and w.isupper(): return w.capitalize()
+        if len(w) >= 3 and w.isupper():
+            return w.capitalize()
         return w
     text = re.sub(r'\b[A-Z]{3,}\b', _fix_allcaps, text)
+
+    # 18. Accenti su maiuscole -> minuscole accentate (italiano + comuni europei)
     for up, lo in [('À','à'),('È','è'),('É','é'),('Ì','ì'),('Î','î'),
                    ('Ò','ò'),('Ó','ó'),('Ù','ù'),('Ú','ú'),('Â','â'),
                    ('Ê','ê'),('Ô','ô'),('Û','û'),('Ä','ä'),('Ë','ë'),
                    ('Ï','ï'),('Ö','ö'),('Ü','ü')]:
         text = text.replace(up, lo)
-    text = re.sub(r'!{2,}', '!', text)
-    text = re.sub(r'\?{2,}', '?', text)
-    text = re.sub(r',{2,}', ',', text)
-    text = re.sub(r'([!?])\.', r'\1', text)
-    # Due punti -> punto (pausa naturale per Chatterbox)
-    # Protegge: orari/ratio cifra:cifra (15:30, 1:2) e URL (http://)
-    text = re.sub(r'(\d):(\d)', r'\1COLONNUMERO\2', text)   # salva XX:XX
-    text = re.sub(r'://', 'COLONSLASH', text)                # salva ://
-    text = text.replace(':', '.')                            # tutto il resto -> .
-    text = text.replace('COLONNUMERO', ':')                  # ripristina XX:XX
-    text = text.replace('COLONSLASH', '://')                 # ripristina ://
+
+    # 19. Punteggiatura multipla -> singola
+    text = re.sub(r'!{2,}', '!', text)     # !!! -> !
+    text = re.sub(r'\?{2,}', '?', text)    # ??? -> ?
+    text = re.sub(r',{2,}', ',', text)     # ,,, -> ,
+    text = re.sub(r'([!?])\.', r'\1', text) # !. -> !
+
+    # 20. Pulizia caratteri non TTS-safe
+    #     Mantieni: lettere, numeri, spazi, punteggiatura base, accentate IT
     text = re.sub(r"[^\w\s.,!?'\"\-\u00c0-\u00f9]", ' ', text)
-    text = re.sub(r' +([.,!?])', r'\1', text)
-    text = re.sub(r'([.,!?]) {2,}', r'\1 ', text)
-    text = re.sub(r' {2,}', ' ', text)
+
+    # 21. Normalizzazione spazi e punteggiatura
+    text = re.sub(r' +([.,!?])', r'\1', text)    # spazio prima di punteggiatura
+    text = re.sub(r'([.,!?]) {2,}', r'\1 ', text) # doppi spazi dopo punteggiatura
+    text = re.sub(r' {2,}', ' ', text)            # spazi multipli -> uno
+
+    # 22. Ripristina tag protetti
     for ph, t in tm.items():
         text = text.replace(ph, t)
+
     return text.strip()
 
 
@@ -478,17 +491,32 @@ def newlines_to_pauses(text):
     """
     Converte gli accapo nel testo in tag pausa ChatterText.
     Da usare PRIMA di normalize_text, solo sul testo libero (non taggato).
-    1 accapo -> [p1], 2 accapo -> [p2], 3+ accapo -> [b]
+
+    Regola:
+      1 accapo   (\\n)     -> [p1]  pausa breve  ~0.18s
+      2 accapo   (\\n\\n)  -> [p2]  pausa media  ~0.40s
+      3+ accapo  (\\n\\n\\n+) -> [b] pausa lunga ~1.00s
+
+    I blocchi [inizio]...[fine] vengono ignorati (già strutturati dall'utente).
     """
+    # Se il testo ha già la struttura [inizio]/[fine], non toccare nulla
     if re.search(r'\[inizio\]', text, re.IGNORECASE):
         return text
+
+    # 3+ accapo -> [b] pausa lunga
     text = re.sub(r'\n{3,}', ' [b] ', text)
+    # 2 accapo -> [p2] pausa media
     text = re.sub(r'\n{2}', ' [p2] ', text)
+    # 1 accapo -> [p1] pausa breve
     text = re.sub(r'\n', ' [p1] ', text)
+
+    # Pulizia: rimuovi tag pausa duplicati o a inizio/fine
     text = re.sub(r'(\[p[123]\]|\[b\])\s*(\[p[123]\]|\[b\])', r'\2', text)
     text = re.sub(r'^\s*(\[p[123]\]|\[b\])\s*', '', text)
     text = re.sub(r'\s*(\[p[123]\]|\[b\])\s*$', '', text)
+
     return text
+
 
 
 def analyze_text(text):
@@ -503,9 +531,11 @@ def analyze_text(text):
                  key=lambda x: -x[1])[:5]
     if rep:
         errs.append(("info", "Parole ripetute: "+", ".join('"{}"({}x)'.format(w,c) for w,c in rep)))
+    # Puntini multipli residui (non dovrebbero esserci dopo normalize)
     raw_dots = re.findall(r"\.{2,}", tnt)
     if raw_dots:
         errs.append(("warning", "Puntini multipli residui: {} occorrenze".format(len(raw_dots))))
+    # Caratteri speciali residui non TTS-safe
     sp = re.findall(r"[^\w\s.,!?\'\"\-\u00C0-\u00F9]", tnt)
     sp_uniq = list(dict.fromkeys(sp))[:10]
     if sp_uniq:
@@ -589,28 +619,46 @@ def detect_join(chunk):
     return None
 
 # =========================================================
-# SUONO
+# SUONO (v2.8: volume ridotto del 50%)
 # =========================================================
 def play_sound():
+    """
+    Suono di completamento con volume ridotto del 50% rispetto a v2.7.
+    Windows: durate Beep dimezzate (da [120,120,200,350] a [60,60,100,175])
+    Mac:     afplay con volume -v 0.5
+    Linux:   paplay con volume ridotto, fallback su print(\a)
+    """
     try:
         if sys.platform == "win32":
             import winsound
+            # Volume percepito ridotto dimezzando la durata di ogni tono
             for f, d in [(523, 60), (659, 60), (784, 100), (1047, 175)]:
-                winsound.Beep(f, d); time.sleep(0.04)
+                winsound.Beep(f, d)
+                time.sleep(0.04)
         elif sys.platform == "darwin":
-            subprocess.run(["afplay", "-v", "0.5", "/System/Library/Sounds/Glass.aiff"],
-                           capture_output=True)
+            # -v 0.5 = 50% volume su afplay
+            subprocess.run(
+                ["afplay", "-v", "0.5", "/System/Library/Sounds/Glass.aiff"],
+                capture_output=True
+            )
         else:
             if subprocess.run(["which","paplay"], capture_output=True).returncode == 0:
-                subprocess.run(["paplay", "--volume=32768",
-                     "/usr/share/sounds/freedesktop/stereo/complete.oga"], capture_output=True)
+                # --volume=32768 = 50% del massimo 65536
+                subprocess.run(
+                    ["paplay", "--volume=32768",
+                     "/usr/share/sounds/freedesktop/stereo/complete.oga"],
+                    capture_output=True
+                )
             elif subprocess.run(["which","aplay"], capture_output=True).returncode == 0:
-                subprocess.run(["aplay", "/usr/share/sounds/freedesktop/stereo/complete.oga"],
-                                capture_output=True)
+                subprocess.run(
+                    ["aplay", "/usr/share/sounds/freedesktop/stereo/complete.oga"],
+                    capture_output=True
+                )
             else:
                 print("\a", end="", flush=True)
     except Exception:
         pass
+
 
 # =========================================================
 # GPU
@@ -627,17 +675,12 @@ def detect_device():
     return "cpu", "CPU: nessuna GPU CUDA rilevata"
 
 # =========================================================
-# PROMPT GUIDA NARRATIVA
+# PROMPT GUIDA NARRATIVA (v2.9)
 # =========================================================
-GUIDE_PROMPT = '''# PROMPT PER RISCRITTURA CAPITOLO - ChatterText TTS v3.0 - STILE NARRATIVA
+GUIDE_PROMPT = '''# PROMPT PER RISCRITTURA CAPITOLO - ChatterText TTS v2.9 - STILE NARRATIVA
 
 Sei un editor specializzato nella preparazione di testi per la sintesi vocale con Chatterbox TTS.
-Riscrivi il capitolo applicando il sistema di tag ChatterText v3.0 - STILE NARRATIVA.
-
-## NOVITA v3.0 - PAUSE NATURALI
-  ChatterText ora converte i tag pausa in punteggiatura + newline reali prima di
-  passare il testo a Chatterbox. Questo sfrutta la respirazione naturale interna
-  del modello. Puoi scrivere anche testo libero senza tag: gli accapo diventano pause.
+Riscrivi il capitolo applicando il sistema di tag ChatterText v2.9 - STILE NARRATIVA.
 
 ## CASTING (opzionale ma consigliato)
   CASTING:
@@ -665,12 +708,12 @@ Riscrivi il capitolo applicando il sistema di tag ChatterText v3.0 - STILE NARRA
   solenne | estatico | malinconico | vibrante | intimo
 
 ## PAUSE INLINE - 6 livelli standard
-  [p1] ~0.18s  virgola, inciso breve    -> a Chatterbox: virgola + \\n
-  [p2] ~0.40s  punto normale            -> a Chatterbox: punto   + \\n
-  [p3] ~0.65s  riflessione, domanda     -> a Chatterbox: punto   + \\n\\n
-  [b]  ~1.00s  cambio idea importante   -> a Chatterbox: punto   + \\n\\n
-  [bd] ~1.60s  climax, suspense         -> a Chatterbox: punto   + \\n\\n\\n
-  [cap]~2.00s  reset mentale, paragrafo -> a Chatterbox: punto   + \\n\\n\\n
+  [p1] ~0.18s  virgola, inciso breve
+  [p2] ~0.40s  punto normale - la piu usata
+  [p3] ~0.65s  riflessione, domanda, cambio tono
+  [b]  ~1.00s  cambio idea importante, due punti
+  [bd] ~1.60s  climax, rivelazione, suspense
+  [cap]~2.00s  reset mentale, nuovo paragrafo
 
 ## ENFASI
   [e1]  enfasi leggera  (+0.10)
@@ -684,17 +727,36 @@ Riscrivi il capitolo applicando il sistema di tag ChatterText v3.0 - STILE NARRA
   [stacco]     cambio pensiero stessa voce
   [lungo]      pausa teatrale
   [scena]      cambio scena / capitolo
-  [dissolvenza] fade lungo tra sezioni
+  [dissolvenza] fade lungo tra sezioni (1.60s)
 
-## PULIZIA AUTOMATICA v3.0 - NON usare questi caratteri nel testo taggato
-  "..."  ->  .    ";"    ->  ,    "--"   ->  ,
-  "ecc." ->  eccetera    "€ $ %%" -> euro dollari percento
-  "(testo)" -> , testo,  "*testo*" -> testo
+## PULIZIA AUTOMATICA v2.9 - NON usare questi caratteri nel testo taggato
+  ChatterText li converte automaticamente durante "Analizza e Processa":
+  "..."  ->  .    (tre puntini: usa [p3] [b] [bd] per le pause lunghe)
+  ";"    ->  ,    (punto e virgola: gia convertito, non aggiungere ;)
+  "--"   ->  ,    (doppio trattino)
+  "ecc." ->  eccetera   (e tutte le abbreviazioni comuni)
+  "€ $ %" -> euro dollari percento
+  "(testo)" -> , testo,  (parentesi trasformate in virgole)
+  "*testo*" -> testo     (markdown rimosso)
+
+## NOTA IMPORTANTE - ACCAPO COME PAUSE
+  Nel testo SENZA tag strutturali ([inizio]/[fine]) gli accapo diventano pause:
+    1 accapo (Enter)    -> [p1] pausa breve ~0.18s
+    2 accapo (Enter x2) -> [p2] pausa media ~0.40s
+    3+ accapo           -> [b]  pausa lunga ~1.00s
+  Nei testi con tag [inizio]/[fine] gli accapo vengono ignorati:
+  usa sempre i tag pause espliciti ([p1] [p2] [p3] [b] [bd]).
+
+## REGOLA ANTI-GLITCH
+  MAI blocchi con meno di 5 parole pulite.
+  SEMPRE un tag giunzione prima di [/Vn_emozione][fine].
+  MAI punto e virgola ";" nel testo (viene gia convertito ma e meglio evitarlo).
+  MAI tre puntini "..." nel testo (usa i tag pausa al loro posto).
 
 ## ESEMPIO STRUTTURA CORRETTA
 
 [inizio][V1_riflessivo]
-Era una sera strana,[p2] il tipo di sera in cui l\'aria sembra ferma.[b]
+Era una sera strana,[p2] il tipo di sera in cui l'aria sembra ferma.[b]
 [/V1_riflessivo][para]
 [V1_preoccupato]
 Marco si fermo sul portone[p1] e guardo il cielo.[p2][stacco]
@@ -711,24 +773,57 @@ Ora riscrivi il seguente capitolo:
 '''
 
 # =========================================================
-# PROMPT GUIDA POETICA
+# PROMPT GUIDA POETICA (v2.9)
 # =========================================================
-POETRY_PROMPT = '''# PROMPT PER TESTO POETICO - ChatterText TTS v3.0 - STILE POESIA
+POETRY_PROMPT = '''# PROMPT PER TESTO POETICO - ChatterText TTS v2.9 - STILE POESIA
 
 Sei un editor specializzato nella preparazione di POESIE per la sintesi vocale Chatterbox TTS.
-Riscrivi la poesia applicando il sistema di tag ChatterText v3.0 - STILE POESIA.
+Riscrivi la poesia applicando il sistema di tag ChatterText v2.9 - STILE POESIA.
 
-## TAG POETICI SPECIALI
-  [verso]       ~0.44s  fine verso - -> a Chatterbox: virgola + \\n
-  [strofa]      ~1.74s  fine strofa  -> a Chatterbox: punto   + \\n\\n
-  [metro]       ~0.12s  micro-pausa  -> a Chatterbox: spazio
-  [enjambement] ~0.07s  scorrimento  -> a Chatterbox: spazio
-  [cesura]      ~0.65s  pausa interna -> a Chatterbox: virgola + \\n
-  [dissolvenza]         giunzione fade tra strofe
+In modalita POESIA i parametri TTS sono ottimizzati per:
+  - Esaggerazione alta (0.82) per massima espressivita
+  - Temperature alta (0.72) per naturalezza recitata
+  - Pause scale 1.45x: tutte le pause durano il 45% in piu del normale
+  - Stile recitato, non letto: ogni verso ha un arco emotivo
+
+## TAG POETICI SPECIALI (solo in modalita Poesia)
+  [verso]       ~0.44s effettivi  fine verso con respiro leggero
+  [strofa]      ~1.74s effettivi  fine strofa, pausa piena, reset emotivo
+  [metro]       ~0.12s effettivi  micro-pausa sull'accento metrico
+  [enjambement] ~0.07s effettivi  verso che scorre nel successivo (quasi zero)
+  [cesura]      ~0.65s effettivi  pausa interna al verso (tra emistichi)
+  [dissolvenza]                   giunzione fade lungo tra strofe (1.60s)
 
 ## TAG VOCE PER POESIA
   [v1]...[/v1]  Voce principale del poema
-  Con emozioni: solenne | estatico | malinconico | vibrante | intimo
+  [v2]...[/v2]  Voce seconda (es: interlocutore nel dialogo lirico)
+  Con emozioni poetiche: solenne | estatico | malinconico | vibrante | intimo
+  E standard:            calmo | appassionato | triste | riflessivo | sussurrato
+
+## PAUSE INLINE (con scale 1.45x in modalita Poesia)
+  [p1] ~0.26s effettivi  virgola leggera dentro il verso
+  [p2] ~0.58s effettivi  fine verso con punto
+  [p3] ~0.94s effettivi  riflessione profonda
+  [b]  ~1.45s effettivi  cambio di immagine poetica
+  [bd] ~2.32s effettivi  culmine, rivelazione, silenzio drammatico
+
+## PULIZIA AUTOMATICA v2.9 - NON usare questi caratteri nel testo taggato
+  ChatterText li converte automaticamente durante "Analizza e Processa":
+  "..."  ->  .    (tre puntini: usa [cesura] [p3] [b] per le sospensioni)
+  ";"    ->  ,    (punto e virgola: usa i tag pausa invece)
+  "(nota)" -> , nota,  (parentesi trasformate in virgole)
+  "--"   ->  ,    (doppio trattino)
+  Simboli €%&×°  -> parole (euro, percento, per, gradi...)
+
+## NOTA IMPORTANTE - ACCAPO NEL TESTO POETICO
+  Con tag [inizio]/[fine] gli accapo vengono ignorati: usa sempre i tag
+  poetici espliciti al posto degli a capo naturali del verso.
+  CORRETTO:
+    [inizio][V1_malinconico]
+    Scende la sera[cesura] senza rumore.[verso]
+    [/V1_malinconico][fine]
+  SBAGLIATO: non lasciare accapo nudi sperando che diventino pause,
+  nei blocchi taggati non funziona: usa [verso] [cesura] [strofa].
 
 ## STRUTTURA BASE PER POESIA
 
@@ -736,9 +831,34 @@ Riscrivi la poesia applicando il sistema di tag ChatterText v3.0 - STILE POESIA.
 Scende la sera[cesura] senza rumore.[verso]
 [/V1_malinconico][fine]
 
+[inizio][V1_malinconico]
+Ogni finestra[cesura] nasconde un dolore.[verso]
+[/V1_malinconico][fine]
+
+Fine strofa con dissolvenza:
 [inizio][V1_solenne]
-E il vento porta via[ep] l\'ultima voce.[p3][dissolvenza]
+E il vento porta via[ep] l'ultima voce.[p3][dissolvenza]
 [/V1_solenne][fine]
+
+Enjambement (verso che scorre):
+[inizio][V1_vibrante]
+Il cielo si apre[enjambement]
+[/V1_vibrante][fine]
+
+[inizio][V1_vibrante]
+come una ferita di luce.[verso]
+[/V1_vibrante][fine]
+
+## REGOLE OBBLIGATORIE PER POESIA
+  1. MAI blocchi con meno di 5 parole pulite
+  2. Ogni verso termina con [verso] OPPURE [enjambement] OPPURE [strofa]
+  3. SEMPRE giunzione ([verso]/[strofa]/[dissolvenza]) prima di [/Vn_emozione][fine]
+  4. Emozione costante per strofa (non cambiare emozione verso per verso)
+  5. [ep] sulle parole-immagine piu forti (max 2-3 per strofa)
+  6. [e2] solo al culmine emotivo del poema (1-2 volte totali)
+  7. MAI "..." nel testo: usa [cesura] per la sospensione poetica
+  8. MAI ";" nel testo: usa [p1] o [cesura] al suo posto
+  9. Rispondere SOLO con il testo taggato, senza spiegazioni
 
 ---
 Ora prepara la seguente poesia:
@@ -747,23 +867,24 @@ Ora prepara la seguente poesia:
 '''
 
 # =========================================================
-# BUILD SCRIPT PYTHON v3.0
+# BUILD SCRIPT PYTHON (v2.9)
 # =========================================================
 def build_python_script(chunks, exag, cfg, temp, v1, v2, v3, v4, v5, v6, v7,
                         epreset, devmode="auto", reading_style="narrativa",
                         noise_gate_db=-50, rms_target_db=-18, trim_threshold_db=-45,
-                        pause_scale=1.0, aggressive_clean=False,
-                        natural_pauses=True):
-    """
-    Genera lo script Python per Chatterbox.
-    natural_pauses=True: converte i tag pausa in punteggiatura+newline
-                         prima di passare il testo a model.generate().
-    """
-    has2   = bool(v2.strip()); has3 = bool(v3.strip()); has4 = bool(v4.strip())
-    has5   = bool(v5.strip()); has6 = bool(v6.strip()); has7 = bool(v7.strip())
-    v2eff  = v2.strip() if has2 else v1; v3eff = v3.strip() if has3 else v1
-    v4eff  = v4.strip() if has4 else v1; v5eff = v5.strip() if has5 else v1
-    v6eff  = v6.strip() if has6 else v1; v7eff = v7.strip() if has7 else v1
+                        pause_scale=1.0, aggressive_clean=False):
+    has2   = bool(v2.strip())
+    has3   = bool(v3.strip())
+    has4   = bool(v4.strip())
+    has5   = bool(v5.strip())
+    has6   = bool(v6.strip())
+    has7   = bool(v7.strip())
+    v2eff  = v2.strip() if has2 else v1
+    v3eff  = v3.strip() if has3 else v1
+    v4eff  = v4.strip() if has4 else v1
+    v5eff  = v5.strip() if has5 else v1
+    v6eff  = v6.strip() if has6 else v1
+    v7eff  = v7.strip() if has7 else v1
     ep_r   = json.dumps(epreset, ensure_ascii=False, indent=4)
     emop   = "|".join(ALL_EMO)
 
@@ -797,48 +918,10 @@ def build_python_script(chunks, exag, cfg, temp, v1, v2, v3, v4, v5, v6, v7,
                 "    DEVICE=torch.device('cpu')",
                 "    print('CPU (nessuna GPU)')"]
 
-    # Funzione pauses_to_natural_text da includere nello script generato
-    natural_fn = r'''
-def pauses_to_natural_text(text):
-    """
-    v3.0 - Converte tag pausa in punteggiatura naturale + newline reali.
-    Chatterbox usa i newline come guide respiratorie: ogni riga = unità di respiro.
-    """
-    PTABLE = {
-        "[metro]":("",0),"[enjambement]":("",0),
-        "[p1]":(",",1),"[verso]":(",",1),"[cesura]":(",",1),
-        "[p2]":(".",1),"[pausa]":(".",1),
-        "[p3]":(".",2),"[b]":(".",2),"[strofa]":(".",2),"[pausa_lunga]":(".",2),
-        "[bd]":(".",3),"[cap]":(".",3),"[silenzio]":(".",3),
-    }
-    ORDER=["[silenzio]","[cap]","[bd]","[pausa_lunga]","[strofa]","[b]",
-           "[p3]","[pausa]","[p2]","[cesura]","[verso]","[p1]","[enjambement]","[metro]"]
-    for tag in ORDER:
-        if tag not in PTABLE: continue
-        punct,nlcount=PTABLE[tag]
-        ph="__PNLT__{}__NL{}__".format(punct.replace(".","DOT").replace(",","COMMA"),nlcount)
-        text=re.sub(re.escape(tag),ph,text,flags=re.IGNORECASE)
-    def resolve(m):
-        rp=m.group(1).replace("DOT",".").replace("COMMA",",")
-        nl="\n"*int(m.group(2))
-        pos=m.start(); before=text[:pos].rstrip()
-        if rp and before and before[-1] in ".,!?:;": return nl if nl else " "
-        return (rp+nl) if rp else (nl if nl else " ")
-    text=re.sub(r"__PNLT__([\w]*)__NL(\d)__",resolve,text)
-    text=re.sub(r"\n{4,}","\n\n\n",text)
-    text=re.sub(r"[ \t]+\n","\n",text)
-    text=re.sub(r"\n[ \t]+","\n",text)
-    text=re.sub(r"([.,!?])\s*([.,])",r"\1",text)
-    text=re.sub(r"[ \t]{2,}"," ",text)
-    text=re.sub(r" +([,.])\n",r"\1\n",text)
-    text=re.sub(r" +([,.])\s*$",r"\1",text)
-    return text.strip()
-'''
-
     L = [
-"# Script generato da ChatterText v3.0",
-"# Stile: {}  |  Pause Naturali: {}  |  Noise gate: {}dB".format(reading_style, natural_pauses, noise_gate_db),
-"# RMS target: {}dB  |  Pause scale: {:.2f}x  |  Pulizia aggressiva: {}".format(rms_target_db, pause_scale, aggressive_clean),
+"# Script generato da ChatterText v2.9",
+"# Stile: {}  |  Noise gate: {}dB  |  RMS target: {}dB".format(reading_style, noise_gate_db, rms_target_db),
+"# Pause scale: {:.2f}x  |  Pulizia aggressiva: {}".format(pause_scale, aggressive_clean),
 "import os,re,sys,random,torch,torchaudio as ta,pathlib,time",
 "if sys.platform=='win32':",
 "    import io",
@@ -877,8 +960,6 @@ def pauses_to_natural_text(text):
 "RMS_TARGET_DB={}".format(rms_target_db),
 "TRIM_DB={}".format(trim_threshold_db),
 "AGGRESSIVE_CLEAN={}".format(aggressive_clean),
-"NATURAL_PAUSES={}".format(natural_pauses),
-natural_fn,
 "PM={",
 "    '[p1]':(0.18,0.03), '[p2]':(0.40,0.05), '[p3]':(0.65,0.07),",
 "    '[b]': (1.00,0.10), '[bd]':(1.60,0.15), '[cap]':(2.00,0.20),",
@@ -908,32 +989,26 @@ natural_fn,
 "    ps=[(p,gp(p)) for p in rp]; tp=sum(d for _,d in ps)",
 "    et=ER.findall(chunk); ek=et[-1].lower().strip('[]') if et else None",
 "    jt=JR.findall(chunk); jk=jt[-1].lower() if jt else None",
-"    # si_meta: rimuove SOLO tag voce/emozione/enfasi/giunzioni",
-"    # LASCIA i tag pausa [p1][p2][b]... intatti: servono a prepare_text_for_tts()",
-"    def si_meta(t):",
-"        t=ER.sub('',t); t=JR.sub('',t); return t.strip()",
-"    # si_voice: rimuove anche i tag voce dal testo pulito",
-"    def si_voice(t):",
-"        t=re.sub(r'\\[/?(?:v1|v2|v3|v4|v5|v6|v7)(?:_'+EN+r')?\\]','',t,flags=re.IGNORECASE)",
-"        return si_meta(t)",
+"    def si(t):",
+"        t=PR.sub('',t); t=ER.sub('',t); t=JR.sub('',t); return t.strip()",
 "    m=re.search(r'\\[(v1|v2|v3|v4|v5|v6|v7)_(' +EN+r')\\]',chunk,re.IGNORECASE)",
 "    if m:",
 "        v,e=m.group(1).lower(),m.group(2).lower()",
 "        cl=re.sub(r'\\[(?:v1|v2|v3|v4|v5|v6|v7)_(?:'+EN+r')\\]','',chunk,flags=re.IGNORECASE)",
 "        cl=re.sub(r'\\[/(?:v1|v2|v3|v4|v5|v6|v7)_(?:'+EN+r')\\]','',cl,flags=re.IGNORECASE)",
-"        return si_meta(cl),v,e,ps,tp,ek,jk",
+"        return si(cl),v,e,ps,tp,ek,jk",
 "    m=re.search(r'\\[(v1|v2|v3|v4|v5|v6|v7)\\]',chunk,re.IGNORECASE)",
 "    if m:",
 "        v=m.group(1).lower()",
 "        cl=re.sub(r'\\[/?(?:v1|v2|v3|v4|v5|v6|v7)\\]','',chunk,flags=re.IGNORECASE)",
-"        return si_meta(cl),v,None,ps,tp,ek,jk",
+"        return si(cl),v,None,ps,tp,ek,jk",
 "    m=re.search(r'\\[('+EN+r')\\]',chunk,re.IGNORECASE)",
 "    if m:",
 "        e=m.group(1).lower()",
 "        cl=re.sub(r'\\[(?:'+EN+r')\\]','',chunk,flags=re.IGNORECASE)",
 "        cl=re.sub(r'\\[/(?:'+EN+r')\\]','',cl,flags=re.IGNORECASE)",
-"        return si_meta(cl),'v1',e,ps,tp,ek,jk",
-"    return si_meta(chunk),'v1',None,ps,tp,ek,jk",
+"        return si(cl),'v1',e,ps,tp,ek,jk",
+"    return si(chunk),'v1',None,ps,tp,ek,jk",
 "def pp(emo,ek=None):",
 "    p=EPRESET[emo].copy() if emo and emo in EPRESET else DEF_P.copy()",
 "    p.setdefault('top_p',0.75); p.setdefault('min_p',0.15)",
@@ -962,7 +1037,8 @@ natural_fn,
 "    if wav.dim()==1: wav=wav.unsqueeze(0)",
 "    rms=torch.sqrt(torch.mean(wav**2)+1e-8)",
 "    target_rms=10**(target_db/20)",
-"    gain=target_rms/rms; gain=min(gain, 10.0)",
+"    gain=target_rms/rms",
+"    gain=min(gain, 10.0)",
 "    wav=wav*gain",
 "    wav=torch.tanh(wav*0.9)*1.1",
 "    return wav.clamp(-0.98, 0.98)",
@@ -985,7 +1061,8 @@ natural_fn,
 "    mo=wav[0] if wav.dim()>1 else wav; en=torch.abs(mo)",
 "    indices=(en>thr).nonzero(as_tuple=True)[0]",
 "    if len(indices)==0: return wav",
-"    s=max(0, indices[0].item()-mg); e=min(len(en), indices[-1].item()+mg)",
+"    s=max(0, indices[0].item()-mg)",
+"    e=min(len(en), indices[-1].item()+mg)",
 "    return wav[...,s:e]",
 "def apply_fade(wav, sr, fade_ms=14):",
 "    f=int(sr*fade_ms/1000); wav=wav.clone()",
@@ -994,32 +1071,16 @@ natural_fn,
 "    return wav",
 "def full_process(wav, sr):",
 "    wav=noise_gate(wav, sr)",
-"    if AGGRESSIVE_CLEAN: wav=declick(wav, sr)",
+"    if AGGRESSIVE_CLEAN:",
+"        wav=declick(wav, sr)",
 "    wav=trim_silence(wav, sr)",
 "    wav=apply_fade(wav, sr)",
 "    wav=rms_normalize(wav)",
 "    return wav",
-# --- Nuova sezione: generazione con pause naturali ---
-"def prepare_text_for_tts(txt):",
-"    '''",
-"    v3.0: se NATURAL_PAUSES attivo, converte i tag pausa in",
-"    punteggiatura + newline reali PRIMA di passare a model.generate().",
-"    I tag enfasi/giunzioni vengono rimossi (già usati in parametri).",
-"    '''",
-"    if NATURAL_PAUSES:",
-"        txt = pauses_to_natural_text(txt)",
-"    else:",
-"        # Vecchio comportamento: rimuovi solo i tag pausa senza conversione",
-"        txt = re.sub(r'\\[(?:p[123]|b(?:d)?|cap|pausa(?:_lunga)?|silenzio|verso|strofa|metro|enjambement|cesura)\\]','',txt,flags=re.IGNORECASE)",
-"    # Rimuovi eventuali tag residui (enfasi, giunzioni) che non devono andare al TTS",
-"    txt = re.sub(r'\\[e[12p]\\]','',txt,flags=re.IGNORECASE)",
-"    txt = re.sub(r'\\[(?:join|cont|cambio|cambio3|cambio4|cambio5|cambio6|cambio7|para|stacco|lungo|scena|dissolvenza)\\]','',txt,flags=re.IGNORECASE)",
-"    return txt.strip()",
 "segs=[]; fail=[]",
 "st=time.time()",
 "print('\\n'+'='*55)",
 "print('AVVIO GENERAZIONE [{}]'.format(DEVICE.type.upper()))",
-"print('Pause Naturali: {}'.format('ATTIVE' if NATURAL_PAUSES else 'disattive'))",
 "print('='*55)",
 "for i,(txt,vo,em,ps,tp,ek,jk) in enumerate(tc):",
 "    if i>0:",
@@ -1036,14 +1097,8 @@ natural_fn,
 "    print('\\n [{}] {}%{}'.format(bar,pct,eta))",
 "    print(' Chunk {}/{} [{}]{}{}{}'.format(i+1,len(tc),vo.upper(),_em_s,_ek_s,_jk_s))",
 "    print('   {}{}'.format(_rep,_tail))",
-"    if tp>0: print('   pausa audio: {:.2f}s (gauss x{:.2f})'.format(tp, PAUSE_SCALE))",
+"    if tp>0: print('   pausa: {:.2f}s (gauss x{:.2f})'.format(tp, PAUSE_SCALE))",
 "    if len(txt.split())<5: print('   ATTENZIONE: chunk corto!')",
-"    tts_txt = prepare_text_for_tts(txt)",
-"    if NATURAL_PAUSES and tts_txt != txt:",
-"        _nl_count = tts_txt.count('\\n')",
-"        print('   Testo TTS ({} righe natural):'.format(_nl_count+1))",
-"        for _ln in tts_txt[:120].split('\\n'):",
-"            if _ln.strip(): print('     |', _ln.strip()[:70])",
 "    if   vo=='v7' and HAS7: vp=AUDIO_V7",
 "    elif vo=='v6' and HAS6: vp=AUDIO_V6",
 "    elif vo=='v5' and HAS5: vp=AUDIO_V5",
@@ -1053,7 +1108,7 @@ natural_fn,
 "    else:                   vp=AUDIO_V1",
 "    p=pp(em,ek); ok=False",
 "    try:",
-"        wav=model.generate(tts_txt,language_id='it',audio_prompt_path=vp,",
+"        wav=model.generate(txt,language_id='it',audio_prompt_path=vp,",
 "            exaggeration=p['exaggeration'],cfg_weight=p['cfg_weight'],",
 "            temperature=p['temperature'],min_p=p['min_p'],top_p=p['top_p'])",
 "        if DEVICE.type=='cuda': wav=wav.cpu()",
@@ -1065,7 +1120,7 @@ natural_fn,
 "    except Exception as e: print('   ERR:{} retry...'.format(e))",
 "    if not ok:",
 "        try:",
-"            wav=model.generate(tts_txt,language_id='it',audio_prompt_path=vp,",
+"            wav=model.generate(txt,language_id='it',audio_prompt_path=vp,",
 "                exaggeration=0.0,cfg_weight=0.25,temperature=0.22,min_p=0.20,top_p=0.65)",
 "            if DEVICE.type=='cuda': wav=wav.cpu()",
 "            wav=full_process(wav, model.sr)",
@@ -1156,7 +1211,6 @@ natural_fn,
 "print(f'   Durata: {dur:.1f}s ({dur/60:.1f} min)')",
 "print(f'   Tempo:  {tot:.1f}s ({tot/60:.1f} min)')",
 "print(f'   Device: {DEVICE.type.upper()}')",
-"print(f'   Pause Naturali: {\"ATTIVE\" if NATURAL_PAUSES else \"disattive\"}')",
 "voci_attive=[('V2',HAS2),('V3',HAS3),('V4',HAS4),('V5',HAS5),('V6',HAS6),('V7',HAS7)]",
 "voci_str=' | '.join(n for n,a in voci_attive if a) or '-'",
 "print(f'   Voci: V1 + {voci_str}')",
@@ -1268,7 +1322,7 @@ class PresetWindow(tk.Toplevel):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("ChatterText v3.0")
+        self.title("ChatterText v2.9")
         self.geometry("1100x980"); self.minsize(900,700)
         self.configure(bg=C["bg"])
         self.chunks = []; self.chunk_vars = []; self.script_path = None
@@ -1280,9 +1334,8 @@ class App(tk.Tk):
         self.verrs    = tk.StringVar(value="0")
         self.vdev     = tk.StringVar(value="auto")
         self.vsound   = tk.BooleanVar(value=True)
-        self.vreadstyle  = tk.StringVar(value="narrativa")
-        self.vaggclean   = tk.BooleanVar(value=False)
-        self.vnatpauses  = tk.BooleanVar(value=True)   # nuovo v3.0
+        self.vreadstyle = tk.StringVar(value="narrativa")
+        self.vaggclean  = tk.BooleanVar(value=False)
         self._build_ui(); self._detect_device()
 
     # ---- LAYOUT ----
@@ -1302,14 +1355,17 @@ class App(tk.Tk):
         r = self.sf
         self._hdr(r); self._dev_sec(r); self._style_sec(r)
         self._inp_sec(r)
-        self._action_bar(r)
+        self._action_bar(r)   # <-- nuovo: pulsanti sempre visibili
         self._ctrl_sec(r)
         self._stats_sec(r); self._log_sec(r); self._chunks_sec(r)
         self._guide_sec(r); self._footer(r)
 
+    # Nuovo metodo: barra azioni fissa
     def _action_bar(self, r):
         sec = self._sec(r, "Azioni")
         br = sf(sec); br.pack(fill="x", pady=(8,0))
+
+        # Genera Audio
         b_gen = tk.Button(br, text=">> Genera Audio", command=self.run_chatterbox,
                           bg="#1a3d2b", fg=C["text"],
                           activebackground=C["success"], activeforeground="#fff",
@@ -1318,10 +1374,16 @@ class App(tk.Tk):
         b_gen.pack(side="left", padx=(0,8))
         b_gen.bind("<Enter>", lambda e: b_gen.config(bg=C["success"], fg="#fff"))
         b_gen.bind("<Leave>", lambda e: b_gen.config(bg="#1a3d2b", fg=C["text"]))
+
+        # Analizza e Processa
         sb_btn(br, "Analizza e Processa", self.process, color=C["accent2"]).pack(side="left", padx=(0,8))
+
+        # Stop
         self.stopbtn = sb_btn(br, "■ Stop", self._stop, color=C["danger"])
         self.stopbtn.pack(side="left", padx=(0,8))
         self.stopbtn.config(state="disabled")
+
+        # Cancella
         sb_btn(br, "Cancella", self.clear_all, color="#555555").pack(side="left")
 
     def _sec(self, parent, title):
@@ -1343,8 +1405,8 @@ class App(tk.Tk):
         tk.Label(h, text="ChatterText", font=FH1, fg="#fff", bg="#0a1628").pack()
         tk.Label(h, text="Analizza e prepara il testo per Chatterbox TTS",
                  font=FB, fg=C["text_dim"], bg="#0a1628").pack(pady=(4,0))
-        tk.Label(h, text="v3.0  |  Pause Naturali  |  4 Stili  |  Tag Poetici  |  Post-proc Audio  |  7 Voci  |  Pulizia testo avanzata",
-                 font=FS, fg=C["natural"], bg="#0a1628").pack(pady=(2,0))
+        tk.Label(h, text="v2.9  |  4 Stili  |  Tag Poetici  |  Post-proc Audio  |  7 Voci  |  Accapo come pause  |  Pulizia testo avanzata",
+                 font=FS, fg=C["gpu"], bg="#0a1628").pack(pady=(2,0))
 
     def _dev_sec(self, r):
         sec = self._sec(r, "Dispositivo di Calcolo")
@@ -1361,7 +1423,7 @@ class App(tk.Tk):
                            activeforeground=C["accent"], activebackground=C["surface"],
                            cursor="hand2").pack(side="left", padx=6)
         nf = sf(top); nf.pack(side="right")
-        tk.Checkbutton(nf, text="Suono fine generazione", variable=self.vsound,
+        tk.Checkbutton(nf, text="Suono fine generazione (vol -50%)", variable=self.vsound,
                        font=FB, fg=C["text"], bg=C["surface"], selectcolor=C["surface2"],
                        activeforeground=C["accent"], activebackground=C["surface"],
                        cursor="hand2").pack(side="left")
@@ -1406,37 +1468,6 @@ class App(tk.Tk):
                        activeforeground=C["warning"], activebackground=C["surface"],
                        cursor="hand2").pack(side="left", padx=(12,0))
 
-        # --- NUOVO v3.0: Pause Naturali checkbox ---
-        npf = sf(sec); npf.pack(fill="x", pady=(12,0))
-        np_frame = tk.Frame(npf, bg="#0a1a0a", highlightthickness=1,
-                            highlightbackground=C["natural"], padx=14, pady=10)
-        np_frame.pack(fill="x")
-        np_top = tk.Frame(np_frame, bg="#0a1a0a"); np_top.pack(fill="x")
-        tk.Checkbutton(np_top, text="🎙 Pause Naturali (v3.0) — CONSIGLIATO",
-                       variable=self.vnatpauses,
-                       font=("Segoe UI",10,"bold"), fg=C["natural"], bg="#0a1a0a",
-                       selectcolor="#0a1a0a", activeforeground=C["natural"],
-                       activebackground="#0a1a0a", cursor="hand2"
-                       ).pack(side="left")
-        tk.Label(np_top,
-                 text="  Converte i tag pausa in punteggiatura+newline prima di Chatterbox",
-                 font=FS, fg=C["text_dim"], bg="#0a1a0a").pack(side="left", padx=(8,0))
-        np_desc = tk.Frame(np_frame, bg="#0a1a0a"); np_desc.pack(fill="x", pady=(6,0))
-        pause_examples = [
-            ("[p1] → virgola+↵", C["natural"]),
-            ("[p2] → punto+↵",   "#74b9ff"),
-            ("[b]  → punto+↵↵",  "#00b894"),
-            ("[bd] → punto+↵↵↵", "#e84357"),
-            ("[verso] → virgola+↵", "#9b59b6"),
-            ("[strofa] → punto+↵↵", "#6c3483"),
-        ]
-        for txt, col in pause_examples:
-            tk.Label(np_desc, text=txt, font=("Courier New",8,"bold"),
-                     fg=col, bg="#0a1a0a", padx=6, pady=2).pack(side="left", padx=2)
-        tk.Label(np_frame,
-                 text="Le pause audio in secondi vengono mantenute: i due sistemi si sommano per la massima naturalezza.",
-                 font=FS, fg=C["warning"], bg="#0a1a0a").pack(anchor="w", pady=(4,0))
-
         prf = sf(sec); prf.pack(fill="x", pady=(10,0))
         sb_btn(prf, "Copia Prompt NARRATIVA", lambda: self._copy_prompt("narrativa"),
                color=C["style_narr"]).pack(side="left", padx=(0,8))
@@ -1449,7 +1480,8 @@ class App(tk.Tk):
 
     def _set_style(self, key):
         self.vreadstyle.set(key)
-        st = READING_STYLES[key]; col = st["color"]
+        st = READING_STYLES[key]
+        col = st["color"]
         self.style_name_lbl.config(text=st["label"], fg=col)
         self.style_desc_lbl.config(text=st["desc"])
         self.style_notes_lbl.config(text=st["notes"])
@@ -1466,21 +1498,23 @@ class App(tk.Tk):
     def _copy_prompt(self, style):
         if style == "poesia":
             self.clipboard_clear(); self.clipboard_append(POETRY_PROMPT)
-            messagebox.showinfo("Copiato!", "Prompt POESIA v3.0 copiato!")
+            messagebox.showinfo("Copiato!", "Prompt POESIA v2.8 copiato!\n"
+                                "Include tag poetici: [verso] [strofa] [metro] [enjambement] [cesura]")
         else:
             self.clipboard_clear(); self.clipboard_append(GUIDE_PROMPT)
-            messagebox.showinfo("Copiato!", "Prompt NARRATIVA v3.0 copiato!")
+            messagebox.showinfo("Copiato!", "Prompt NARRATIVA v2.8 copiato!")
 
     def _save_all_prompts(self):
         dest = pathlib.Path(self.vdir.get() if hasattr(self,'vdir') else str(pathlib.Path.cwd()))
-        p1 = dest / "PROMPT_NARRATIVA_v3.0.txt"
-        p2 = dest / "PROMPT_POESIA_v3.0.txt"
+        p1 = dest / "PROMPT_NARRATIVA_v2.8.txt"
+        p2 = dest / "PROMPT_POESIA_v2.8.txt"
         p1.write_text(GUIDE_PROMPT, encoding="utf-8")
         p2.write_text(POETRY_PROMPT, encoding="utf-8")
         messagebox.showinfo("Salvati!", "Salvati:\n{}\n{}".format(p1, p2))
 
     def _inp_sec(self, r):
         sec = self._sec(r, "Testo")
+        # v2.8: altezza aumentata da 10 a 14
         self.txt = scrolledtext.ScrolledText(
             sec, height=14,
             bg=C["surface2"], fg=C["text"],
@@ -1505,6 +1539,7 @@ class App(tk.Tk):
         self.vmaxw = self._le(r1, "Max parole/chunk", "40")
         self.vmaxc = self._le(r1, "Max caratteri", "240")
 
+        # Voci
         r2 = sf(sec); r2.pack(fill="x", pady=(0,4))
         self.vv1 = self._le(r2, "Voce 1 - Narratore (2.Voci/)", "3l14n.wav", wide=True)
         self.vv2 = self._le(r2, "Voce 2 - Personaggio B (opz.)", "", wide=True)
@@ -1520,6 +1555,7 @@ class App(tk.Tk):
         gv = sf(r2c); gv.pack(side="right", padx=(8,0), anchor="s")
         sb_btn(gv, "Verifica voci", self._verify_voices, color=C["text_dim"]).pack(pady=(18,0))
 
+        # Parametri TTS
         r3 = sf(sec); r3.pack(fill="x", pady=(0,10))
         self.vexag = self._le(r3, "Exaggeration", "0.62")
         self.vcfg  = self._le(r3, "CFG Weight", "0.70")
@@ -1537,6 +1573,8 @@ class App(tk.Tk):
         self.vdir = tk.StringVar(value=_app_dir)
         se(r4, width=55, textvariable=self.vdir).pack(side="left", padx=(0,8))
         sb_btn(r4, "Sfoglia", self._browse, color=C["text_dim"]).pack(side="left")
+
+        # Applica lo stile iniziale ai parametri TTS
         self._set_style("narrativa")
 
     def _verify_voices(self):
@@ -1576,6 +1614,7 @@ class App(tk.Tk):
         self.err_box.pack(fill="x", pady=(8,0))
 
     def _log_sec(self, r):
+        # v2.8: sezione output — Stop rimosso da qui (è ora in _ctrl_sec)
         self.logsec = self._sec(r, "Output"); self.logsec.pack_forget()
         pf = sf(self.logsec); pf.pack(fill="x", pady=(0,8))
         self.progv = tk.DoubleVar(value=0)
@@ -1593,6 +1632,7 @@ class App(tk.Tk):
         self.vdevl = tk.StringVar(value="")
         tk.Label(er, textvariable=self.veta,  font=FS, fg=C["warning"], bg=C["surface"]).pack(side="left")
         tk.Label(er, textvariable=self.vdevl, font=FS, fg=C["gpu"],     bg=C["surface"]).pack(side="right")
+        # v2.8: log più alto (height 14 -> 20)
         self.log = scrolledtext.ScrolledText(
             self.logsec, height=20,
             bg="#050505", fg=C["success"],
@@ -1611,7 +1651,7 @@ class App(tk.Tk):
     def _guide_sec(self, r):
         outer = tk.Frame(r, bg=C["bg"], padx=18, pady=10); outer.pack(fill="x")
         hr = tk.Frame(outer, bg=C["bg"]); hr.pack(fill="x", pady=(0,8))
-        tk.Label(hr, text="Guida Tag - v3.0", font=FH2, fg=C["accent"], bg=C["bg"]).pack(side="left")
+        tk.Label(hr, text="Guida Tag - v2.8", font=FH2, fg=C["accent"], bg=C["bg"]).pack(side="left")
         bf = tk.Frame(hr, bg=C["bg"]); bf.pack(side="right")
         sb_btn(bf, "Prompt Narrativa", lambda: self._copy_prompt("narrativa"),
                color=C["style_narr"]).pack(side="left", padx=(0,8))
@@ -1622,45 +1662,6 @@ class App(tk.Tk):
         inner = tk.Frame(outer, bg=C["surface"], bd=0, highlightthickness=1,
                          highlightbackground=C["border"], padx=20, pady=16)
         inner.pack(fill="x")
-
-        # --- NUOVA SEZIONE: Pause Naturali ---
-        np_sec = tk.Frame(inner, bg="#0a1a0a", highlightthickness=1,
-                          highlightbackground=C["natural"], padx=14, pady=10)
-        np_sec.pack(fill="x", pady=(0,14))
-        tk.Label(np_sec, text="PAUSE NATURALI v3.0 — come i tag pausa diventano testo per Chatterbox",
-                 font=FL, fg=C["natural"], bg="#0a1a0a").pack(anchor="w")
-        np_grid = tk.Frame(np_sec, bg="#0a1a0a"); np_grid.pack(fill="x", pady=(8,0))
-        np_data = [
-            ("[metro]",      "→  spazio",       "quasi zero",      "#a9cce3"),
-            ("[enjambement]","→  spazio",        "scorrimento",     "#d7bde2"),
-            ("[p1]",         "→  virgola + ↵",   "respiro breve",   C["natural"]),
-            ("[verso]",      "→  virgola + ↵",   "fine verso",      "#9b59b6"),
-            ("[cesura]",     "→  virgola + ↵",   "pausa interna",   "#7d3c98"),
-            ("[p2]",         "→  punto   + ↵",   "fine frase",      "#74b9ff"),
-            ("[pausa]",      "→  punto   + ↵",   "pausa media",     "#4a90e2"),
-            ("[p3]",         "→  punto   + ↵↵",  "riflessione",     "#8e44ad"),
-            ("[b]",          "→  punto   + ↵↵",  "cambio idea",     "#27ae60"),
-            ("[strofa]",     "→  punto   + ↵↵",  "fine strofa",     "#6c3483"),
-            ("[bd]",         "→  punto   + ↵↵↵", "climax",          "#e84357"),
-            ("[cap]",        "→  punto   + ↵↵↵", "capoverso",       "#e67e22"),
-            ("[silenzio]",   "→  punto   + ↵↵↵", "silenzio",        "#636e72"),
-        ]
-        for ci, (tag, conv, desc, col) in enumerate(np_data):
-            row = ci // 4; col_i = ci % 4
-            cell = tk.Frame(np_grid, bg="#111", highlightthickness=1, highlightbackground=col)
-            cell.grid(row=row, column=col_i, padx=3, pady=3, sticky="ew")
-            np_grid.columnconfigure(col_i, weight=1)
-            tk.Label(cell, text=tag, font=("Courier New",8,"bold"),
-                     fg=col, bg="#111", padx=5, pady=3).pack(anchor="w")
-            tk.Label(cell, text=conv, font=("Courier New",8),
-                     fg="#fff", bg="#111", padx=5).pack(anchor="w")
-            tk.Label(cell, text=desc, font=FS,
-                     fg=C["text_dim"], bg="#111", padx=5, pady=2).pack(anchor="w")
-        tk.Label(np_sec,
-                 text="La punteggiatura NON viene duplicata se già presente nel testo.\n"
-                      "Pause audio in secondi MANTENUTE: i due sistemi si sommano.\n"
-                      "Il log di generazione mostra il testo TTS riga per riga (visibile durante la generazione).",
-                 font=FS, fg=C["text_dim"], bg="#0a1a0a", justify="left").pack(anchor="w", pady=(8,0))
 
         cols = tk.Frame(inner, bg=C["surface"]); cols.pack(fill="x")
         cols.columnconfigure(0, weight=1); cols.columnconfigure(1, weight=1)
@@ -1695,18 +1696,20 @@ class App(tk.Tk):
                 ("[v4]",C["v4"],"Antag."),("[v5]",C["v5"],"Narr.est.")])
         tg(lc, [("[v6]",C["v6"],"->V1"),("[v7]",C["v7"],"->V1")])
 
-        sl(lc, "EMOZIONI")
+        sl(lc, "EMOZIONI POETICHE / TEATRALI")
         br2 = tk.Frame(lc, bg=C["surface"]); br2.pack(fill="x", pady=(0,4))
         for emo in ["solenne","estatico","malinconico","vibrante","intimo"]:
             tk.Label(br2, text=" {} ".format(emo), font=FS, fg="#fff",
                      bg=EMO_C.get(emo, C["text_dim"]), padx=4, pady=2).pack(side="left", padx=2, pady=2)
+
+        sl(lc, "EMOZIONI STANDARD")
         br3 = tk.Frame(lc, bg=C["surface"]); br3.pack(fill="x", pady=(0,10))
         for emo in ["calmo","appassionato","arrabbiato","triste","ironico",
                     "sussurrato","riflessivo","deciso","preoccupato","gentile","serio"]:
             tk.Label(br3, text=" {} ".format(emo), font=FS, fg="#fff",
                      bg=EMO_C.get(emo, C["text_dim"]), padx=4, pady=2).pack(side="left", padx=2, pady=2)
 
-        sl(lc, "PAUSE INLINE (durate originali)")
+        sl(lc, "PAUSE STANDARD")
         fp = tk.Frame(lc, bg=C["surface"]); fp.pack(fill="x", pady=(0,4))
         for ci, (tag, col, desc) in enumerate([
             ("[p1]","#4a9080","~0.18s\nvirgola"),
@@ -1739,6 +1742,8 @@ class App(tk.Tk):
                      bg=C["surface2"], pady=4, padx=2).pack()
             tk.Label(cell, text=desc, font=FS, fg=C["text_dim"],
                      bg=C["surface2"], padx=2, pady=2, justify="center").pack()
+        tk.Label(rc, text="  Poesia: PAUSE_SCALE 1.45x -> tutte le pause piu lunghe",
+                 font=FS, fg=C["style_poesia"], bg=C["surface"], pady=3, anchor="w").pack(fill="x")
 
         sl(rc, "ENFASI")
         tg(rc, [("[e1]","#e67e22","Leggera\n+0.10"),("[e2]","#e84357","Forte\n+0.25"),
@@ -1762,49 +1767,48 @@ class App(tk.Tk):
             tk.Label(cell, text=desc, font=FS, fg=C["text_dim"],
                      bg=C["surface2"], padx=1, pady=2, justify="center").pack()
 
-        sl(rc, "Pulizia testo automatica v3.0")
+        sl(rc, "Pulizia testo automatica v2.9")
         cleanup_info = tk.Frame(rc, bg=C["surface2"], highlightthickness=1,
                                 highlightbackground=C["success"], padx=10, pady=8)
         cleanup_info.pack(fill="x", pady=(0,8))
         cleanup_lines = [
-            # --- ACCAPO come pause naturali ---
-            ("↵",        "→ virgola+\\n   (1 invio: respiro breve, frase continua)"),
-            ("↵↵",       "→ punto+\\n     (2 invii: fine frase, pausa media)"),
-            ("↵↵↵",      "→ punto+\\n\\n  (3+ invii: nuovo pensiero, riga vuota)"),
-            # --- Due punti (NUOVO v3.0) ---
-            ("testo:",   "→ testo.   (due punti → punto, pausa naturale)"),
-            ("15:30",    "→ 15:30    (orari/numeri: invariati)"),
-            # --- Punteggiatura ---
-            ("...",      "→ .   (tre puntini → punto singolo)"),
-            ("…",        "→ .   (ellipsis unicode)"),
-            ("— –",      "→ ,   (trattini em/en)"),
-            ("--",       "→ ,   (doppio trattino)"),
-            ("a - b",    "→ a, b  (trattino isolato tra parole)"),
-            (";",        "→ ,   (punto e virgola)"),
-            ("!!! ???",  "→ ! ?  (punteggiatura multipla)"),
-            # --- Apostrofo (FIX v3.0) ---
-            ("l\u2019anima", "→ l'anima  (apostrofo curvo Word/iOS → dritto)"),
-            ("l`anima",  "→ l'anima  (backtick usato come apostrofo)"),
-            # --- Simboli ---
-            ("€ $ £",    "→ euro dollari sterline"),
-            ("%",        "→ percento"),
-            ("&",        "→ e"),
-            ("#5",       "→ numero 5"),
-            ("× ÷",      "→ per / diviso"),
-            ("½ ¼ ¾",    "→ mezzo un quarto tre quarti"),
-            ("37°C",     "→ 37 gradi"),
-            ("1° 2°",    "→ primo secondo"),
-            # --- Abbreviazioni ---
-            ("dott.",    "→ dottor"),
-            ("sig.",     "→ signor"),
-            ("prof.",    "→ professore"),
-            ("ecc.",     "→ eccetera"),
-            ("km",       "→ chilometri"),
-            # --- Testo ---
-            ("(testo)",  "→ , testo,  (parentesi → virgole)"),
-            ("*testo*",  "→ testo  (markdown rimosso)"),
-            ("a/b",      "→ a o b  (barra tra parole)"),
-            ("CIA",      "→ Cia  (ALLCAPS → Prima lettera)"),
+            # accapo
+            ("↵",       "→ [p1] pausa breve (1 invio)"),
+            ("↵↵",      "→ [p2] pausa media (2 invii)"),
+            ("↵↵↵",     "→ [b]  pausa lunga (3+ invii)"),
+            # punteggiatura
+            ("...",     "→ .  (punto singolo)"),
+            ("…",       "→ .  (ellipsis unicode)"),
+            ("— –",     "→ ,  (trattini em/en)"),
+            ("--",      "→ ,  (doppio trattino)"),
+            ("a - b",   "→ a, b (trattino isolato)"),
+            (";",       "→ ,  (punto e virgola)"),
+            ("!!! ??",  "→ ! ? (punteggiatura mult.)"),
+            # simboli
+            ("€ $ £",   "→ euro dollari sterline"),
+            ("%",       "→ percento"),
+            ("&",       "→ e"),
+            ("#5",      "→ numero 5"),
+            ("×  ÷",    "→ per / diviso"),
+            ("±",       "→ piu o meno"),
+            ("½ ¼ ¾",   "→ mezzo un quarto tre quarti"),
+            # gradi/ordinali
+            ("37°C",    "→ 37 gradi"),
+            ("1° 2°",   "→ primo secondo"),
+            # abbreviazioni
+            ("dott.",   "→ dottor"),
+            ("sig.",    "→ signor"),
+            ("prof.",   "→ professore"),
+            ("ecc.",    "→ eccetera"),
+            ("km",      "→ chilometri"),
+            # testo
+            (" (testo)","→ , testo, (parentesi)"),
+            ("*testo*",  "→ testo (markdown)"),
+            ("a/b",     "→ a o b (barra)"),
+            # maiuscole
+            ('" "',     '→ " (virgolette tipogr.)'),
+            ("CIA",     "→ Cia (ALLCAPS)"),
+            ("À È",     "→ à è (accenti maiusc.)"),
         ]
         for tag_txt, desc_txt in cleanup_lines:
             row = tk.Frame(cleanup_info, bg=C["surface2"]); row.pack(fill="x", pady=1)
@@ -1814,17 +1818,17 @@ class App(tk.Tk):
                      bg=C["surface2"], anchor="w").pack(side="left")
 
         tk.Label(inner,
-                 text="v3.0: Pause Naturali — [p1][p2][b]... → virgole/punti+newline per Chatterbox.\n"
-                      "Accapo → pause (↵=respiro  ↵↵=fine frase  ↵↵↵=nuovo pensiero).\n"
-                      "Due punti → punto. Apostrofo curvo Word/iOS → corretto. Simboli e abbreviazioni IT convertiti.",
-                 font=FS, fg=C["natural"], bg=C["surface"], pady=10, justify="left", anchor="w"
+                 text="v2.9: Accapo → pause automatiche (↵=[p1]  ↵↵=[p2]  ↵↵↵=[b]). "
+                      "Simboli €%&×°½ convertiti. Abbreviazioni IT espanse. "
+                      "Parentesi e markdown rimossi. ; → virgola.",
+                 font=FS, fg=C["success"], bg=C["surface"], pady=10, justify="left", anchor="w"
                  ).pack(fill="x", pady=(12,0))
 
     def _footer(self, r):
         ft = tk.Frame(r, bg=C["bg"], pady=20); ft.pack(fill="x")
         tk.Label(ft,
-                 text="2026 (c) ChatterText v3.0 by Gerardo D'Orrico  --  "
-                      "Pause Naturali | 4 Stili | Tag Poetici | Post-proc Audio | 7 Voci | Pulizia testo avanzata",
+                 text="2026 (c) ChatterText v2.9 by Gerardo D'Orrico  --  "
+                      "4 Stili | Tag Poetici | Post-proc Audio | 7 Voci | Pulizia testo avanzata",
                  font=FS, fg=C["text_dim"], bg=C["bg"]).pack()
 
     # ---- DEVICE ----
@@ -1847,10 +1851,15 @@ class App(tk.Tk):
         has_t = bool(re.search(r"\[inizio\]", raw, re.IGNORECASE))
 
         if has_t:
+            # Testo già strutturato con [inizio]/[fine]: normalizza solo il contenuto
             norm = re.sub(r"\[inizio\]([\s\S]*?)\[fine\]",
                           lambda m: "[inizio]" + normalize_text(m.group(1)) + "[fine]",
                           raw, flags=re.IGNORECASE)
         else:
+            # Testo libero:
+            #   1. Converti accapo in pause PRIMA di normalizzare
+            #      (normalize_text rimuoverebbe i \n prima che diventino tag)
+            #   2. Poi normalizza il testo risultante
             with_pauses = newlines_to_pauses(raw)
             norm = normalize_text(with_pauses)
 
@@ -1869,15 +1878,8 @@ class App(tk.Tk):
         if pc:  pts.append("{} pause".format(pc))
         if enc: pts.append("{} enfasi".format(enc))
         if jc:  pts.append("{} giunzioni".format(jc))
-
-        # Mostra anteprima pause naturali se attive
-        np_active = self.vnatpauses.get()
-        if np_active and pc > 0:
-            pts.append("→ Pause Naturali ON")
-
         self.tag_lbl.config(text="  ".join(pts) if pts else "Modalita automatica",
-                            fg=C["natural"] if np_active and pc>0 else
-                               (C["success"] if pts else C["warning"]))
+                            fg=C["success"] if pts else C["warning"])
         self.err_box.config(state="normal"); self.err_box.delete("1.0","end")
         if errs:
             for et, msg in errs:
@@ -1941,37 +1943,17 @@ class App(tk.Tk):
                 jcol = JOIN_BADGE_C.get(jn, C["text_dim"])
                 jfg = "#000" if jn == "para" else "#fff"
                 tk.Label(hdr, text=" {} ".format(jt), font=FS, fg=jfg, bg=jcol, padx=5, pady=2).pack(side="left", padx=1)
-            # Badge pause naturali attive
-            if self.vnatpauses.get() and pauses:
-                tk.Label(hdr, text=" 🎙NP ", font=FS, fg="#000",
-                         bg=C["natural"], padx=4, pady=2).pack(side="left", padx=1)
-
-            # Anteprima testo naturale su hover (info nel footer card)
             inf = tk.Frame(hdr, bg=C["hdr_bg"]); inf.pack(side="right")
             tk.Label(inf, text="{} par. {} car.".format(words,chars), font=FS,
                      fg=C["text_dim"], bg=C["hdr_bg"]).pack(side="left", padx=8)
             tk.Label(inf, text=stxt, font=FS, fg=sc, bg=C["hdr_bg"]).pack(side="left")
             self.chunk_vars.append(tk.StringVar(value=chunk))
             tf = tk.Frame(card, bg=C["chunk_bg"], padx=8, pady=6); tf.pack(fill="x")
-            ta_w = tk.Text(tf, height=4, bg=C["surface2"], fg=C["text"], font=FM, relief="flat", bd=0,
+            ta = tk.Text(tf, height=4, bg=C["surface2"], fg=C["text"], font=FM, relief="flat", bd=0,
                          wrap="word", insertbackground=C["accent"],
                          highlightthickness=1, highlightbackground=C["border"])
-            ta_w.insert("1.0", chunk); ta_w.pack(fill="x")
-            ta_w.bind("<KeyRelease>", lambda e, t=ta_w, ix=i: self._edit(t, ix))
-
-            # Anteprima Pause Naturali sotto il chunk
-            if self.vnatpauses.get() and pauses:
-                preview_txt = pauses_to_natural_text(cl)
-                if preview_txt != cl:
-                    pf2 = tk.Frame(card, bg="#0a1a0a", padx=8, pady=4); pf2.pack(fill="x")
-                    tk.Label(pf2, text="🎙 Testo a Chatterbox:", font=FS,
-                             fg=C["natural"], bg="#0a1a0a").pack(anchor="w")
-                    preview_lines = preview_txt[:200].split('\n')
-                    for ln in preview_lines[:6]:
-                        if ln.strip():
-                            tk.Label(pf2, text="  │ "+ln.strip()[:80], font=("Courier New",8),
-                                     fg="#a0d0c0", bg="#0a1a0a", anchor="w").pack(fill="x")
-
+            ta.insert("1.0", chunk); ta.pack(fill="x")
+            ta.bind("<KeyRelease>", lambda e, t=ta, ix=i: self._edit(t, ix))
             af = tk.Frame(card, bg=C["chunk_bg"], padx=8, pady=6); af.pack(fill="x")
             sb_btn(af, "Copia", lambda ix=i: self._copy_c(ix)).pack(side="left", padx=(0,6))
             sb_btn(af, "Dividi", lambda ix=i: self._split(ix), color=C["warning"]).pack(side="left", padx=(0,6))
@@ -2022,8 +2004,7 @@ class App(tk.Tk):
             reading_style=style_key,
             noise_gate_db=ng, rms_target_db=rms, trim_threshold_db=trim,
             pause_scale=pause_scale,
-            aggressive_clean=self.vaggclean.get(),
-            natural_pauses=self.vnatpauses.get()
+            aggressive_clean=self.vaggclean.get()
         )
 
     def save_script(self):
@@ -2047,10 +2028,9 @@ class App(tk.Tk):
         self.vdevl.set("GPU CUDA" if dm=="cuda" else ("CPU" if dm=="cpu" else "Auto-detect..."))
         self.log.config(state="normal"); self.log.delete("1.0","end")
         style_lbl = READING_STYLES.get(self.vreadstyle.get(), {}).get("label","?")
-        np_lbl = "Pause Naturali: ATTIVE" if self.vnatpauses.get() else "Pause Naturali: disattive"
-        self.log.insert("end", "Avvio: {}\n Stile: {}  |  {}\n Cartella: {}\n".format(
-            sf2, style_lbl, np_lbl, dest))
+        self.log.insert("end", "Avvio: {}\n Stile: {}\n Cartella: {}\n".format(sf2, style_lbl, dest))
         self.log.config(state="disabled")
+        # Abilita il tasto Stop (che ora è in _ctrl_sec)
         self.stopbtn.config(state="normal")
         self._t0 = time.time()
         def _run():
@@ -2114,6 +2094,7 @@ class App(tk.Tk):
         for v in (self.vwords, self.vchars, self.vchunks, self.verrs): v.set("0")
         self.vcc.set("0 / 10000")
         self.stats.pack_forget(); self.chunksec.pack_forget(); self.logsec.pack_forget()
+        # Disabilita Stop quando si cancella tutto
         self.stopbtn.config(state="disabled")
         for w in self.cbox.winfo_children(): w.destroy()
 
