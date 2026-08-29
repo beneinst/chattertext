@@ -1935,23 +1935,7 @@ class App(tk.Tk):
     # ---- DEVICE ----
     def _detect_device(self):
         def _d():
-            py = self._chatterbox_python()
-            probe = (
-                "import torch; "
-                "print('CUDA|{}|{}|{}'.format(torch.cuda.is_available(), "
-                "torch.cuda.get_device_name(0) if torch.cuda.is_available() else '', "
-                "torch.cuda.get_device_properties(0).total_memory//(1024**3) if torch.cuda.is_available() else 0))"
-            )
-            try:
-                result = subprocess.run([py, "-c", probe], capture_output=True, text=True,
-                                        encoding="utf-8", errors="replace", timeout=20)
-                parts = result.stdout.strip().split("|")
-                if result.returncode == 0 and len(parts) == 4 and parts[1] == "True":
-                    dev, info = "cuda", "GPU: {} ({}GB VRAM)".format(parts[2], parts[3])
-                else:
-                    dev, info = "cpu", "CPU: CUDA non disponibile nell'ambiente Chatterbox"
-            except Exception:
-                dev, info = "cpu", "CPU: impossibile verificare PyTorch nell'ambiente Chatterbox"
+            dev, info = detect_device()
             col = C["gpu"] if dev == "cuda" else C["cpu"]
             self.after(0, lambda: self._set_badge(("GPU " if dev=="cuda" else "CPU ")+info, col))
         threading.Thread(target=_d, daemon=True).start()
@@ -1974,13 +1958,7 @@ class App(tk.Tk):
         ]
         for candidate in candidates:
             if candidate.exists():
-                try:
-                    check = subprocess.run([str(candidate), "-c", "import sys; print(sys.executable)"],
-                                           capture_output=True, timeout=10)
-                    if check.returncode == 0:
-                        return str(candidate)
-                except Exception:
-                    continue
+                return str(candidate)
         return sys.executable
 
     # ---- PROCESS ----

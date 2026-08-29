@@ -1,4 +1,4 @@
-# Script generato da ChatterText v3.0
+# Script generato da ChatterText v3.0 + Chatterbox Multilingual V3
 # Stile: narrativa  |  Pause Naturali: True  |  Noise gate: -50.0dB
 # RMS target: -18.0dB  |  Pause scale: 1.00x  |  Pulizia aggressiva: False
 import os,re,sys,random,torch,torchaudio as ta,pathlib,time
@@ -18,19 +18,27 @@ def _sl(*a,**k):
     return _olt(*a,**k)
 torch.load=_sl
 from chatterbox.mtl_tts import ChatterboxMultilingualTTS
-print('Caricamento modello...')
-model=ChatterboxMultilingualTTS.from_pretrained(device=DEVICE.type)
+print('Caricamento Chatterbox Multilingual V3...')
+print('Al primo avvio il modello viene scaricato: l'operazione puo richiedere alcuni minuti.')
+try:
+    model=ChatterboxMultilingualTTS.from_pretrained(device=DEVICE.type,t3_model='v3')
+except TypeError:
+    print('ERRORE V3: Chatterbox installato non supporta Multilingual V3. Aggiorna chatterbox-tts nel venv_chatterbox.')
+    exit(2)
+except Exception as e:
+    print('ERRORE V3: impossibile caricare Multilingual V3: {}'.format(e))
+    exit(2)
 print('Modello su {}!'.format(DEVICE.type.upper()))
 chunks=[
-  "iscrìviti al canale [p1]. [p1]. [p1]. [p1]."
+  "efwe"
 ]
-AUDIO_V1="2.Voci/1OPier.wav"
-AUDIO_V2="2.Voci/1OPier.wav"
-AUDIO_V3="2.Voci/1OPier.wav"
-AUDIO_V4="2.Voci/1OPier.wav"
-AUDIO_V5="2.Voci/1OPier.wav"
-AUDIO_V6="2.Voci/1OPier.wav"
-AUDIO_V7="2.Voci/1OPier.wav"
+AUDIO_V1="2.Voci/1Opier.wav"
+AUDIO_V2="2.Voci/1Opier.wav"
+AUDIO_V3="2.Voci/1Opier.wav"
+AUDIO_V4="2.Voci/1Opier.wav"
+AUDIO_V5="2.Voci/1Opier.wav"
+AUDIO_V6="2.Voci/1Opier.wav"
+AUDIO_V7="2.Voci/1Opier.wav"
 HAS2=False
 HAS3=False
 HAS4=False
@@ -153,7 +161,11 @@ EPRESET={
         "min_p": 0.22
     }
 }
-DEF_P={'exaggeration':0.62,'cfg_weight':0.7,'temperature':0.58,'top_p':0.75,'min_p':0.15}
+DEF_P={'exaggeration':0.5,'cfg_weight':0.58,'temperature':0.6,'top_p':1.0,'min_p':0.05}
+SAMPLER_TOP_P=1.0
+SAMPLER_MIN_P=0.05
+REPETITION_PENALTY=1.2
+SEED=0
 PAUSE_SCALE=1.0
 NOISE_GATE_DB=-50.0
 RMS_TARGET_DB=-18.0
@@ -253,11 +265,14 @@ def pc(chunk):
     return si_meta(chunk),'v1',None,ps,tp,ek,jk
 def pp(emo,ek=None):
     p=EPRESET[emo].copy() if emo and emo in EPRESET else DEF_P.copy()
-    p.setdefault('top_p',0.75); p.setdefault('min_p',0.15)
+    p['top_p']=SAMPLER_TOP_P; p['min_p']=SAMPLER_MIN_P
     if ek and ek in EP:
         p['exaggeration']=min(1.0,p['exaggeration']+EP[ek]['exaggeration_delta'])
         p['cfg_weight']=max(0.1,p['cfg_weight']+EP[ek]['cfg_weight_delta'])
     return p
+if SEED:
+    random.seed(SEED); torch.manual_seed(SEED)
+    if torch.cuda.is_available(): torch.cuda.manual_seed_all(SEED)
 tc=[pc(c) for c in chunks]
 def noise_gate(wav, sr, gate_db=NOISE_GATE_DB, hpz=80, attack_ms=8, release_ms=60):
     thr=10**(gate_db/20)
@@ -285,16 +300,18 @@ def rms_normalize(wav, target_db=RMS_TARGET_DB):
     return wav.clamp(-0.98, 0.98)
 def declick(wav, sr, window_ms=3):
     w=int(sr*window_ms/1000)
-    if w<2 or wav.shape[-1]<w*2: return wav
+    if w%2==0: w+=1
+    if w<3 or wav.shape[-1]<w*2: return wav
+    n=wav.shape[-1]
     kern=torch.ones(1,1,w)/w
-    smoothed=torch.nn.functional.conv1d(wav.float().unsqueeze(0), kern, padding=w//2).squeeze(0)
+    smoothed=torch.nn.functional.conv1d(wav.float().unsqueeze(0), kern, padding=w//2).squeeze(0)[...,:n]
     diff=torch.abs(wav-smoothed)
     thr=diff.mean()*3.0
     mask=(diff>thr).float()
     k2=int(sr*1/1000)+1
     if k2%2==0: k2+=1
-    k2=torch.ones(1,1,k2)/k2
-    mask=torch.nn.functional.conv1d(mask.unsqueeze(0),k2,padding=k2.shape[-1]//2).squeeze(0).clamp(0,1)
+    k2t=torch.ones(1,1,k2)/k2
+    mask=torch.nn.functional.conv1d(mask.unsqueeze(0),k2t,padding=k2t.shape[-1]//2).squeeze(0).clamp(0,1)[...,:n]
     return wav*(1-mask)+smoothed*mask
 def trim_silence(wav, sr, threshold_db=TRIM_DB, pad_ms=30):
     thr=10**(threshold_db/20)
@@ -309,10 +326,40 @@ def apply_fade(wav, sr, fade_ms=14):
     wav[...,:f]*=torch.linspace(0,1,f)
     wav[...,-f:]*=torch.linspace(1,0,f)
     return wav
+import math
+def spectral_balance(wav, sr, presence_gain=2.5, presence_freq=3000, mud_cut_db=-2.5, mud_freq=300):
+    wav=ta.functional.equalizer_biquad(wav, sr, center_freq=presence_freq, gain=presence_gain, Q=0.8)
+    wav=ta.functional.equalizer_biquad(wav, sr, center_freq=mud_freq, gain=mud_cut_db, Q=0.8)
+    return wav
+def gentle_compressor(wav, sr, threshold_db=-20, ratio=2.5, attack_ms=8, release_ms=120, makeup_db=2.5, block_ms=10):
+    if wav.dim()==1: wav=wav.unsqueeze(0)
+    thr=10**(threshold_db/20)
+    block=max(1,int(sr*block_ms/1000))
+    absw=torch.abs(wav[0]); n=absw.shape[0]
+    pad=(-n)%block
+    if pad: absw=torch.nn.functional.pad(absw,(0,pad))
+    blocks=absw.view(-1,block)
+    brms=torch.sqrt(torch.mean(blocks**2,dim=1)+1e-9)
+    att=math.exp(-block_ms/attack_ms); rel=math.exp(-block_ms/release_ms)
+    env=torch.zeros_like(brms); level=0.0
+    for i in range(brms.shape[0]):
+        v=brms[i].item()
+        level=att*level+(1-att)*v if v>level else rel*level+(1-rel)*v
+        env[i]=level
+    gain=torch.ones_like(env)
+    over=env>thr
+    gain[over]=(thr+(env[over]-thr)/ratio)/(env[over]+1e-8)
+    gs=gain.repeat_interleave(block)[:n]
+    if gs.shape[0]<n: gs=torch.nn.functional.pad(gs,(0,n-gs.shape[0]))
+    makeup=10**(makeup_db/20)
+    out=wav.clone(); out[0]=out[0]*gs*makeup
+    return out.clamp(-0.98,0.98)
 def full_process(wav, sr):
     wav=noise_gate(wav, sr)
     if AGGRESSIVE_CLEAN: wav=declick(wav, sr)
     wav=trim_silence(wav, sr)
+    wav=spectral_balance(wav, sr)
+    wav=gentle_compressor(wav, sr)
     wav=apply_fade(wav, sr)
     wav=rms_normalize(wav)
     return wav
@@ -368,25 +415,26 @@ for i,(txt,vo,em,ps,tp,ek,jk) in enumerate(tc):
     elif vo=='v2' and HAS2: vp=AUDIO_V2
     else:                   vp=AUDIO_V1
     p=pp(em,ek); ok=False
-    try:
-        wav=model.generate(tts_txt,language_id='it',audio_prompt_path=vp,
-            exaggeration=p['exaggeration'],cfg_weight=p['cfg_weight'],
-            temperature=p['temperature'],min_p=p['min_p'],top_p=p['top_p'])
-        if DEVICE.type=='cuda': wav=wav.cpu()
-        wav=full_process(wav, model.sr)
-        if tp>0:
-            sil=torch.zeros((wav.shape[0],int(model.sr*tp)))
-            wav=torch.cat([wav,sil],dim=-1)
-        segs.append(wav); ok=True; print('   OK!')
-    except Exception as e: print('   ERR:{} retry...'.format(e))
-    if not ok:
+    attempts=[dict(p), dict(exaggeration=0.0,cfg_weight=0.25,temperature=0.22,min_p=0.20,top_p=0.65), dict(exaggeration=0.0,cfg_weight=0.30,temperature=0.15,min_p=0.25,top_p=0.60)]
+    last_err=None
+    for attempt_i,ap in enumerate(attempts):
         try:
             wav=model.generate(tts_txt,language_id='it',audio_prompt_path=vp,
-                exaggeration=0.0,cfg_weight=0.25,temperature=0.22,min_p=0.20,top_p=0.65)
+                exaggeration=ap['exaggeration'],cfg_weight=ap['cfg_weight'],
+                temperature=ap['temperature'],min_p=ap['min_p'],top_p=ap['top_p'],repetition_penalty=REPETITION_PENALTY)
             if DEVICE.type=='cuda': wav=wav.cpu()
             wav=full_process(wav, model.sr)
-            segs.append(wav); print('   Recuperato!')
-        except Exception as e2: print(f'   FALLITO:{e2}'); fail.append(i)
+            if tp>0:
+                sil=torch.zeros((wav.shape[0],int(model.sr*tp)))
+                wav=torch.cat([wav,sil],dim=-1)
+            segs.append(wav); ok=True
+            print('   OK!' if attempt_i==0 else '   Recuperato al tentativo {}!'.format(attempt_i+1))
+            break
+        except Exception as e:
+            last_err=e
+            print('   ERR tentativo {}: {} ...'.format(attempt_i+1, e))
+    if not ok:
+        print('   FALLITO:{}'.format(last_err)); fail.append(i)
 if not segs: print('Nessun audio.'); exit(1)
 od=pathlib.Path('1.Output'); od.mkdir(exist_ok=True)
 num=len(list(od.glob('audiolibro_*.wav')))+1
