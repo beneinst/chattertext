@@ -1,7 +1,7 @@
 # Script generato da ChatterText v3.0 + Chatterbox Multilingual V3
 # Stile: narrativa  |  Pause Naturali: True  |  Noise gate: -50.0dB
 # RMS target: -18.0dB  |  Pause scale: 1.00x  |  Pulizia aggressiva: False
-import os,re,sys,random,torch,torchaudio as ta,pathlib,time
+import os,re,sys,random,inspect,torch,torchaudio as ta,pathlib,time
 if sys.platform=='win32':
     import io
     sys.stdout=io.TextIOWrapper(sys.stdout.buffer,encoding='utf-8',errors='replace')
@@ -19,18 +19,18 @@ def _sl(*a,**k):
 torch.load=_sl
 from chatterbox.mtl_tts import ChatterboxMultilingualTTS
 print('Caricamento Chatterbox Multilingual V3...')
-print('Al primo avvio il modello viene scaricato: l'operazione puo richiedere alcuni minuti.')
+print("Al primo avvio il modello viene scaricato: l'operazione puo richiedere alcuni minuti.")
+if 't3_model' not in inspect.signature(ChatterboxMultilingualTTS.from_pretrained).parameters:
+    print('ERRORE V3: la libreria Chatterbox installata e troppo vecchia e non supporta Multilingual V3.')
+    exit(2)
 try:
     model=ChatterboxMultilingualTTS.from_pretrained(device=DEVICE.type,t3_model='v3')
-except TypeError:
-    print('ERRORE V3: Chatterbox installato non supporta Multilingual V3. Aggiorna chatterbox-tts nel venv_chatterbox.')
-    exit(2)
 except Exception as e:
     print('ERRORE V3: impossibile caricare Multilingual V3: {}'.format(e))
     exit(2)
 print('Modello su {}!'.format(DEVICE.type.upper()))
 chunks=[
-  "efwe"
+  "frwefwe [p1] wef [p1] w [p1] ef [p1] we [p1] fw [p1] e [p1] fw [p1] ef [p1] wefwefwef [p1] wefwef [p1] wef [p1] wef"
 ]
 AUDIO_V1="2.Voci/1Opier.wav"
 AUDIO_V2="2.Voci/1Opier.wav"
@@ -161,9 +161,9 @@ EPRESET={
         "min_p": 0.22
     }
 }
-DEF_P={'exaggeration':0.5,'cfg_weight':0.58,'temperature':0.6,'top_p':1.0,'min_p':0.05}
-SAMPLER_TOP_P=1.0
-SAMPLER_MIN_P=0.05
+DEF_P={'exaggeration':0.5,'cfg_weight':0.58,'temperature':0.6,'top_p':0.75,'min_p':0.15}
+SAMPLER_TOP_P=0.75
+SAMPLER_MIN_P=0.15
 REPETITION_PENALTY=1.2
 SEED=0
 PAUSE_SCALE=1.0
