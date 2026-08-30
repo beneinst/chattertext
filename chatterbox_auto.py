@@ -1,6 +1,6 @@
 # Script generato da ChatterText v3.0 + Chatterbox Multilingual V3
-# Stile: narrativa  |  Pause Naturali: True  |  Noise gate: -50.0dB
-# RMS target: -18.0dB  |  Pause scale: 1.00x  |  Pulizia aggressiva: False
+# Stile: teatro  |  Pause Naturali: True  |  Noise gate: -46.0dB
+# RMS target: -15.0dB  |  Pause scale: 1.20x  |  Pulizia aggressiva: False
 import os,re,sys,random,inspect,torch,torchaudio as ta,pathlib,time
 if sys.platform=='win32':
     import io
@@ -30,15 +30,18 @@ except Exception as e:
     exit(2)
 print('Modello su {}!'.format(DEVICE.type.upper()))
 chunks=[
-  "frwefwe [p1] wef [p1] w [p1] ef [p1] we [p1] fw [p1] e [p1] fw [p1] ef [p1] wefwefwef [p1] wefwef [p1] wef [p1] wef"
+  "Salve, sono Gerardo D'orrico, nato il sei marzo mille novecento settanta sei a Cosenza, una meravigliosa città nel cuore della regione Calabria, Italia.",
+  "Fin da giovane, ho nutrito una profonda passione per l'arte, la scrittura e la tecnologia.  [p1].",
+  "[p1] Dopo aver completato gli studi di maturità, ho intrapreso un percorso accademico presso le università di Arcavàcata e Bologna, dove ho avuto l'opportunità di approfondire le mie conoscenze in diversi ambiti.",
+  "Sebbene non abbia conseguito una laurea, ho sviluppato una solida competenza nell'informatica e mi sono appassionato all'utilizzo di strumenti musicali.  [p1].  [p1].  [p1].  [p1]."
 ]
-AUDIO_V1="2.Voci/1Opier.wav"
-AUDIO_V2="2.Voci/1Opier.wav"
-AUDIO_V3="2.Voci/1Opier.wav"
-AUDIO_V4="2.Voci/1Opier.wav"
-AUDIO_V5="2.Voci/1Opier.wav"
-AUDIO_V6="2.Voci/1Opier.wav"
-AUDIO_V7="2.Voci/1Opier.wav"
+AUDIO_V1="2.Voci/gerardosample1.wav"
+AUDIO_V2="2.Voci/gerardosample1.wav"
+AUDIO_V3="2.Voci/gerardosample1.wav"
+AUDIO_V4="2.Voci/gerardosample1.wav"
+AUDIO_V5="2.Voci/gerardosample1.wav"
+AUDIO_V6="2.Voci/gerardosample1.wav"
+AUDIO_V7="2.Voci/gerardosample1.wav"
 HAS2=False
 HAS3=False
 HAS4=False
@@ -161,15 +164,15 @@ EPRESET={
         "min_p": 0.22
     }
 }
-DEF_P={'exaggeration':0.5,'cfg_weight':0.58,'temperature':0.6,'top_p':0.75,'min_p':0.15}
-SAMPLER_TOP_P=0.75
-SAMPLER_MIN_P=0.15
+DEF_P={'exaggeration':0.78,'cfg_weight':0.38,'temperature':0.72,'top_p':0.9,'min_p':0.05}
+SAMPLER_TOP_P=0.9
+SAMPLER_MIN_P=0.05
 REPETITION_PENALTY=1.2
 SEED=0
-PAUSE_SCALE=1.0
-NOISE_GATE_DB=-50.0
-RMS_TARGET_DB=-18.0
-TRIM_DB=-45.0
+PAUSE_SCALE=1.2
+NOISE_GATE_DB=-46.0
+RMS_TARGET_DB=-15.0
+TRIM_DB=-40.0
 AGGRESSIVE_CLEAN=False
 NATURAL_PAUSES=True
 
