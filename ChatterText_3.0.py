@@ -61,7 +61,7 @@ HIDDEN_SUBPROCESS = _hidden_subprocess_kwargs()
 # PALETTE
 # =========================================================
 C = {
-    "bg":       "#292929", "surface":  "#303030", "surface2": "#383838",
+    "bg":       "#25221b", "surface":  "#303030", "surface2": "#383838",
     "border":   "#4a4a4a", "accent":   "#81ecec", "accent2":  "#4a90e2",
     "text":     "#ededed", "text_dim": "#a0a5a6", "success":  "#00b894",
     "warning":  "#fdcb6e", "danger":   "#e84357", "v1":       "#3498db",
@@ -1620,12 +1620,13 @@ class App(tk.Tk):
         canvas.pack(side="left", fill="both", expand=True); scr.pack(side="right", fill="y")
         self.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(-1*(e.delta//120), "units"))
         r = self.sf
-        self._hdr(r); self._dev_sec(r); self._style_sec(r)
+        self._hdr(r); self._style_sec(r)
         self._inp_sec(r)
+        self._voices_sec(r)
         self._param_sec(r)
         self._action_bar(r)
-        self._voices_sec(r)
         self._stats_sec(r); self._log_sec(r); self._chunks_sec(r)
+        self._dev_sec(r)
         self._footer(r)
 
     def _action_bar(self, r):
@@ -1661,18 +1662,18 @@ class App(tk.Tk):
         return v
 
     def _hdr(self, r):
-        h = tk.Frame(r, bg="#0a1628", pady=24); h.pack(fill="x")
-        title_row = tk.Frame(h, bg="#0a1628"); title_row.pack(fill="x", padx=28)
+        h = tk.Frame(r, bg="#332f2c", pady=24); h.pack(fill="x")
+        title_row = tk.Frame(h, bg="#332f2c"); title_row.pack(fill="x", padx=28)
         if self._app_icon is not None:
-            tk.Label(title_row, image=self._app_icon, bg="#0a1628").pack(side="left", padx=(0,12))
-        title_text = tk.Frame(title_row, bg="#0a1628"); title_text.pack(side="left")
-        tk.Label(title_text, text="ChatterText", font=FH1, fg="#fff", bg="#0a1628",
+            tk.Label(title_row, image=self._app_icon, bg="#332f2c").pack(side="left", padx=(0,12))
+        title_text = tk.Frame(title_row, bg="#332f2c"); title_text.pack(side="left")
+        tk.Label(title_text, text="ChatterText", font=FH1, fg="#fff", bg="#332f2c",
                  anchor="w").pack(fill="x")
         tk.Label(title_text, text="Analizza e prepara il testo per Chatterbox TTS",
-                 font=FB, fg=C["text_dim"], bg="#0a1628", anchor="w").pack(fill="x", pady=(4,0))
+                 font=FB, fg=C["text_dim"], bg="#332f2c", anchor="w").pack(fill="x", pady=(4,0))
         tk.Label(title_text,
                  text="v3.0 + V3  |  Pause Naturali  |  4 Stili  |  Tag Poetici  |  Post-proc Audio  |  7 Voci",
-                 font=FS, fg=C["natural"], bg="#0a1628", anchor="w").pack(fill="x", pady=(2,0))
+                 font=FS, fg=C["natural"], bg="#332f2c", anchor="w").pack(fill="x", pady=(2,0))
 
     def _dev_sec(self, r):
         sec = self._sec(r, "Dispositivo di Calcolo")
