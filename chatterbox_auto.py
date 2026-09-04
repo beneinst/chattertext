@@ -30,15 +30,16 @@ except Exception as e:
     exit(2)
 print('Modello su {}!'.format(DEVICE.type.upper()))
 chunks=[
-  "[V1_ironico]rergwregreg[/V1_ironico] [p1] [V1_deciso]regerger[/V1_deciso]"
+  "Benvenuto all'ascolto di Novelle per un anno, [p1] volume decimo, [p1] il vecchio dio, [p1] di luigi pirandello. [p1]. [p1]. [p1].",
+  "[p1] Benvenuto all'ascolto di Novelle per un anno, [p1] volume decimo, [p1] il vecchio dio, [p1] di luigi pirandello. [p1]. [p1]."
 ]
-AUDIO_V1="2.Voci/1Opier.wav"
-AUDIO_V2="2.Voci/1Opier.wav"
-AUDIO_V3="2.Voci/1Opier.wav"
-AUDIO_V4="2.Voci/1Opier.wav"
-AUDIO_V5="2.Voci/1Opier.wav"
-AUDIO_V6="2.Voci/1Opier.wav"
-AUDIO_V7="2.Voci/1Opier.wav"
+AUDIO_V1="2.Voci/2Raffaellaliuzzo.wav"
+AUDIO_V2="2.Voci/2Raffaellaliuzzo.wav"
+AUDIO_V3="2.Voci/2Raffaellaliuzzo.wav"
+AUDIO_V4="2.Voci/2Raffaellaliuzzo.wav"
+AUDIO_V5="2.Voci/2Raffaellaliuzzo.wav"
+AUDIO_V6="2.Voci/2Raffaellaliuzzo.wav"
+AUDIO_V7="2.Voci/2Raffaellaliuzzo.wav"
 HAS2=False
 HAS3=False
 HAS4=False
@@ -445,8 +446,16 @@ for i,(txt,vo,em,ps,tp,ek,jk) in enumerate(tc):
     if not ok:
         print('   FALLITO:{}'.format(last_err)); fail.append(i)
 if not segs: print('Nessun audio.'); exit(1)
+if fail:
+    print('Generazione annullata: chunk falliti {}'.format([n+1 for n in fail]))
+    print('Nessun file parziale è stato salvato.')
+    exit(1)
 od=pathlib.Path('1.Output'); od.mkdir(exist_ok=True)
-num=len(list(od.glob('audiolibro_*.wav')))+1
+used=[]
+for fp in od.glob('audiolibro_*.wav'):
+    m=re.fullmatch(r'audiolibro_(\d+)\.wav',fp.name,re.IGNORECASE)
+    if m: used.append(int(m.group(1)))
+num=(max(used) if used else 0)+1
 out=od/'audiolibro_{:02d}.wav'.format(num)
 SCENE=[
         "poi" ,"quando" ,"all'improvviso" ,"improvvisamente" ,"in quel momento" ,"mentre" ,"subito dopo" ,"intanto" ,"nel frattempo" ,"a quel punto" ,"alla fine"
@@ -528,10 +537,14 @@ for i,seg in enumerate(segs):
     if fa is None: fa=seg; continue
     jt=jl[i-1]; res=asmb(fa,seg,model.sr,jt)
     if res is None:
-        pau=dyn_pause(chunks[i-1], emo=tc[i-1][2])
-        sil=torch.zeros((seg.shape[0],int(model.sr*pau)))
-        fa=cf(fa,torch.cat([sil,seg],dim=-1),model.sr)
-        js='auto({:.2f}s)'.format(pau)
+        if tc[i-1][4]>0:
+            # La pausa esplicita è già stata aggiunta al segmento precedente.
+            fa=cf(fa,seg,model.sr); js='tag-pausa'
+        else:
+            pau=dyn_pause(chunks[i-1], emo=tc[i-1][2])
+            sil=torch.zeros((seg.shape[0],int(model.sr*pau)))
+            fa=cf(fa,torch.cat([sil,seg],dim=-1),model.sr)
+            js='auto({:.2f}s)'.format(pau)
     else: fa=res; js=jt if jt else 'auto'
     print(f'   -> join {i}: {js}')
 fa=rms_normalize(fa)
