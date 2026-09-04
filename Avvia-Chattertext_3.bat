@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-call venv_chatterbox\Scripts\activate
-start /b pythonw ChatterText_3.0.py > log.txt 2>&1
+start "" /b "%~dp0venv_chatterbox\Scripts\pythonw.exe" "%~dp0ChatterText_3.0.py"
+exit /b

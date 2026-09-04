@@ -1,6 +1,6 @@
 # Script generato da ChatterText v3.0 + Chatterbox Multilingual V3
-# Stile: teatro  |  Pause Naturali: True  |  Noise gate: -46.0dB
-# RMS target: -15.0dB  |  Pause scale: 1.20x  |  Pulizia aggressiva: False
+# Stile: narrativa  |  Pause Naturali: True  |  Noise gate: -50.0dB
+# RMS target: -18.0dB  |  Pause scale: 1.00x  |  Pulizia aggressiva: False
 import os,re,sys,random,inspect,torch,torchaudio as ta,pathlib,time
 if sys.platform=='win32':
     import io
@@ -30,18 +30,15 @@ except Exception as e:
     exit(2)
 print('Modello su {}!'.format(DEVICE.type.upper()))
 chunks=[
-  "Salve, sono Gerardo D'orrico, nato il sei marzo mille novecento settanta sei a Cosenza, una meravigliosa città nel cuore della regione Calabria, Italia.",
-  "Fin da giovane, ho nutrito una profonda passione per l'arte, la scrittura e la tecnologia.  [p1].",
-  "[p1] Dopo aver completato gli studi di maturità, ho intrapreso un percorso accademico presso le università di Arcavàcata e Bologna, dove ho avuto l'opportunità di approfondire le mie conoscenze in diversi ambiti.",
-  "Sebbene non abbia conseguito una laurea, ho sviluppato una solida competenza nell'informatica e mi sono appassionato all'utilizzo di strumenti musicali.  [p1].  [p1].  [p1].  [p1]."
+  "[V1_ironico]rergwregreg[/V1_ironico] [p1] [V1_deciso]regerger[/V1_deciso]"
 ]
-AUDIO_V1="2.Voci/gerardosample1.wav"
-AUDIO_V2="2.Voci/gerardosample1.wav"
-AUDIO_V3="2.Voci/gerardosample1.wav"
-AUDIO_V4="2.Voci/gerardosample1.wav"
-AUDIO_V5="2.Voci/gerardosample1.wav"
-AUDIO_V6="2.Voci/gerardosample1.wav"
-AUDIO_V7="2.Voci/gerardosample1.wav"
+AUDIO_V1="2.Voci/1Opier.wav"
+AUDIO_V2="2.Voci/1Opier.wav"
+AUDIO_V3="2.Voci/1Opier.wav"
+AUDIO_V4="2.Voci/1Opier.wav"
+AUDIO_V5="2.Voci/1Opier.wav"
+AUDIO_V6="2.Voci/1Opier.wav"
+AUDIO_V7="2.Voci/1Opier.wav"
 HAS2=False
 HAS3=False
 HAS4=False
@@ -164,15 +161,16 @@ EPRESET={
         "min_p": 0.22
     }
 }
-DEF_P={'exaggeration':0.78,'cfg_weight':0.38,'temperature':0.72,'top_p':0.9,'min_p':0.05}
-SAMPLER_TOP_P=0.9
-SAMPLER_MIN_P=0.05
+DEF_P={'exaggeration':0.5,'cfg_weight':0.58,'temperature':0.6,'top_p':0.75,'min_p':0.15}
+SAMPLER_TOP_P=0.75
+SAMPLER_MIN_P=0.15
 REPETITION_PENALTY=1.2
 SEED=0
-PAUSE_SCALE=1.2
-NOISE_GATE_DB=-46.0
-RMS_TARGET_DB=-15.0
-TRIM_DB=-40.0
+PAUSE_SCALE=1.0
+PRESET_SCALE=1.0
+NOISE_GATE_DB=-50.0
+RMS_TARGET_DB=-18.0
+TRIM_DB=-45.0
 AGGRESSIVE_CLEAN=False
 NATURAL_PAUSES=True
 
@@ -267,8 +265,16 @@ def pc(chunk):
         return si_meta(cl),'v1',e,ps,tp,ek,jk
     return si_meta(chunk),'v1',None,ps,tp,ek,jk
 def pp(emo,ek=None):
-    p=EPRESET[emo].copy() if emo and emo in EPRESET else DEF_P.copy()
-    p['top_p']=SAMPLER_TOP_P; p['min_p']=SAMPLER_MIN_P
+    if emo and emo in EPRESET:
+        p=EPRESET[emo].copy()
+        # Lo stile amplifica/attenua lo scarto del preset rispetto ai parametri base.
+        for key,lo,hi in [('exaggeration',0.0,2.0),('cfg_weight',0.0,1.0),('temperature',0.05,2.0)]:
+            base=DEF_P[key]; p[key]=max(lo,min(hi,base+(p[key]-base)*PRESET_SCALE))
+        p['top_p']=max(0.0,min(1.0,p['top_p']))
+        p['min_p']=max(0.0,min(1.0,p['min_p']))
+    else:
+        p=DEF_P.copy()
+        p['top_p']=SAMPLER_TOP_P; p['min_p']=SAMPLER_MIN_P
     if ek and ek in EP:
         p['exaggeration']=min(1.0,p['exaggeration']+EP[ek]['exaggeration_delta'])
         p['cfg_weight']=max(0.1,p['cfg_weight']+EP[ek]['cfg_weight_delta'])

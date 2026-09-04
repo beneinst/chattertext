@@ -40,35 +40,18 @@ import tkinter as tk
 from tkinter import scrolledtext, messagebox, filedialog, ttk
 import os, subprocess, threading, sys, re, json, pathlib, time
 
-
-def _hidden_subprocess_kwargs():
-    """Impedisce ai processi figli di aprire una console su Windows."""
-    if sys.platform != "win32":
-        return {}
-
-    startupinfo = subprocess.STARTUPINFO()
-    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    startupinfo.wShowWindow = subprocess.SW_HIDE
-    return {
-        "startupinfo": startupinfo,
-        "creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0),
-    }
-
-
-HIDDEN_SUBPROCESS = _hidden_subprocess_kwargs()
-
 # =========================================================
 # PALETTE
 # =========================================================
 C = {
-    "bg":       "#292929", "surface":  "#303030", "surface2": "#383838",
-    "border":   "#4a4a4a", "accent":   "#81ecec", "accent2":  "#4a90e2",
-    "text":     "#ededed", "text_dim": "#a0a5a6", "success":  "#00b894",
+    "bg":       "#0d0d0d", "surface":  "#131313", "surface2": "#1a1a1a",
+    "border":   "#2a2a2a", "accent":   "#81ecec", "accent2":  "#4a90e2",
+    "text":     "#e0e0e0", "text_dim": "#7f8c8d", "success":  "#00b894",
     "warning":  "#fdcb6e", "danger":   "#e84357", "v1":       "#3498db",
     "v2":       "#e74c3c", "v3":       "#00b894",
     "v4":       "#e67e22", "v5":       "#9b59b6",
     "v6":       "#5d7a8a", "v7":       "#4a4a4a",
-    "chunk_bg": "#2c2c2c", "hdr_bg":   "#333333",
+    "chunk_bg": "#111111", "hdr_bg":   "#181818",
     "gpu":      "#76b900", "cpu":      "#4a90e2",
     "style_narr":   "#3498db",
     "style_poesia": "#9b59b6",
@@ -313,15 +296,6 @@ JOIN_MAP = {
 ALL_JOIN_NAMES = ["join","cont","cambio","cambio3","cambio4","cambio5","cambio6","cambio7",
                   "para","stacco","lungo","scena","dissolvenza"]
 
-QUICK_TAGS = (
-    ["[p1]", "[p2]", "[p3]", "[b]", "[bd]", "[cap]", "[pausa]", "[pausa_lunga]", "[silenzio]"]
-    + ["[verso]", "[strofa]", "[metro]", "[enjambement]", "[cesura]"]
-    + ["[e1]", "[e2]", "[ep]"]
-    + ["[join]", "[cont]", "[cambio]", "[cambio3]", "[cambio4]", "[cambio5]",
-       "[cambio6]", "[cambio7]", "[para]", "[stacco]", "[lungo]", "[scena]", "[dissolvenza]"]
-    + ["[inizio]…[fine]"]
-)
-
 BREATH_MAX_W = 14; BREATH_MAX_C = 80
 CHUNK_MIN_W  = 5;  CHUNK_MIN_C  = 20
 
@@ -541,8 +515,7 @@ def normalize_text(text):
     text = text.replace(':', '.')                            # tutto il resto -> .
     text = text.replace('COLONNUMERO', ':')                  # ripristina XX:XX
     text = text.replace('COLONSLASH', '://')                 # ripristina ://
-    # Mantiene ':' e '/' già protetti/ripristinati in orari, rapporti e URL.
-    text = re.sub(r"[^\w\s.,!?'\":/\-\u00c0-\u00f9]", ' ', text)
+    text = re.sub(r"[^\w\s.,!?'\"\-\u00c0-\u00f9]", ' ', text)
     text = re.sub(r' +([.,!?])', r'\1', text)
     text = re.sub(r'([.,!?]) {2,}', r'\1 ', text)
     text = re.sub(r' {2,}', ' ', text)
@@ -590,28 +563,6 @@ def analyze_text(text):
     caps = re.findall(r"[''`\u00b4]\w*[A-Z]\w*", text)
     if caps:
         errs.append(("info", "Maiuscole dopo apostrofo: " + ", ".join(caps[:3])))
-
-    # Controllo strutturale dei tag voce/emozione.
-    emo = "|".join(ALL_EMO)
-    tag_re = re.compile(r"\[(/?)(v[1-7])(?:_("+emo+r"))?\]", re.IGNORECASE)
-    stack = []
-    for match in tag_re.finditer(text):
-        closing, voice, emotion = match.group(1), match.group(2).lower(), (match.group(3) or "").lower()
-        if not closing:
-            stack.append((voice, emotion, match.group(0)))
-        elif not stack:
-            errs.append(("error", "Tag di chiusura senza apertura: {}".format(match.group(0))))
-        else:
-            open_voice, open_emotion, open_tag = stack.pop()
-            if (voice, emotion) != (open_voice, open_emotion):
-                errs.append(("error", "Tag discordanti: {} chiuso da {}".format(open_tag, match.group(0))))
-    for _, _, open_tag in stack:
-        errs.append(("error", "Tag senza chiusura: {}".format(open_tag)))
-
-    starts = len(re.findall(r"\[inizio\]", text, re.IGNORECASE))
-    ends = len(re.findall(r"\[fine\]", text, re.IGNORECASE))
-    if starts != ends:
-        errs.append(("error", "Blocchi non bilanciati: {} [inizio], {} [fine]".format(starts, ends)))
     return errs
 
 
@@ -620,7 +571,7 @@ def chunk_text(text, min_w, max_w, max_c):
     if tms:
         chunks = []; emo = "|".join(ALL_EMO)
         vpat = re.compile(
-            r"\[(v[1-7])(?:_("+emo+r"))?\]([\s\S]*?)\[/(v[1-7])(?:_("+emo+r"))?\]",
+            r"\[(v1|v2|v3|v4|v5|v6|v7)(?:_(?:"+emo+r"))?\]([\s\S]*?)\[/(?:v1|v2|v3|v4|v5|v6|v7)(?:_(?:"+emo+r"))?\]",
             re.IGNORECASE)
         for m in tms:
             cont = m.group(1).strip()
@@ -628,68 +579,24 @@ def chunk_text(text, min_w, max_w, max_c):
             vml = list(vpat.finditer(cont))
             if vml:
                 for vm in vml:
-                    open_key = (vm.group(1).lower(), (vm.group(2) or "").lower())
-                    close_key = (vm.group(4).lower(), (vm.group(5) or "").lower())
-                    if open_key == close_key and vm.group(3).strip():
-                        chunks.append(vm.group(0).strip())
-                    elif cont:
-                        # Non perde il testo: la discordanza viene segnalata da analyze_text().
-                        chunks.append(cont)
-                        break
+                    ft = vm.group(0).strip()
+                    if vm.group(2).strip(): chunks.append(ft)
             else:
                 if cont: chunks.append(cont)
         return chunks
     paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
     chunks = []
-
-    def split_oversized(piece):
-        words = piece.split()
-        if not words:
-            return []
-        result, buf = [], []
-        for word in words:
-            candidate = " ".join(buf + [word])
-            if buf and (len(candidate.split()) > max_w or len(candidate) > max_c):
-                result.append(" ".join(buf))
-                buf = [word]
-            else:
-                buf.append(word)
-        if buf:
-            result.append(" ".join(buf))
-        return result
-
     for p in paragraphs:
         if len(p) <= max_c and len(p.split()) <= max_w:
             chunks.append(p); continue
-        paragraph_start = len(chunks)
-        # Include anche l'ultima frase priva di punteggiatura finale.
-        sentences = [s.strip() for s in re.findall(r"[^.!?]+(?:[.!?]+|$)", p) if s.strip()]
-        buf = ""
-        for sentence in sentences:
-            pieces = split_oversized(sentence) if (len(sentence) > max_c or len(sentence.split()) > max_w) else [sentence]
-            for fr in pieces:
-                test = (buf+" "+fr).strip() if buf else fr
-                if len(test) > max_c or len(test.split()) > max_w:
-                    if buf.strip(): chunks.append(buf.strip())
-                    buf = fr
-                else:
-                    buf = test
+        sentences = re.findall(r"[^.!?]+[.!?]+", p) or [p]; buf = ""
+        for fr in sentences:
+            test = (buf+" "+fr).strip() if buf else fr
+            if len(test) > max_c or len(test.split()) > max_w:
+                if buf.strip(): chunks.append(buf.strip())
+                buf = fr
+            else: buf = test
         if buf.strip(): chunks.append(buf.strip())
-
-        # Se resta una coda troppo corta, ridistribuisce le parole con il chunk
-        # precedente senza superare i limiti massimi e senza attraversare paragrafi.
-        local = chunks[paragraph_start:]
-        if len(local) >= 2 and len(local[-1].split()) < min_w:
-            words = (local[-2] + " " + local[-1]).split()
-            choices = []
-            for split_at in range(min_w, len(words) - min_w + 1):
-                left, right = " ".join(words[:split_at]), " ".join(words[split_at:])
-                if (len(left.split()) <= max_w and len(right.split()) <= max_w and
-                        len(left) <= max_c and len(right) <= max_c):
-                    choices.append((abs(len(left.split()) - len(right.split())), left, right))
-            if choices:
-                _, left, right = min(choices, key=lambda item: item[0])
-                chunks[-2:] = [left, right]
     return chunks
 
 
@@ -772,91 +679,83 @@ def detect_device():
 # =========================================================
 # PROMPT GUIDA NARRATIVA
 # =========================================================
-GUIDE_PROMPT = '''# PREPARAZIONE FEDELE PER CHATTERTEXT TTS v3.0 — NARRATIVA
+GUIDE_PROMPT = '''# PROMPT PER RISCRITTURA CAPITOLO - ChatterText TTS v3.0 - STILE NARRATIVA
 
-Sei un editor tecnico per la lettura ad alta voce con Chatterbox TTS.
-Devi preparare il testo ricevuto aggiungendo esclusivamente struttura, tag e respiro.
+Sei un editor specializzato nella preparazione di testi per la sintesi vocale con Chatterbox TTS.
+Riscrivi il capitolo applicando il sistema di tag ChatterText v3.0 - STILE NARRATIVA.
 
-## REGOLA ASSOLUTA: LE PAROLE NON SI TOCCANO
-- Non aggiungere, eliminare, sostituire, correggere, parafrasare o riordinare parole.
-- Non riassumere, semplificare, censurare, completare o inventare contenuti.
-- Conserva esattamente nomi, dialoghi, ripetizioni, lessico, tempi verbali e ordine originale.
-- Puoi intervenire soltanto su tag ChatterText, accapo, righe vuote, spazi e
-  punteggiatura strettamente necessaria alla lettura.
-- Se trovi un possibile errore nel testo, lascialo invariato.
+## NOVITA v3.0 - PAUSE NATURALI
+  ChatterText ora converte i tag pausa in punteggiatura + newline reali prima di
+  passare il testo a Chatterbox. Questo sfrutta la respirazione naturale interna
+  del modello. Puoi scrivere anche testo libero senza tag: gli accapo diventano pause.
 
-## FORMATO DELLA RISPOSTA
-- Restituisci soltanto il testo ChatterText pronto da incollare.
-- Non aggiungere introduzioni, commenti, CASTING, spiegazioni o riepiloghi.
-- Non usare Markdown e non racchiudere il risultato in blocchi di codice.
-- Separa ogni blocco con una riga vuota.
-- Ogni blocco deve avere questa struttura esatta:
+## CASTING (opzionale ma consigliato)
+  CASTING:
+  V1 = Narratore
+  V2 = Marco
+  V3 = Elena
+  V4 = Il Dottore   (antagonista)
+  V5 = Voce narrante esterna
+  V6 = Luigi        (personaggio minore)
+  V7 = Anna         (personaggio minore)
 
-[inizio]
-[V1_emozione]
-testo originale con eventuali tag interni
-[/V1_emozione]
-[fine]
+## TAG VOCE (7 voci)
+  [v1]...[/v1]  V1 = Narratore principale
+  [v2]...[/v2]  V2 = Personaggio B / interlocutore
+  [v3]...[/v3]  V3 = Personaggio C / voce interiore
+  [v4]...[/v4]  V4 = Antagonista / voce oscura
+  [v5]...[/v5]  V5 = Narratore esterno / voce onnisciente
+  [v6]...[/v6]  V6 = Personaggio minore (fallback V1 se non configurato)
+  [v7]...[/v7]  V7 = Personaggio minore (fallback V1 se non configurato)
+  Con emozione: [V1_calmo]...[/V1_calmo]
 
-## DIMENSIONE E RESPIRO
-- Crea blocchi semantici di circa 20-35 parole e mai oltre 240 caratteri, quando possibile.
-- Non spezzare nomi propri, locuzioni, citazioni o frasi in punti innaturali.
-- Un blocco corto è accettabile per una battuta breve o un effetto drammatico.
-- Usa gli accapo soltanto tra elementi strutturali; usa i tag per le pause interne.
-- Non mettere virgola o punto immediatamente prima di un tag pausa: il tag genera
-  automaticamente la punteggiatura e il respiro necessari.
+## STATI EMOTIVI
+  calmo | appassionato | arrabbiato | triste | ironico
+  sussurrato | riflessivo | deciso | preoccupato | gentile | serio
+  solenne | estatico | malinconico | vibrante | intimo
 
-## VOCI ED EMOZIONI
-- V1: narratore principale.
-- V2-V7: personaggi o voci differenti, assegnati in modo coerente per tutto il testo.
-- Non inventare personaggi e non cambiare voce allo stesso personaggio.
-- Usa una sola voce e una sola emozione principale per blocco.
-- Formato obbligatorio: [V1_calmo]...[/V1_calmo]. La chiusura deve essere identica.
-- Emozioni disponibili:
-  calmo | appassionato | arrabbiato | triste | ironico | sussurrato |
-  riflessivo | deciso | preoccupato | gentile | serio | solenne |
-  estatico | malinconico | vibrante | intimo
+## PAUSE INLINE - 6 livelli standard
+  [p1] ~0.18s  virgola, inciso breve    -> a Chatterbox: virgola + \\n
+  [p2] ~0.40s  punto normale            -> a Chatterbox: punto   + \\n
+  [p3] ~0.65s  riflessione, domanda     -> a Chatterbox: punto   + \\n\\n
+  [b]  ~1.00s  cambio idea importante   -> a Chatterbox: punto   + \\n\\n
+  [bd] ~1.60s  climax, suspense         -> a Chatterbox: punto   + \\n\\n\\n
+  [cap]~2.00s  reset mentale, paragrafo -> a Chatterbox: punto   + \\n\\n\\n
 
-## PAUSE INTERNE
-[p1] respiro breve | [p2] fine frase | [p3] riflessione
-[b] cambio idea | [bd] climax/suspense | [cap] chiusura lunga
-[e1] enfasi leggera | [e2] enfasi forte | [ep] enfasi poetica
+## ENFASI
+  [e1]  enfasi leggera  (+0.10)
+  [e2]  enfasi forte    (+0.25 - max 1 ogni 2-3 blocchi)
+  [ep]  enfasi poetica  (+0.15 - per parole chiave emotive)
 
-- Inserisci le pause solo dove il significato e la sintassi originali le giustificano.
-- Non aggiungere tag a ogni frase: evita una lettura frammentata o artificiale.
-- Usa [e2] con parsimonia, al massimo una volta ogni 2-3 blocchi.
+## GIUNZIONI
+  [cambio]     V1<->V2  cambio voce principale
+  [cambio3..7] cambio con le altre voci
+  [para]       fine paragrafo stessa voce
+  [stacco]     cambio pensiero stessa voce
+  [lungo]      pausa teatrale
+  [scena]      cambio scena / capitolo
+  [dissolvenza] fade lungo tra sezioni
 
-## GIUNZIONE TRA BLOCCHI
-[join] continuità immediata | [cont] passaggio morbido
-[cambio] cambio V1/V2 | [cambio3]...[cambio7] cambio verso altre voci
-[para] fine paragrafo | [stacco] cambio pensiero | [lungo] pausa teatrale
-[scena] cambio scena/capitolo | [dissolvenza] transizione in dissolvenza
+## PULIZIA AUTOMATICA v3.0 - NON usare questi caratteri nel testo taggato
+  "..."  ->  .    ";"    ->  ,    "--"   ->  ,
+  "ecc." ->  eccetera    "€ $ %%" -> euro dollari percento
+  "(testo)" -> , testo,  "*testo*" -> testo
 
-- Il tag di giunzione va alla fine del testo ma PRIMA del tag di chiusura voce.
-- Sul confine tra due blocchi usa una pausa finale oppure una giunzione, mai entrambe.
-- Le pause interne possono invece essere usate normalmente nello stesso blocco.
+## ESEMPIO STRUTTURA CORRETTA
 
-## ESEMPIO DI SOLA STRUTTURA
-[inizio]
-[V1_riflessivo]
-Era una sera strana[p2] il tipo di sera in cui l\'aria sembrava ferma.[para]
-[/V1_riflessivo]
-[fine]
+[inizio][V1_riflessivo]
+Era una sera strana,[p2] il tipo di sera in cui l\'aria sembra ferma.[b]
+[/V1_riflessivo][para]
+[V1_preoccupato]
+Marco si fermo sul portone[p1] e guardo il cielo.[p2][stacco]
+[/V1_preoccupato][fine]
 
-[inizio]
-[V2_deciso]
-Non posso aspettare ancora.[cambio]
-[/V2_deciso]
-[fine]
+[inizio][V2_deciso]
+Non posso aspettare ancora,[p2] disse.[cambio]
+[/V2_deciso][fine]
 
-## CONTROLLO OBBLIGATORIO PRIMA DELLA RISPOSTA
-1. Confronta tutte le parole con l'originale: devono essere identiche e nello stesso ordine.
-2. Controlla che ogni [inizio] abbia un [fine].
-3. Controlla che ogni tag voce/emozione abbia una chiusura identica.
-4. Controlla che pause e giunzioni siano dentro il tag voce.
-5. Rimuovi qualsiasi spiegazione esterna al testo preparato.
-
-TESTO DA PREPARARE:
+---
+Ora riscrivi il seguente capitolo:
 
 [INCOLLA QUI IL TESTO]
 '''
@@ -864,82 +763,35 @@ TESTO DA PREPARARE:
 # =========================================================
 # PROMPT GUIDA POETICA
 # =========================================================
-POETRY_PROMPT = '''# PREPARAZIONE FEDELE PER CHATTERTEXT TTS v3.0 — POESIA
+POETRY_PROMPT = '''# PROMPT PER TESTO POETICO - ChatterText TTS v3.0 - STILE POESIA
 
-Sei un editor tecnico per la lettura poetica ad alta voce con Chatterbox TTS.
-Devi aggiungere struttura, respiro ed espressività senza riscrivere la poesia.
+Sei un editor specializzato nella preparazione di POESIE per la sintesi vocale Chatterbox TTS.
+Riscrivi la poesia applicando il sistema di tag ChatterText v3.0 - STILE POESIA.
 
-## REGOLA ASSOLUTA: LE PAROLE NON SI TOCCANO
-- Non aggiungere, eliminare, sostituire, correggere, parafrasare o riordinare parole.
-- Conserva esattamente versi, ripetizioni, lessico, maiuscole intenzionali e ordine originale.
-- Non trasformare versi in prosa e non completare immagini o frasi sospese.
-- Puoi intervenire soltanto su tag ChatterText, accapo, righe vuote, spazi e
-  punteggiatura strettamente necessaria alla lettura.
-- Se trovi un possibile errore, lascialo invariato.
+## TAG POETICI SPECIALI
+  [verso]       ~0.44s  fine verso - -> a Chatterbox: virgola + \\n
+  [strofa]      ~1.74s  fine strofa  -> a Chatterbox: punto   + \\n\\n
+  [metro]       ~0.12s  micro-pausa  -> a Chatterbox: spazio
+  [enjambement] ~0.07s  scorrimento  -> a Chatterbox: spazio
+  [cesura]      ~0.65s  pausa interna -> a Chatterbox: virgola + \\n
+  [dissolvenza]         giunzione fade tra strofe
 
-## FORMATO DELLA RISPOSTA
-- Restituisci soltanto la poesia ChatterText pronta da incollare.
-- Non aggiungere spiegazioni, analisi, titoli non presenti o blocchi Markdown.
-- Mantieni un verso per riga e una riga vuota tra le strofe.
-- Racchiudi ogni strofa o unità espressiva in un blocco completo:
+## TAG VOCE PER POESIA
+  [v1]...[/v1]  Voce principale del poema
+  Con emozioni: solenne | estatico | malinconico | vibrante | intimo
 
-[inizio]
-[V1_emozione]
-versi originali con tag poetici
-[/V1_emozione]
-[fine]
+## STRUTTURA BASE PER POESIA
 
-## VOCE ED EMOZIONE
-- Usa una sola voce e una sola emozione principale per blocco.
-- Formato obbligatorio: [V1_malinconico]...[/V1_malinconico].
-- Emozioni poetiche consigliate: solenne | estatico | malinconico | vibrante | intimo.
-- Sono disponibili anche: calmo | appassionato | triste | sussurrato |
-  riflessivo | gentile | serio e gli altri preset ChatterText.
-- La chiusura deve coincidere esattamente con l'apertura.
+[inizio][V1_malinconico]
+Scende la sera[cesura] senza rumore.[verso]
+[/V1_malinconico][fine]
 
-## TAG POETICI
-[verso] fine verso con respiro breve
-[strofa] fine strofa con pausa ampia
-[metro] micro-pausa metrica quasi impercettibile
-[enjambement] continuità tra due versi sintatticamente legati
-[cesura] pausa interna al verso
-[e1] enfasi leggera | [e2] enfasi forte | [ep] enfasi poetica
+[inizio][V1_solenne]
+E il vento porta via[ep] l\'ultima voce.[p3][dissolvenza]
+[/V1_solenne][fine]
 
-- Inserisci [verso] alla fine di un verso concluso.
-- Usa [enjambement] al posto di [verso] quando il senso continua nel verso seguente.
-- Usa [cesura] soltanto per una pausa interna realmente suggerita dal verso.
-- Usa [strofa] alla fine della strofa quando desideri silenzio.
-- Usa [dissolvenza] al posto di [strofa] quando desideri una transizione sfumata.
-- Non usare [strofa] e [dissolvenza] insieme sullo stesso confine.
-- Non mettere punteggiatura immediatamente prima di un tag pausa poetico.
-- Non sovraccaricare ogni verso con più tag.
-
-## PAUSE STANDARD E GIUNZIONI
-Sono validi anche [p1] [p2] [p3] [b] [bd] [cap], ma usali solo quando
-i tag poetici non descrivono meglio il respiro.
-[cont] mantiene continuità tra blocchi; [lungo] crea una pausa teatrale;
-[scena] separa sezioni molto distinte.
-Sul confine usa una pausa oppure una giunzione, mai entrambe.
-Ogni tag operativo deve stare prima della chiusura della voce.
-
-## ESEMPIO DI SOLA STRUTTURA
-[inizio]
-[V1_malinconico]
-Scende la sera[cesura] senza rumore[verso]
-e il vento porta via[enjambement]
-l\'ultima voce[strofa]
-[/V1_malinconico]
-[fine]
-
-## CONTROLLO OBBLIGATORIO PRIMA DELLA RISPOSTA
-1. Confronta tutte le parole con l'originale: devono essere identiche e nello stesso ordine.
-2. Controlla che versi e strofe mantengano la struttura originale.
-3. Controlla che ogni [inizio] abbia un [fine].
-4. Controlla che ogni tag voce/emozione abbia una chiusura identica.
-5. Controlla che tutti i tag operativi siano dentro il tag voce.
-6. Rimuovi qualsiasi spiegazione esterna alla poesia preparata.
-
-POESIA DA PREPARARE:
+---
+Ora prepara la seguente poesia:
 
 [INCOLLA QUI LA POESIA]
 '''
@@ -950,7 +802,7 @@ POESIA DA PREPARARE:
 def build_python_script(chunks, exag, cfg, temp, v1, v2, v3, v4, v5, v6, v7,
                         epreset, devmode="auto", reading_style="narrativa",
                         noise_gate_db=-50, rms_target_db=-18, trim_threshold_db=-45,
-                        pause_scale=1.0, preset_scale=1.0, aggressive_clean=False,
+                        pause_scale=1.0, aggressive_clean=False,
                         natural_pauses=True, min_p=0.05,
                         top_p=1.0, repetition_penalty=1.2, seed=0):
     """
@@ -1084,7 +936,6 @@ def pauses_to_natural_text(text):
 "REPETITION_PENALTY={}".format(repetition_penalty),
 "SEED={}".format(seed),
 "PAUSE_SCALE={}".format(pause_scale),
-"PRESET_SCALE={}".format(preset_scale),
 "NOISE_GATE_DB={}".format(noise_gate_db),
 "RMS_TARGET_DB={}".format(rms_target_db),
 "TRIM_DB={}".format(trim_threshold_db),
@@ -1147,16 +998,8 @@ natural_fn,
 "        return si_meta(cl),'v1',e,ps,tp,ek,jk",
 "    return si_meta(chunk),'v1',None,ps,tp,ek,jk",
 "def pp(emo,ek=None):",
-"    if emo and emo in EPRESET:",
-"        p=EPRESET[emo].copy()",
-"        # Lo stile amplifica/attenua lo scarto del preset rispetto ai parametri base.",
-"        for key,lo,hi in [('exaggeration',0.0,2.0),('cfg_weight',0.0,1.0),('temperature',0.05,2.0)]:",
-"            base=DEF_P[key]; p[key]=max(lo,min(hi,base+(p[key]-base)*PRESET_SCALE))",
-"        p['top_p']=max(0.0,min(1.0,p['top_p']))",
-"        p['min_p']=max(0.0,min(1.0,p['min_p']))",
-"    else:",
-"        p=DEF_P.copy()",
-"        p['top_p']=SAMPLER_TOP_P; p['min_p']=SAMPLER_MIN_P",
+"    p=EPRESET[emo].copy() if emo and emo in EPRESET else DEF_P.copy()",
+"    p['top_p']=SAMPLER_TOP_P; p['min_p']=SAMPLER_MIN_P",
 "    if ek and ek in EP:",
 "        p['exaggeration']=min(1.0,p['exaggeration']+EP[ek]['exaggeration_delta'])",
 "        p['cfg_weight']=max(0.1,p['cfg_weight']+EP[ek]['cfg_weight_delta'])",
@@ -1328,16 +1171,8 @@ natural_fn,
 "    if not ok:",
 "        print('   FALLITO:{}'.format(last_err)); fail.append(i)",
 "if not segs: print('Nessun audio.'); exit(1)",
-"if fail:",
-"    print('Generazione annullata: chunk falliti {}'.format([n+1 for n in fail]))",
-"    print('Nessun file parziale è stato salvato.')",
-"    exit(1)",
 "od=pathlib.Path('1.Output'); od.mkdir(exist_ok=True)",
-"used=[]",
-"for fp in od.glob('audiolibro_*.wav'):",
-"    m=re.fullmatch(r'audiolibro_(\\d+)\\.wav',fp.name,re.IGNORECASE)",
-"    if m: used.append(int(m.group(1)))",
-"num=(max(used) if used else 0)+1",
+"num=len(list(od.glob('audiolibro_*.wav')))+1",
 "out=od/'audiolibro_{:02d}.wav'.format(num)",
 "SCENE={}".format(pl(scene)),
 "DIALOG={}".format(pl(dialog)),
@@ -1407,14 +1242,10 @@ natural_fn,
 "    if fa is None: fa=seg; continue",
 "    jt=jl[i-1]; res=asmb(fa,seg,model.sr,jt)",
 "    if res is None:",
-"        if tc[i-1][4]>0:",
-"            # La pausa esplicita è già stata aggiunta al segmento precedente.",
-"            fa=cf(fa,seg,model.sr); js='tag-pausa'",
-"        else:",
-"            pau=dyn_pause(chunks[i-1], emo=tc[i-1][2])",
-"            sil=torch.zeros((seg.shape[0],int(model.sr*pau)))",
-"            fa=cf(fa,torch.cat([sil,seg],dim=-1),model.sr)",
-"            js='auto({:.2f}s)'.format(pau)",
+"        pau=dyn_pause(chunks[i-1], emo=tc[i-1][2])",
+"        sil=torch.zeros((seg.shape[0],int(model.sr*pau)))",
+"        fa=cf(fa,torch.cat([sil,seg],dim=-1),model.sr)",
+"        js='auto({:.2f}s)'.format(pau)",
 "    else: fa=res; js=jt if jt else 'auto'",
 "    print(f'   -> join {i}: {js}')",
 "fa=rms_normalize(fa)",
@@ -1518,19 +1349,11 @@ class PresetWindow(tk.Toplevel):
 
     def _save(self):
         r = {}
-        limits = {
-            "exaggeration": (0.0, 2.0), "cfg_weight": (0.0, 1.0),
-            "temperature": (0.05, 2.0), "top_p": (0.0, 1.0), "min_p": (0.0, 1.0),
-        }
         for emo in ALL_EMO:
             r[emo] = {}
             for p in self.PARAMS:
-                try:
-                    value = float(self.vs[emo][p].get())
-                    lo, hi = limits[p]
-                    r[emo][p] = round(max(lo, min(hi, value)), 3)
-                except (TypeError, ValueError):
-                    r[emo][p] = EMOTION_PRESETS[emo][p]
+                try: r[emo][p] = round(float(self.vs[emo][p].get()), 3)
+                except: r[emo][p] = EMOTION_PRESETS[emo][p]
         self.on_save(r); self.destroy()
 
     def _reset(self):
@@ -1547,9 +1370,6 @@ class App(tk.Tk):
         self.title("ChatterText v3.0 + Multilingual V3")
         self.geometry("1100x980"); self.minsize(900,700)
         self.configure(bg=C["bg"])
-        self._app_icon = None
-        self._set_app_icon()
-        self._configure_ttk_style()
         self.chunks = []; self.chunk_vars = []; self.script_path = None
         self.epreset = {k: v.copy() for k, v in EMOTION_PRESETS.items()}
         self._proc = None; self._t0 = None
@@ -1565,50 +1385,9 @@ class App(tk.Tk):
         self._build_ui(); self._detect_device()
 
     # ---- LAYOUT ----
-    def _configure_ttk_style(self):
-        style = ttk.Style(self)
-        try:
-            style.theme_use("clam")
-        except tk.TclError:
-            pass
-        style.configure("Dark.Vertical.TScrollbar",
-                        background="#505050", troughcolor=C["bg"],
-                        bordercolor=C["bg"], lightcolor="#505050",
-                        darkcolor="#505050", arrowcolor=C["text"])
-        style.map("Dark.Vertical.TScrollbar",
-                  background=[("active", "#666666"), ("pressed", "#737373")])
-        style.configure("TCombobox", fieldbackground=C["surface2"],
-                        background="#505050", foreground=C["text"],
-                        arrowcolor=C["text"], bordercolor=C["border"])
-        style.map("TCombobox",
-                  fieldbackground=[("readonly", C["surface2"])],
-                  foreground=[("readonly", C["text"])])
-
-    def _darken_text_scrollbar(self, widget):
-        try:
-            widget.vbar.config(bg="#505050", activebackground="#666666",
-                               troughcolor=C["surface"], bd=0, relief="flat",
-                               highlightthickness=0, width=13)
-        except (AttributeError, tk.TclError):
-            pass
-
-    def _set_app_icon(self):
-        app_dir = pathlib.Path(__file__).resolve().parent
-        png_path = app_dir / "chattertext_icon.png"
-        ico_path = app_dir / "favicon.ico"
-        try:
-            if png_path.exists():
-                self._app_icon = tk.PhotoImage(file=str(png_path))
-                self.iconphoto(True, self._app_icon)
-            elif ico_path.exists() and sys.platform == "win32":
-                self.iconbitmap(default=str(ico_path))
-        except tk.TclError:
-            pass
-
     def _build_ui(self):
         canvas = tk.Canvas(self, bg=C["bg"], highlightthickness=0)
-        scr    = ttk.Scrollbar(self, orient="vertical", command=canvas.yview,
-                               style="Dark.Vertical.TScrollbar")
+        scr    = tk.Scrollbar(self, orient="vertical", command=canvas.yview)
         self.sf = tk.Frame(canvas, bg=C["bg"])
         self.sf.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
         self._cw = canvas.create_window((0,0), window=self.sf, anchor="nw")
@@ -1622,11 +1401,10 @@ class App(tk.Tk):
         r = self.sf
         self._hdr(r); self._dev_sec(r); self._style_sec(r)
         self._inp_sec(r)
-        self._param_sec(r)
         self._action_bar(r)
-        self._voices_sec(r)
+        self._ctrl_sec(r)
         self._stats_sec(r); self._log_sec(r); self._chunks_sec(r)
-        self._footer(r)
+        self._guide_sec(r); self._footer(r)
 
     def _action_bar(self, r):
         sec = self._sec(r, "Azioni")
@@ -1640,7 +1418,6 @@ class App(tk.Tk):
         b_gen.bind("<Enter>", lambda e: b_gen.config(bg=C["success"], fg="#fff"))
         b_gen.bind("<Leave>", lambda e: b_gen.config(bg="#1a3d2b", fg=C["text"]))
         sb_btn(br, "Analizza e Processa", self.process, color=C["accent2"]).pack(side="left", padx=(0,8))
-        sb_btn(br, "Incolla", self.paste_text, color="#6c5ce7").pack(side="left", padx=(0,8))
         self.stopbtn = sb_btn(br, "■ Stop", self._stop, color=C["danger"])
         self.stopbtn.pack(side="left", padx=(0,8))
         self.stopbtn.config(state="disabled")
@@ -1662,17 +1439,11 @@ class App(tk.Tk):
 
     def _hdr(self, r):
         h = tk.Frame(r, bg="#0a1628", pady=24); h.pack(fill="x")
-        title_row = tk.Frame(h, bg="#0a1628"); title_row.pack(fill="x", padx=28)
-        if self._app_icon is not None:
-            tk.Label(title_row, image=self._app_icon, bg="#0a1628").pack(side="left", padx=(0,12))
-        title_text = tk.Frame(title_row, bg="#0a1628"); title_text.pack(side="left")
-        tk.Label(title_text, text="ChatterText", font=FH1, fg="#fff", bg="#0a1628",
-                 anchor="w").pack(fill="x")
-        tk.Label(title_text, text="Analizza e prepara il testo per Chatterbox TTS",
-                 font=FB, fg=C["text_dim"], bg="#0a1628", anchor="w").pack(fill="x", pady=(4,0))
-        tk.Label(title_text,
-                 text="v3.0 + V3  |  Pause Naturali  |  4 Stili  |  Tag Poetici  |  Post-proc Audio  |  7 Voci",
-                 font=FS, fg=C["natural"], bg="#0a1628", anchor="w").pack(fill="x", pady=(2,0))
+        tk.Label(h, text="ChatterText", font=FH1, fg="#fff", bg="#0a1628").pack()
+        tk.Label(h, text="Analizza e prepara il testo per Chatterbox TTS",
+                 font=FB, fg=C["text_dim"], bg="#0a1628").pack(pady=(4,0))
+        tk.Label(h, text="v3.0 + V3  |  Pause Naturali  |  4 Stili  |  Tag Poetici  |  Post-proc Audio  |  7 Voci",
+                 font=FS, fg=C["natural"], bg="#0a1628").pack(pady=(2,0))
 
     def _dev_sec(self, r):
         sec = self._sec(r, "Dispositivo di Calcolo")
@@ -1705,7 +1476,7 @@ class App(tk.Tk):
         for key, st in READING_STYLES.items():
             col = st["color"]
             btn = sb_btn(sf_top, "{} {}".format(
-                {"narrativa":"📖","poesia":"✒","teatro":"🎭","audiolibro_lungo":"🎧"}.get(key,""),
+                {"narrativa":"📖","poesia":"🎭","teatro":"🎪","audiolibro_lungo":"📚"}.get(key,""),
                 st["label"]
             ), lambda k=key: self._set_style(k), color=col, padx=18, pady=10)
             btn.pack(side="left", padx=(0,8))
@@ -1725,9 +1496,6 @@ class App(tk.Tk):
                                         text=READING_STYLES["narrativa"]["notes"],
                                         font=FS, fg=C["warning"], bg="#0d1a0d", anchor="w")
         self.style_notes_lbl.pack(fill="x")
-        self.style_scale_lbl = tk.Label(self.style_info_f, text="",
-                                        font=FS, fg=C["natural"], bg="#0d1a0d", anchor="w")
-        self.style_scale_lbl.pack(fill="x", pady=(3,0))
 
         pf = sf(sec); pf.pack(fill="x", pady=(4,0))
         tk.Label(pf, text="Post-processing:", font=FL, fg=C["accent"], bg=C["surface"]).pack(side="left", padx=(0,12))
@@ -1776,13 +1544,7 @@ class App(tk.Tk):
         sb_btn(prf, "Copia Prompt POESIA", lambda: self._copy_prompt("poesia"),
                color=C["style_poesia"]).pack(side="left", padx=(0,8))
         sb_btn(prf, "Salva entrambi", self._save_all_prompts,
-               color=C["text_dim"]).pack(side="left", padx=(0,8))
-        self.guide_toggle_btn = sb_btn(prf, "▾ Mostra Guida Tag", self._toggle_guide,
-                                       color="#2d6073")
-        self.guide_toggle_btn.pack(side="left")
-
-        self._guide_sec(sec)
-        self.guide_outer.pack_forget()
+               color=C["text_dim"]).pack(side="left")
 
         self._set_style("narrativa")
 
@@ -1792,8 +1554,6 @@ class App(tk.Tk):
         self.style_name_lbl.config(text=st["label"], fg=col)
         self.style_desc_lbl.config(text=st["desc"])
         self.style_notes_lbl.config(text=st["notes"])
-        self.style_scale_lbl.config(text="Intensità preset emotivi: {:.2f}x  •  Durata pause: {:.2f}x".format(
-            st["preset_scale"], st["pause_scale"]))
         self.style_info_f.config(highlightbackground=col)
         if hasattr(self, 'vexag'):
             self.vexag.set(str(st["exaggeration"]))
@@ -1816,62 +1576,15 @@ class App(tk.Tk):
             messagebox.showinfo("Copiato!", "Prompt NARRATIVA v3.0 copiato!")
 
     def _save_all_prompts(self):
-        default = pathlib.Path(self.vdir.get() if hasattr(self,'vdir') else str(pathlib.Path.cwd()))
-        initial = default if default.is_dir() else pathlib.Path(__file__).resolve().parent
-        selected = filedialog.askdirectory(title="Scegli dove salvare i prompt v3.0",
-                                            initialdir=str(initial))
-        if not selected:
-            return
-        dest = pathlib.Path(selected)
-        try:
-            dest.mkdir(parents=True, exist_ok=True)
-            p1 = dest / "PROMPT_NARRATIVA_v3.0.txt"
-            p2 = dest / "PROMPT_POESIA_v3.0.txt"
-            p1.write_text(GUIDE_PROMPT, encoding="utf-8")
-            p2.write_text(POETRY_PROMPT, encoding="utf-8")
-        except OSError as ex:
-            messagebox.showerror("Salvataggio non riuscito", "Impossibile salvare i prompt:\n{}".format(ex))
-            return
-        messagebox.showinfo("Prompt salvati", "File aggiornati salvati in:\n{}\n\n• {}\n• {}".format(
-            dest, p1.name, p2.name))
+        dest = pathlib.Path(self.vdir.get() if hasattr(self,'vdir') else str(pathlib.Path.cwd()))
+        p1 = dest / "PROMPT_NARRATIVA_v3.0.txt"
+        p2 = dest / "PROMPT_POESIA_v3.0.txt"
+        p1.write_text(GUIDE_PROMPT, encoding="utf-8")
+        p2.write_text(POETRY_PROMPT, encoding="utf-8")
+        messagebox.showinfo("Salvati!", "Salvati:\n{}\n{}".format(p1, p2))
 
     def _inp_sec(self, r):
         sec = self._sec(r, "Testo")
-        emo_bar = tk.Frame(sec, bg="#111827", highlightthickness=1,
-                           highlightbackground="#3b4a67", padx=12, pady=9)
-        emo_bar.pack(fill="x", pady=(0,10))
-        tk.Label(emo_bar, text="Preset emotivo nel testo", font=FL,
-                 fg=C["accent"], bg="#111827").pack(side="left", padx=(0,12))
-        tk.Label(emo_bar, text="Voce", font=FS, fg=C["text_dim"],
-                 bg="#111827").pack(side="left", padx=(0,4))
-        self.vtagvoice = tk.StringVar(value="V1")
-        voice_box = ttk.Combobox(emo_bar, textvariable=self.vtagvoice,
-                                 values=["V{}".format(i) for i in range(1,8)],
-                                 width=5, state="readonly")
-        voice_box.pack(side="left", padx=(0,10))
-        tk.Label(emo_bar, text="Emozione", font=FS, fg=C["text_dim"],
-                 bg="#111827").pack(side="left", padx=(0,4))
-        self.vtagemotion = tk.StringVar(value="calmo")
-        emotion_box = ttk.Combobox(emo_bar, textvariable=self.vtagemotion,
-                                   values=ALL_EMO, width=16, state="readonly")
-        emotion_box.pack(side="left", padx=(0,10))
-        sb_btn(emo_bar, "Applica alla selezione", self.apply_emotion_tag,
-               color="#8e44ad", padx=12, pady=5).pack(side="left")
-        tk.Label(emo_bar, text="Se non selezioni testo, inserisce i tag nel punto del cursore.",
-                 font=FS, fg=C["text_dim"], bg="#111827").pack(side="left", padx=(10,0))
-        tag_bar = tk.Frame(sec, bg="#10201d", highlightthickness=1,
-                           highlightbackground="#285c50", padx=12, pady=8)
-        tag_bar.pack(fill="x", pady=(0,10))
-        tk.Label(tag_bar, text="Altri tag", font=FL, fg=C["natural"],
-                 bg="#10201d").pack(side="left", padx=(0,12))
-        self.vquicktag = tk.StringVar(value="[p2]")
-        quick_box = ttk.Combobox(tag_bar, textvariable=self.vquicktag,
-                                 values=QUICK_TAGS, width=19, state="readonly")
-        quick_box.pack(side="left", padx=(0,8))
-        sb_btn(tag_bar, "Inserisci tag", self.insert_quick_tag,
-               color="#168a74", padx=12, pady=5).pack(side="left", padx=(0,10))
-        tk.Label(tag_bar, text="Pause • enfasi • giunzioni • poesia • blocco [inizio]/[fine]",
-                 font=FS, fg=C["text_dim"], bg="#10201d").pack(side="left")
         self.txt = scrolledtext.ScrolledText(
             sec, height=14,
             bg=C["surface2"], fg=C["text"],
@@ -1879,7 +1592,6 @@ class App(tk.Tk):
             font=FM, wrap="word",
             highlightthickness=1, highlightbackground=C["border"]
         )
-        self._darken_text_scrollbar(self.txt)
         self.txt.pack(fill="x", pady=(0,10))
         self.txt.insert("1.0", "Incolla qui il tuo testo (fino a 10000 caratteri)...")
         self.txt.bind("<FocusIn>", lambda e: self.txt.delete("1.0","end")
@@ -1890,47 +1602,13 @@ class App(tk.Tk):
         self.txt.bind("<KeyRelease>", lambda e: self.vcc.set(
             "{} / 10000".format(len(self.txt.get("1.0","end-1c")))))
 
-    def _param_sec(self, r):
-        sec = self._sec(r, "Parametri di Generazione")
+    def _ctrl_sec(self, r):
+        sec = self._sec(r, "Parametri")
         r1 = sf(sec); r1.pack(fill="x", pady=(0,10))
         self.vminw = self._le(r1, "Min parole/chunk", "20")
         self.vmaxw = self._le(r1, "Max parole/chunk", "40")
         self.vmaxc = self._le(r1, "Max caratteri", "240")
 
-        adv_head = sf(sec); adv_head.pack(fill="x", pady=(2,0))
-        self.advanced_param_btn = sb_btn(adv_head, "▾ Mostra parametri avanzati",
-                                         self._toggle_advanced_params, color="#596780",
-                                         padx=12, pady=6)
-        self.advanced_param_btn.pack(side="left")
-        tk.Label(adv_head, text="I valori consigliati vengono impostati automaticamente dallo stile di lettura.",
-                 font=FS, fg=C["text_dim"], bg=C["surface"]).pack(side="left", padx=(10,0))
-
-        self.advanced_param_frame = sf(sec)
-        self.advanced_param_frame.pack(fill="x", pady=(10,0))
-        r3 = sf(self.advanced_param_frame); r3.pack(fill="x", pady=(0,10))
-        self.vexag = self._le(r3, "Exaggeration", "0.50")
-        self.vcfg  = self._le(r3, "CFG Weight", "0.58")
-        self.vtemp = self._le(r3, "Temperature", "0.60")
-        self.vminp = self._le(r3, "Min-P", "0.05")
-        self.vtopp = self._le(r3, "Top-P", "1.00")
-        self.vrep  = self._le(r3, "Anti-ripetizioni", "1.20")
-        self.vseed = self._le(r3, "Seed (0 casuale)", "0")
-        tk.Label(self.advanced_param_frame,
-                 text="I preset emotivi si applicano direttamente nella sezione Testo.",
-                 font=FS, fg=C["text_dim"], bg=C["surface"], anchor="w").pack(fill="x")
-        self.advanced_param_frame.pack_forget()
-        self._set_style(self.vreadstyle.get())
-
-    def _toggle_advanced_params(self):
-        if self.advanced_param_frame.winfo_manager():
-            self.advanced_param_frame.pack_forget()
-            self.advanced_param_btn.config(text="▾ Mostra parametri avanzati")
-        else:
-            self.advanced_param_frame.pack(fill="x", pady=(10,0))
-            self.advanced_param_btn.config(text="▴ Nascondi parametri avanzati")
-
-    def _voices_sec(self, r):
-        sec = self._sec(r, "Voci e Cartella Chatterbox")
         r2 = sf(sec); r2.pack(fill="x", pady=(0,4))
         self.vv1 = self._le(r2, "Voce 1 - Narratore (2.Voci/)", "1Opier.wav", wide=True)
         self.vv2 = self._le(r2, "Voce 2 - Personaggio B (opz.)", "", wide=True)
@@ -1941,10 +1619,22 @@ class App(tk.Tk):
         r2c = sf(sec); r2c.pack(fill="x", pady=(0,10))
         self.vv6 = self._le(r2c, "Voce 6 - Pers. minore (opz.)", "", wide=True)
         self.vv7 = self._le(r2c, "Voce 7 - Pers. minore (opz.)", "", wide=True)
-        tk.Label(r2c, text="V6/V7: se vuote → fallback V1", font=FS,
-                 fg=C["v6"], bg=C["surface"]).pack(side="left", padx=(8,0), anchor="s", pady=(0,4))
+        tk.Label(r2c, text="  V6/V7: se vuote -> fallback V1", font=FS,
+                 fg=C["v6"], bg=C["surface"]).pack(side="left", padx=(4,0), anchor="s", pady=(0,4))
         gv = sf(r2c); gv.pack(side="right", padx=(8,0), anchor="s")
         sb_btn(gv, "Verifica voci", self._verify_voices, color=C["text_dim"]).pack(pady=(18,0))
+
+        r3 = sf(sec); r3.pack(fill="x", pady=(0,10))
+        self.vexag = self._le(r3, "Exaggeration", "0.50")
+        self.vcfg  = self._le(r3, "CFG Weight", "0.58")
+        self.vtemp = self._le(r3, "Temperature", "0.60")
+        self.vminp = self._le(r3, "Min-P", "0.05")
+        self.vtopp = self._le(r3, "Top-P", "1.00")
+        self.vrep  = self._le(r3, "Anti-ripetizioni", "1.20")
+        self.vseed = self._le(r3, "Seed (0 casuale)", "0")
+        gp = sf(r3); gp.pack(side="left", padx=(16,0))
+        tk.Label(gp, text="Preset emotivi", font=FL, fg=C["accent"], bg=C["surface"]).pack(anchor="w")
+        sb_btn(gp, "Modifica", self._presets, color="#8e44ad").pack(anchor="w", pady=(4,0))
 
         r4 = sf(sec); r4.pack(fill="x", pady=(0,14))
         tk.Label(r4, text="Cartella Chatterbox:", font=FL, fg=C["accent"], bg=C["surface"]).pack(side="left", padx=(0,8))
@@ -1955,6 +1645,7 @@ class App(tk.Tk):
         self.vdir = tk.StringVar(value=_app_dir)
         se(r4, width=55, textvariable=self.vdir).pack(side="left", padx=(0,8))
         sb_btn(r4, "Sfoglia", self._browse, color=C["text_dim"]).pack(side="left")
+        self._set_style("narrativa")
 
     def _verify_voices(self):
         base = pathlib.Path(self.vdir.get()) / "2.Voci"
@@ -2016,7 +1707,6 @@ class App(tk.Tk):
             font=("Courier New",9), relief="flat", bd=0, state="disabled",
             highlightthickness=1, highlightbackground=C["border"]
         )
-        self._darken_text_scrollbar(self.log)
         self.log.pack(fill="x")
 
     def _chunks_sec(self, r):
@@ -2027,14 +1717,16 @@ class App(tk.Tk):
         self.cbox = sf(self.chunksec); self.cbox.pack(fill="x")
 
     def _guide_sec(self, r):
-        outer = tk.Frame(r, bg=C["surface"], pady=12)
-        self.guide_outer = outer
-        outer.pack(fill="x", pady=(10,0))
-        hr = tk.Frame(outer, bg=C["surface"]); hr.pack(fill="x", pady=(0,8))
-        tk.Label(hr, text="Guida Tag — ChatterText v3.0", font=FH2,
-                 fg=C["accent"], bg=C["surface"]).pack(side="left")
-        tk.Label(hr, text="Riferimento sincronizzato con i tag elaborati dal programma",
-                 font=FS, fg=C["text_dim"], bg=C["surface"]).pack(side="right")
+        outer = tk.Frame(r, bg=C["bg"], padx=18, pady=10); outer.pack(fill="x")
+        hr = tk.Frame(outer, bg=C["bg"]); hr.pack(fill="x", pady=(0,8))
+        tk.Label(hr, text="Guida Tag - v3.0", font=FH2, fg=C["accent"], bg=C["bg"]).pack(side="left")
+        bf = tk.Frame(hr, bg=C["bg"]); bf.pack(side="right")
+        sb_btn(bf, "Prompt Narrativa", lambda: self._copy_prompt("narrativa"),
+               color=C["style_narr"]).pack(side="left", padx=(0,8))
+        sb_btn(bf, "Prompt Poesia", lambda: self._copy_prompt("poesia"),
+               color=C["style_poesia"]).pack(side="left", padx=(0,8))
+        sb_btn(bf, "Salva entrambi", self._save_all_prompts,
+               color=C["text_dim"]).pack(side="left")
         inner = tk.Frame(outer, bg=C["surface"], bd=0, highlightthickness=1,
                          highlightbackground=C["border"], padx=20, pady=16)
         inner.pack(fill="x")
@@ -2057,7 +1749,6 @@ class App(tk.Tk):
             ("[p3]",         "→  punto   + ↵↵",  "riflessione",     "#8e44ad"),
             ("[b]",          "→  punto   + ↵↵",  "cambio idea",     "#27ae60"),
             ("[strofa]",     "→  punto   + ↵↵",  "fine strofa",     "#6c3483"),
-            ("[pausa_lunga]", "→  punto   + ↵↵", "pausa lunga",     "#3867a8"),
             ("[bd]",         "→  punto   + ↵↵↵", "climax",          "#e84357"),
             ("[cap]",        "→  punto   + ↵↵↵", "capoverso",       "#e67e22"),
             ("[silenzio]",   "→  punto   + ↵↵↵", "silenzio",        "#636e72"),
@@ -2122,10 +1813,6 @@ class App(tk.Tk):
                     "sussurrato","riflessivo","deciso","preoccupato","gentile","serio"]:
             tk.Label(br3, text=" {} ".format(emo), font=FS, fg="#fff",
                      bg=EMO_C.get(emo, C["text_dim"]), padx=4, pady=2).pack(side="left", padx=2, pady=2)
-        tk.Label(lc, text="Formato: [V1_calmo]testo[/V1_calmo]\n"
-                          "Il preset regola Exaggeration, CFG, Temperature, Top-P e Min-P.",
-                 font=FS, fg=C["natural"], bg=C["surface"], justify="left").pack(
-                     anchor="w", pady=(0,8))
 
         sl(lc, "PAUSE INLINE (durate originali)")
         fp = tk.Frame(lc, bg=C["surface"]); fp.pack(fill="x", pady=(0,4))
@@ -2150,9 +1837,9 @@ class App(tk.Tk):
         for ci, (tag, col, desc) in enumerate([
             ("[verso]",    "#9b59b6","~0.30s\nfine verso"),
             ("[strofa]",   "#6c3483","~1.20s\nfine strofa"),
-            ("[cesura]",   "#7d3c98","~0.45s\npausa interna"),
+            ("[cesura]",   "#7d3c98","~0.45s\npause interna"),
             ("[metro]",    "#a9cce3","~0.08s\naccento"),
-            ("[enjambement]","#d7bde2","~0.05s\nscorre"),
+            ("[enjamb.]",  "#d7bde2","~0.05s\nscorre"),
         ]):
             cell = tk.Frame(fp2, bg=C["surface2"], highlightthickness=1, highlightbackground=col)
             cell.grid(row=0, column=ci, padx=2, pady=2, sticky="ew"); fp2.columnconfigure(ci, weight=1)
@@ -2171,24 +1858,17 @@ class App(tk.Tk):
             ("[join]","#00cec9","overlap\n0.00s"),
             ("[cont]","#74b9ff","smooth\n0.12s"),
             ("[cambio]","#a29bfe","V1<->V2\n0.50s"),
-            ("[cambio3]","#00b894","fino a V7\n0.50s"),
             ("[para]","#fdcb6e","fine par\n0.90s"),
             ("[stacco]","#fd79a8","pensiero\n1.40s"),
-            ("[lungo]","#e17055","teatrale\n1.80s"),
             ("[scena]","#636e72","scena\n2.40s"),
-            ("[dissolvenza]","#a29bfe","strofe\n1.60s"),
+            ("[dissol.]","#a29bfe","strofe\n1.60s"),
         ]):
             cell = tk.Frame(fj, bg=C["surface2"], highlightthickness=1, highlightbackground=col)
-            row, col_i = divmod(ci, 5)
-            cell.grid(row=row, column=col_i, padx=2, pady=2, sticky="ew")
-            fj.columnconfigure(col_i, weight=1)
+            cell.grid(row=0, column=ci, padx=1, pady=2, sticky="ew"); fj.columnconfigure(ci, weight=1)
             tk.Label(cell, text=tag, font=("Courier New",7,"bold"), fg=col,
                      bg=C["surface2"], pady=4, padx=1).pack()
             tk.Label(cell, text=desc, font=FS, fg=C["text_dim"],
                      bg=C["surface2"], padx=1, pady=2, justify="center").pack()
-        tk.Label(fj, text="Cambi voce disponibili: [cambio], [cambio3], [cambio4], [cambio5], [cambio6], [cambio7]",
-                 font=FS, fg=C["text_dim"], bg=C["surface"], anchor="w").grid(
-                     row=2, column=0, columnspan=5, sticky="w", pady=(3,0))
 
         sl(rc, "Pulizia testo automatica v3.0")
         cleanup_info = tk.Frame(rc, bg=C["surface2"], highlightthickness=1,
@@ -2248,14 +1928,6 @@ class App(tk.Tk):
                  font=FS, fg=C["natural"], bg=C["surface"], pady=10, justify="left", anchor="w"
                  ).pack(fill="x", pady=(12,0))
 
-    def _toggle_guide(self):
-        if self.guide_outer.winfo_manager():
-            self.guide_outer.pack_forget()
-            self.guide_toggle_btn.config(text="▾ Mostra Guida Tag")
-        else:
-            self.guide_outer.pack(fill="x", pady=(10,0))
-            self.guide_toggle_btn.config(text="▴ Nascondi Guida Tag")
-
     def _footer(self, r):
         ft = tk.Frame(r, bg=C["bg"], pady=20); ft.pack(fill="x")
         tk.Label(ft,
@@ -2275,8 +1947,7 @@ class App(tk.Tk):
             )
             try:
                 result = subprocess.run([py, "-c", probe], capture_output=True, text=True,
-                                        encoding="utf-8", errors="replace", timeout=20,
-                                        **HIDDEN_SUBPROCESS)
+                                        encoding="utf-8", errors="replace", timeout=20)
                 parts = result.stdout.strip().split("|")
                 if result.returncode == 0 and len(parts) == 4 and parts[1] == "True":
                     dev, info = "cuda", "GPU: {} ({}GB VRAM)".format(parts[2], parts[3])
@@ -2308,8 +1979,7 @@ class App(tk.Tk):
             if candidate.exists():
                 try:
                     check = subprocess.run([str(candidate), "-c", "import sys; print(sys.executable)"],
-                                           capture_output=True, timeout=10,
-                                           **HIDDEN_SUBPROCESS)
+                                           capture_output=True, timeout=10)
                     if check.returncode == 0:
                         return str(candidate)
                 except Exception:
@@ -2337,10 +2007,10 @@ class App(tk.Tk):
         self.vwords.set(str(len(ws))); self.vchars.set(str(len(norm))); self.verrs.set(str(len(errs)))
         self.stats.pack(fill="x")
         tc  = len(re.findall(r"\[inizio\]", norm, re.IGNORECASE))
-        ec  = len(re.findall(r"\[(?:(?:v1|v2|v3|v4|v5|v6|v7)_)?(?:"+"|".join(ALL_EMO)+r")\]", norm, re.IGNORECASE))
+        ec  = len(re.findall(r"\[(?:(?:v1|v2|v3|v4|v5|v6|v7)_)?(?:"+" |".join(ALL_EMO)+r")\]", norm, re.IGNORECASE))
         pc  = len(re.findall(r"\[(?:p[123]|b(?:d)?|cap|pausa(?:_lunga)?|silenzio|verso|strofa|metro|enjambement|cesura)\]", norm, re.IGNORECASE))
         enc = len(re.findall(r"\[e[12p]\]", norm, re.IGNORECASE))
-        jc  = len(re.findall(r"\[(?:join|cont|cambio|cambio3|cambio4|cambio5|cambio6|cambio7|para|stacco|lungo|scena|dissolvenza)\]", norm, re.IGNORECASE))
+        jc  = len(re.findall(r"\[(?:join|cont|cambio|cambio3|para|stacco|lungo|scena|dissolvenza)\]", norm, re.IGNORECASE))
         pts = []
         if tc:  pts.append("{} blocchi".format(tc))
         if ec:  pts.append("{} emozioni".format(ec))
@@ -2360,27 +2030,20 @@ class App(tk.Tk):
         if errs:
             for et, msg in errs:
                 self.err_box.insert("end", "{} {}\n".format(
-                    "ERRORE:" if et=="error" else ("ATTENZIONE:" if et=="warning" else "INFO:"), msg))
+                    "ATTENZIONE:" if et=="warning" else "INFO:", msg))
         else:
             self.err_box.insert("end", "Nessun problema!"); self.err_box.config(fg=C["success"])
         self.err_box.config(state="disabled")
-        structural = [msg for et, msg in errs if et == "error"]
-        if structural:
-            self.chunksec.pack_forget()
-            messagebox.showerror("Tag non validi",
-                                 "Correggi la struttura dei tag prima di generare i chunk:\n\n" +
-                                 "\n".join("• " + msg for msg in structural[:8]))
-            return
         try: minw,maxw,maxc = int(self.vminw.get()),int(self.vmaxw.get()),int(self.vmaxc.get())
         except: minw,maxw,maxc = 20,40,240
         chunks = chunk_text(norm, minw, maxw, maxc)
         self.chunks = chunks; self.vchunks.set(str(len(chunks)))
         short = [i+1 for i,c in enumerate(chunks)
-                 if len(_protected().sub("",c).strip().split()) < minw]
+                 if len(_protected().sub("",c).strip().split()) < CHUNK_MIN_W]
         if short:
             messagebox.showwarning("Chunk corti!",
                 "Chunk con meno di {} parole (rischio ripetizioni):\n{}\n\n"
-                "Uniscili o usa il Prompt Guida.".format(minw, ", ".join(str(n) for n in short[:10])))
+                "Uniscili o usa il Prompt Guida.".format(CHUNK_MIN_W, ", ".join(str(n) for n in short[:10])))
         self._render(); self.chunksec.pack(fill="x")
 
     def _render(self):
@@ -2505,7 +2168,6 @@ class App(tk.Tk):
         style_key = self.vreadstyle.get()
         style = READING_STYLES.get(style_key, READING_STYLES["narrativa"])
         pause_scale = style["pause_scale"]
-        preset_scale = style["preset_scale"]
         return build_python_script(
             self.chunks, ex, cg, tp,
             self.vv1.get().strip() or "1Opier.wav",
@@ -2515,7 +2177,7 @@ class App(tk.Tk):
             self.epreset, self.vdev.get(),
             reading_style=style_key,
             noise_gate_db=ng, rms_target_db=rms, trim_threshold_db=trim,
-            pause_scale=pause_scale, preset_scale=preset_scale,
+            pause_scale=pause_scale,
             aggressive_clean=self.vaggclean.get(),
             natural_pauses=self.vnatpauses.get(), min_p=min_p, top_p=top_p,
             repetition_penalty=repetition_penalty, seed=seed
@@ -2554,8 +2216,7 @@ class App(tk.Tk):
                 env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
                 proc = subprocess.Popen([self._chatterbox_python(), str(sf2)], cwd=str(dest),
                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                    text=True, encoding="utf-8", errors="replace", env=env,
-                    **HIDDEN_SUBPROCESS)
+                    text=True, encoding="utf-8", errors="replace", env=env)
                 self._proc = proc
                 for line in proc.stdout:
                     self._alog(line)
@@ -2619,84 +2280,6 @@ class App(tk.Tk):
         self.stats.pack_forget(); self.chunksec.pack_forget(); self.logsec.pack_forget()
         self.stopbtn.config(state="disabled")
         for w in self.cbox.winfo_children(): w.destroy()
-
-    def paste_text(self):
-        try:
-            text = self.clipboard_get()
-        except tk.TclError:
-            messagebox.showwarning("Appunti vuoti", "Negli appunti non c'è testo da incollare.")
-            return
-
-        current = self.txt.get("1.0", "end-1c")
-        if "Incolla qui" in current:
-            self.txt.delete("1.0", "end")
-        self.txt.insert("insert", text)
-        self.txt.focus_set()
-        self.txt.see("insert")
-        self.vcc.set("{} / 10000".format(len(self.txt.get("1.0", "end-1c"))))
-
-    def apply_emotion_tag(self):
-        voice = self.vtagvoice.get().strip().upper() or "V1"
-        emotion = self.vtagemotion.get().strip().lower() or "calmo"
-        if voice not in {"V{}".format(i) for i in range(1, 8)} or emotion not in ALL_EMO:
-            messagebox.showwarning("Preset non valido", "Seleziona una voce e un'emozione valide.")
-            return
-
-        opening = "[{}_{}]".format(voice, emotion)
-        closing = "[/{}_{}]".format(voice, emotion)
-        current = self.txt.get("1.0", "end-1c")
-        if "Incolla qui" in current:
-            self.txt.delete("1.0", "end")
-            self.txt.mark_set("insert", "1.0")
-
-        if self.txt.tag_ranges("sel"):
-            start, end = self.txt.index("sel.first"), self.txt.index("sel.last")
-            selected = self.txt.get(start, end)
-            wrapped = opening + selected + closing
-            self.txt.delete(start, end)
-            self.txt.insert(start, wrapped)
-            self.txt.mark_set("insert", "{}+{}c".format(start, len(wrapped)))
-        else:
-            pos = self.txt.index("insert")
-            self.txt.insert(pos, opening + closing)
-            self.txt.mark_set("insert", "{}+{}c".format(pos, len(opening)))
-
-        self.txt.focus_set()
-        self.txt.see("insert")
-        self.vcc.set("{} / 10000".format(len(self.txt.get("1.0", "end-1c"))))
-
-    def insert_quick_tag(self):
-        tag = self.vquicktag.get().strip()
-        if tag not in QUICK_TAGS:
-            messagebox.showwarning("Tag non valido", "Seleziona un tag dall'elenco.")
-            return
-
-        current = self.txt.get("1.0", "end-1c")
-        if "Incolla qui" in current:
-            self.txt.delete("1.0", "end")
-            self.txt.mark_set("insert", "1.0")
-
-        if tag == "[inizio]…[fine]":
-            opening, closing = "[inizio]", "[fine]"
-            if self.txt.tag_ranges("sel"):
-                start, end = self.txt.index("sel.first"), self.txt.index("sel.last")
-                selected = self.txt.get(start, end)
-                wrapped = opening + selected + closing
-                self.txt.delete(start, end)
-                self.txt.insert(start, wrapped)
-                self.txt.mark_set("insert", "{}+{}c".format(start, len(wrapped)))
-            else:
-                pos = self.txt.index("insert")
-                self.txt.insert(pos, opening + closing)
-                self.txt.mark_set("insert", "{}+{}c".format(pos, len(opening)))
-        else:
-            pos = self.txt.index("sel.last") if self.txt.tag_ranges("sel") else self.txt.index("insert")
-            self.txt.insert(pos, tag)
-            self.txt.mark_set("insert", "{}+{}c".format(pos, len(tag)))
-
-        self.txt.focus_set()
-        self.txt.see("insert")
-        self.vcc.set("{} / 10000".format(len(self.txt.get("1.0", "end-1c"))))
 
     def _browse(self):
         d = filedialog.askdirectory(title="Seleziona cartella Chatterbox")
