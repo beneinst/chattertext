@@ -1620,14 +1620,11 @@ class App(tk.Tk):
         canvas.pack(side="left", fill="both", expand=True); scr.pack(side="right", fill="y")
         self.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(-1*(e.delta//120), "units"))
         r = self.sf
-        self._hdr(r)
+        self._hdr(r); self._style_sec(r)
         self._inp_sec(r)
         self._voices_sec(r)
-        from qwen_voice_box import mount
-        mount(self, r, C)
         self._action_bar(r)
         self._stats_sec(r); self._log_sec(r); self._chunks_sec(r)
-        self._style_sec(r)
         self._param_sec(r)
         self._dev_sec(r)
         self._footer(r)
@@ -1644,6 +1641,7 @@ class App(tk.Tk):
         b_gen.bind("<Enter>", lambda e: b_gen.config(bg=C["success"], fg="#fff"))
         b_gen.bind("<Leave>", lambda e: b_gen.config(bg="#1a3d2b", fg=C["text"]))
         sb_btn(br, "Analizza e Processa", self.process, color=C["accent2"]).pack(side="left", padx=(0,8))
+        sb_btn(br, "Incolla", self.paste_text, color="#6c5ce7").pack(side="left", padx=(0,8))
         self.stopbtn = sb_btn(br, "■ Stop", self._stop, color=C["danger"])
         self.stopbtn.pack(side="left", padx=(0,8))
         self.stopbtn.config(state="disabled")
@@ -1865,7 +1863,6 @@ class App(tk.Tk):
         tag_bar = tk.Frame(sec, bg="#10201d", highlightthickness=1,
                            highlightbackground="#285c50", padx=12, pady=8)
         tag_bar.pack(fill="x", pady=(0,10))
-        sb_btn(tag_bar, "Incolla", self.paste_text, color="#6c5ce7").pack(side="right", padx=(8,0))
         tk.Label(tag_bar, text="Altri tag", font=FL, fg=C["natural"],
                  bg="#10201d").pack(side="left", padx=(0,12))
         self.vquicktag = tk.StringVar(value="[p2]")
@@ -2533,8 +2530,6 @@ class App(tk.Tk):
         messagebox.showinfo("Salvato", "Script:\n{}".format(p))
 
     def run_chatterbox(self):
-        if getattr(self, "_qwen_box", None) and self._qwen_box.busy:
-            messagebox.showwarning("GPU occupata", "Attendi o interrompi la generazione Qwen VoiceDesign."); return
         if self._proc and self._proc.poll() is None:
             messagebox.showwarning("In corso", "Generazione già in corso! Premi Stop."); return
         s = self._mk_script()
@@ -2555,7 +2550,6 @@ class App(tk.Tk):
         self.log.config(state="disabled")
         self.stopbtn.config(state="normal")
         self._t0 = time.time()
-        self._chatter_starting = True
         def _run():
             try:
                 env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
@@ -2564,7 +2558,6 @@ class App(tk.Tk):
                     text=True, encoding="utf-8", errors="replace", env=env,
                     **HIDDEN_SUBPROCESS)
                 self._proc = proc
-                self._chatter_starting = False
                 for line in proc.stdout:
                     self._alog(line)
                     if "Caricamento Chatterbox" in line:
@@ -2598,7 +2591,6 @@ class App(tk.Tk):
             except Exception as ex:
                 self._alog("\nErrore: {}\n".format(ex))
             finally:
-                self._chatter_starting = False
                 self.after(0, lambda: self.stopbtn.config(state="disabled"))
         threading.Thread(target=_run, daemon=True).start()
 

@@ -1,0 +1,204 @@
+<!doctype html><html lang="it"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ripristino ChatterText e Qwen VoiceDesign</title>
+<style>
+body{font:17px/1.6 system-ui,sans-serif;color:#26231e;background:#faf8f3;max-width:1050px;margin:40px auto;padding:0 26px}
+h1,h2{line-height:1.2;color:#255952}h1{font-size:34px}h2{margin-top:44px;border-top:1px solid #d6d2c9;padding-top:22px}
+pre{background:#eeeae2;border:1px solid #dad4ca;padding:18px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
+code{font-family:Consolas,monospace;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;font-size:15px}
+td,th{padding:10px;border:1px solid #d6d2c9;text-align:left;vertical-align:top}th{background:#e5ece6}
+a{color:#16645c}li{margin-bottom:7px}@media print{body{background:white;font-size:11pt;margin:0;max-width:none}pre{font-size:9pt}h2{break-after:avoid}tr{break-inside:avoid}}
+</style><body><h1 id="ripristino-di-chattertext-e-qwen-voicedesign">Ripristino di ChatterText e Qwen VoiceDesign</h1>
+<p>Configurazione rilevata il 5 settembre 2026. Guida per Windows a 64 bit.</p>
+<p>Questa guida descrive il ripristino dell'app attuale, compreso il box per creare voci da testo. Non è stata eseguita una reinstallazione: l'app funzionante è rimasta intatta. La procedura su ambiente pulito dovrà essere collaudata nelle prossime prove. I file delle dipendenze allegati fotografano ciò che è installato oggi, ma non contengono i pacchetti o i modelli: per reinstallare da questi elenchi occorre Internet e che le versioni siano ancora disponibili.</p>
+<h2 id="1-le-due-parti-del-sistema">1. Le due parti del sistema</h2>
+<table>
+<thead>
+<tr>
+<th>Parte</th>
+<th>Situazione attuale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App ChatterText</td>
+<td><code>D:\Siti GitHub\chattertext</code></td>
+</tr>
+<tr>
+<td>Avvio</td>
+<td><code>Avvia-Chattertext_3.bat</code>, che richiama <code>venv_chatterbox\Scripts\pythonw.exe</code> e <code>ChatterText_3.0.py</code></td>
+</tr>
+<tr>
+<td>Ambiente Chatterbox</td>
+<td><code>venv_chatterbox</code>, Python 3.12.0</td>
+</tr>
+<tr>
+<td>Libreria Chatterbox effettivamente usata</td>
+<td>Sottocartella <code>chatterbox</code>, installazione modificabile locale, versione 0.1.7</td>
+</tr>
+<tr>
+<td>GPU verificata</td>
+<td>NVIDIA GeForce RTX 3060, 12 GB; driver rilevato 595.79</td>
+</tr>
+<tr>
+<td>PyTorch Chatterbox</td>
+<td>2.5.1+cu121; torchaudio 2.5.1+cu121</td>
+</tr>
+<tr>
+<td>Modello Chatterbox</td>
+<td><code>ResembleAI/chatterbox</code>, Multilingual V3, file <code>t3_mtl23ls_v3.safetensors</code></td>
+</tr>
+<tr>
+<td>Ambiente Qwen</td>
+<td><code>.venv</code>, Python 3.12.14, PyTorch e torchaudio 2.11.0+cu128</td>
+</tr>
+<tr>
+<td>Qwen</td>
+<td>qwen-tts 0.1.1, Transformers 4.57.3, Accelerate 1.12.0</td>
+</tr>
+</tbody>
+</table>
+<p>Cartella Qwen attuale:</p>
+<pre><code class="language-text">C:\Users\gerar\Documents\Codex\2026-09-05\referenced-chatgpt-conversation-this-is-an-2\outputs\Qwen3-VoiceDesign
+</code></pre>
+<p>Il file <code>qwen_voice_config.json</code>, accanto a ChatterText, contiene questo percorso. Il box avvia Qwen come processo separato: non installare Qwen nel venv Chatterbox e non unire i due elenchi di dipendenze.</p>
+<p>Il Python di base di Chatterbox è in <code>C:\Users\gerar\AppData\Local\Programs\Python\Python312</code>. Quello di Qwen proviene attualmente dal runtime locale di Codex. Se uno di questi Python viene rimosso, il relativo ambiente può smettere di avviarsi. Per una nuova postazione usare una propria installazione permanente di Python 3.12 a 64 bit, con Tcl/Tk incluso, e ricreare gli ambienti. La diversa revisione 3.12 dovrà essere verificata nel collaudo.</p>
+<h2 id="2-cosa-conservare-prima-delle-prove">2. Cosa conservare prima delle prove</h2>
+<p>Chiudere ChatterText e attendere la fine delle generazioni. Copiare su un disco di backup:</p>
+<ol>
+<li>Tutta la cartella <code>D:\Siti GitHub\chattertext</code>, compresi file nascosti e la sottocartella <code>chatterbox</code>. Sono essenziali <code>ChatterText_3.0.py</code>, <code>qwen_voice_box.py</code>, <code>qwen_voice_config.json</code>, il file di avvio, icone, <code>2.Voci</code>, <code>1.Output</code>, testi e altri dati personali. Conservare anche questa guida e la cartella <code>Ripristino-Sistema</code>.</li>
+<li>Tutta la cartella Qwen indicata sopra: <code>repository</code>, <code>models</code>, <code>audio</code>, script Python, file delle versioni e configurazioni. Il modello comprende anche <code>speech_tokenizer</code>: non copiare solo il file dei pesi principale.</li>
+<li>La cache Chatterbox <code>C:\Users\gerar\.cache\huggingface\hub\models--ResembleAI--chatterbox</code>, comprese <code>blobs</code>, <code>refs</code> e <code>snapshots</code>. Se ci sono collegamenti simbolici, usare una copia che conservi i collegamenti oppure i file a cui puntano. Conservare anche le altre cache effettivamente richieste da eventuali funzionalità aggiuntive.</li>
+</ol>
+<p>Conservare i venv come copia di emergenza del PC attuale, ma <strong>non considerarli trasferibili</strong>. Su un'altra postazione, o cambiando percorso, si ricreano: contengono riferimenti al Python e alle cartelle originali. La <a href="https://docs.python.org/3.12/library/venv.html">documentazione Python</a> conferma questo comportamento.</p>
+<p>La presente attività salva una guida e un inventario, <strong>non un backup completo</strong>. Per un ripristino esatto del PC, compresi driver e Python, serve anche un'immagine del sistema/disco. Per un'installazione senza Internet servirà preparare e collaudare un archivio dei pacchetti binari; non è incluso ora.</p>
+<h2 id="3-scegliere-il-tipo-di-ripristino">3. Scegliere il tipo di ripristino</h2>
+<ul>
+<li><strong>Solo un file dell'app danneggiato:</strong> ripristinare i file dalla propria copia più recente, mantenendo gli ambienti funzionanti. Per conservare il box, ripristinare insieme app, modulo e configurazione Qwen.</li>
+<li><strong>Ambiente Python danneggiato:</strong> mantenere codice, modelli, voci e output; ricreare soltanto l'ambiente interessato.</li>
+<li><strong>Nuovo PC o nuova cartella:</strong> copiare codice e dati, installare Python e driver NVIDIA appropriati, ricreare entrambi i venv, aggiornare il percorso Qwen e il collegamento di avvio.</li>
+</ul>
+<p>Il backup <code>backup_voicedesign_20260905_210307</code> presente nel progetto è precedente al box: ripristinarne <code>ChatterText_3.0.py</code> rimuove l'integrazione dall'interfaccia. Non è la copia da usare per ottenere l'app completa attuale.</p>
+<h2 id="4-preparare-i-percorsi">4. Preparare i percorsi</h2>
+<p>I comandi seguenti vanno eseguiti in PowerShell <strong>uno alla volta</strong>, controllando l'esito. Se un comando restituisce un errore, fermarsi e conservarne il messaggio. Non eseguirli ora sull'app funzionante: sono il percorso per le prossime prove.</p>
+<p>Installare Python 3.12 a 64 bit dalla <a href="https://www.python.org/downloads/windows/">distribuzione ufficiale</a>, includendo Tcl/Tk. Installare un driver NVIDIA compatibile con la GPU e con i runtime CUDA usati. I pacchetti PyTorch includono il proprio runtime CUDA: per questa procedura non si compila codice CUDA e non è previsto installare il toolkit completo.</p>
+<p>Impostare le variabili con i percorsi reali della postazione di destinazione. L'esempio seguente usa cartelle brevi; non sono state create automaticamente:</p>
+<pre><code class="language-powershell">$AppPath = 'D:\Siti GitHub\chattertext'
+$QwenPath = 'D:\AI\Qwen3-VoiceDesign'
+$PythonBase = 'C:\Users\gerar\AppData\Local\Programs\Python\Python312\python.exe'
+$RestorePath = Join-Path $AppPath 'Ripristino-Sistema'
+&amp; $PythonBase --version
+nvidia-smi
+</code></pre>
+<p>Su un altro account cambiare anche il percorso del Python. Prima copiare le cartelle dal backup nelle destinazioni scelte. Non rinominare o cancellare voci, modelli e output.</p>
+<p>Se nella destinazione esiste già un ambiente da sostituire, chiudere l'app, verificare in Esplora file il percorso esatto e rinominare <strong>solo</strong> <code>venv_chatterbox</code> o <code>.venv</code> in un nome di backup libero. Conservare il vecchio ambiente fino al collaudo. Non creare il nuovo ambiente sopra quello vecchio.</p>
+<h2 id="5-ricreare-chatterbox">5. Ricreare Chatterbox</h2>
+<p>Il <code>pyproject.toml</code> nella radice del progetto descrive una versione diversa. Il pacchetto in uso proviene da <strong><code>chatterbox\pyproject.toml</code></strong>: si reinstalla da questa sottocartella preservata nel backup, non dalla radice e non da un generico aggiornamento su Internet.</p>
+<p>È presente una discrepanza già esistente: il pacchetto dichiara PyTorch/torchaudio 2.6.0, mentre l'ambiente usato dall'utente contiene 2.5.1+cu121. Il file <code>chatterbox-pip-check.txt</code> registra i due avvisi. Per ricreare lo stato attuale usiamo le versioni rilevate senza risolvere automaticamente le dipendenze. Non è una dichiarazione di compatibilità ufficiale e richiede il test audio finale. Un eventuale aggiornamento a 2.6.0 sarà una prova separata.</p>
+<pre><code class="language-powershell">&amp; $PythonBase -m venv (Join-Path $AppPath 'venv_chatterbox')
+$CbPython = Join-Path $AppPath 'venv_chatterbox\Scripts\python.exe'
+&amp; $CbPython -m pip install 'setuptools==80.10.2' wheel
+&amp; $CbPython -m pip install 'torch==2.5.1' 'torchaudio==2.5.1' --index-url https://download.pytorch.org/whl/cu121
+&amp; $CbPython -m pip install --no-deps -r (Join-Path $RestorePath 'chatterbox-dipendenze.txt')
+&amp; $CbPython -m pip install --no-deps --no-build-isolation -e (Join-Path $AppPath 'chatterbox')
+&amp; $CbPython -m pip check
+</code></pre>
+<p>L'ultima verifica dovrebbe segnalare soltanto le due discrepanze PyTorch documentate. Ulteriori messaggi vanno esaminati prima di procedere. Non usare <code>pip install -U</code> per tentare di eliminarli. I <a href="https://pytorch.org/get-started/previous-versions/">comandi CUDA per PyTorch 2.5.1</a> sono documentati dal progetto.</p>
+<p><code>chatterbox-dipendenze.txt</code> deriva dal freeze reale, escludendo PyTorch/torchaudio (installati dall'indice CUDA) e l'installazione locale Chatterbox (installata dal backup). <code>--no-deps</code> evita che il resolver sostituisca le versioni rilevate; tutte le dipendenze devono quindi essere presenti nell'inventario. Il significato dell'opzione è descritto nella <a href="https://pip.pypa.io/en/stable/cli/pip_install/">documentazione pip</a>.</p>
+<h2 id="6-ricreare-qwen-voicedesign">6. Ricreare Qwen VoiceDesign</h2>
+<pre><code class="language-powershell">&amp; $PythonBase -m venv (Join-Path $QwenPath '.venv')
+$QwPython = Join-Path $QwenPath '.venv\Scripts\python.exe'
+&amp; $QwPython -m pip install 'setuptools==78.1.0' wheel
+&amp; $QwPython -m pip install 'torch==2.11.0' 'torchaudio==2.11.0' --index-url https://download.pytorch.org/whl/cu128
+&amp; $QwPython -m pip install --no-deps -r (Join-Path $RestorePath 'qwen-dipendenze.txt')
+&amp; $QwPython -m pip install --no-deps --no-build-isolation -e (Join-Path $QwenPath 'repository')
+&amp; $QwPython -m pip check
+</code></pre>
+<p>Per Qwen il controllo delle dipendenze attuale non segnala conflitti. Usare il codice del backup, commit <code>022e286b98fbec7e1e916cb940cdf532cd9f488e</code>, dal <a href="https://github.com/QwenLM/Qwen3-TTS">repository ufficiale Qwen3-TTS</a>.</p>
+<p>Se il modello è stato copiato integralmente, non scaricarlo di nuovo. Se manca, questo comando recupera <strong>la revisione attualmente usata</strong>:</p>
+<pre><code class="language-powershell">$env:HF_HOME = Join-Path $QwenPath 'cache'
+&amp; $QwPython -c &quot;from huggingface_hub import snapshot_download; import sys; snapshot_download('Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign', revision='5ecdb67327fd37bb2e042aab12ff7391903235d3', local_dir=sys.argv[1])&quot; (Join-Path $QwenPath 'models\Qwen3-TTS-12Hz-1.7B-VoiceDesign')
+Remove-Item Env:HF_HOME
+</code></pre>
+<p>Eseguire questo blocco in una nuova finestra PowerShell senza personalizzazioni HF_HOME. <code>download_model.py</code> originale, invece, interroga la revisione corrente online: non è il comando da preferire per ripristinare esattamente i pesi di oggi.</p>
+<p>Nel test effettuato Qwen usa GPU, bfloat16 e SDPA. FlashAttention non è installato. L'eseguibile SoX non è presente, ma la generazione VoiceDesign verificata funziona ugualmente. Non installare componenti aggiuntivi solo per nascondere questi avvisi.</p>
+<h2 id="7-ricollegare-qwen-e-recuperare-i-modelli-chatterbox">7. Ricollegare Qwen e recuperare i modelli Chatterbox</h2>
+<p>Aggiornare la configurazione Qwen dopo aver scelto il nuovo percorso:</p>
+<pre><code class="language-powershell">@{root=$QwenPath} | ConvertTo-Json | Set-Content -Encoding ascii (Join-Path $AppPath 'qwen_voice_config.json')
+</code></pre>
+<p>Questo comando è adatto ai percorsi ASCII mostrati. Per percorsi con caratteri accentati usare il pulsante <strong>Cartella installazione Qwen</strong> nel box, che salva correttamente in UTF-8.</p>
+<p>Per Chatterbox, copiare la cache salvata nella cache Hugging Face del nuovo account (normalmente <code>%USERPROFILE%\.cache\huggingface\hub</code>). Il riferimento <code>main</code> nella cache rilevata punta a <code>5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18</code>. Se la cache manca, il caricamento di Chatterbox tenta il download online. Poiché il codice attuale non fissa una revisione del modello, un nuovo download potrebbe recuperare pesi diversi: per una riproduzione fedele preferire il backup della cache e il test offline.</p>
+<p>Il JSON Qwen è una configurazione del percorso, non contiene il modello e non deve puntare alla sola sottocartella <code>models</code>.</p>
+<h2 id="8-controlli-prima-delluso">8. Controlli prima dell'uso</h2>
+<p>Controllare separatamente i due ambienti:</p>
+<pre><code class="language-powershell">&amp; $CbPython -c &quot;import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CUDA non disponibile')&quot;
+&amp; $QwPython -c &quot;import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CUDA non disponibile')&quot;
+&amp; $CbPython -c &quot;import inspect; from chatterbox.mtl_tts import ChatterboxMultilingualTTS; print(inspect.signature(ChatterboxMultilingualTTS.from_pretrained))&quot;
+</code></pre>
+<p>L'ultima firma deve includere <code>t3_model</code>, necessario per V3. Provare poi la generazione Qwen con un nome nuovo:</p>
+<pre><code class="language-powershell">&amp; $QwPython (Join-Path $QwenPath 'generate.py') --output (Join-Path $QwenPath 'audio\test_ripristino.wav')
+</code></pre>
+<p>Avviare temporaneamente l'app dalla console, così eventuali errori restano leggibili:</p>
+<pre><code class="language-powershell">Set-Location $AppPath
+&amp; $CbPython (Join-Path $AppPath 'ChatterText_3.0.py')
+</code></pre>
+<p>Checklist di collaudo:</p>
+<ul>
+<li>Il box VoiceDesign si apre; genera almeno due varianti, riproduce e interrompe l'audio, salva e ricarica un JSON.</li>
+<li>Una variante viene assegnata a uno slot Chatterbox e compare in <code>2.Voci</code>.</li>
+<li>Chatterbox produce correttamente un breve testo italiano con quel sample, salvando in <code>1.Output</code>.</li>
+<li>L'interruzione di Qwen funziona e il successivo avvio riesce.</li>
+<li>Chiusura e riapertura con <code>Avvia-Chattertext_3.bat</code> funzionano senza console visibile. Se si usa un collegamento Windows, correggere i percorsi a <code>venv_chatterbox\Scripts\pythonw.exe</code> e <code>ChatterText_3.0.py</code>.</li>
+</ul>
+<p>Per verificare la completezza della cache Chatterbox, dopo un primo test riuscito si può aprire una nuova PowerShell, impostare <code>$env:HF_HUB_OFFLINE='1'</code> e avviare da lì l'app. Un test audio riuscito in quella finestra conferma che i file richiesti da quel flusso sono disponibili localmente. Chiudere poi la finestra per eliminare l'impostazione di sessione. Qwen è già configurato offline nei suoi script di generazione.</p>
+<p>Non eliminare il backup finché entrambe le generazioni non superano queste prove.</p>
+<h2 id="9-problemi-piu-comuni">9. Problemi più comuni</h2>
+<table>
+<thead>
+<tr>
+<th>Sintomo</th>
+<th>Controllo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L'app non parte</td>
+<td>Avviarla con python.exe dalla console; verificare il Python di base e il venv.</td>
+</tr>
+<tr>
+<td>Manca <code>qwen_voice_box</code></td>
+<td>Ripristinare il modulo accanto a <code>ChatterText_3.0.py</code>.</td>
+</tr>
+<tr>
+<td>Cartella Qwen non valida</td>
+<td>Selezionare la radice contenente <code>.venv</code>, <code>voice_worker.py</code>, <code>voice_request.py</code> e <code>models</code>.</td>
+</tr>
+<tr>
+<td>CUDA non disponibile</td>
+<td>Verificare driver, GPU e versione CUDA di torch nell'ambiente specifico, senza modificare l'altro ambiente.</td>
+</tr>
+<tr>
+<td>Memoria GPU insufficiente</td>
+<td>Chiudere altre generazioni/istanze; usare un testo breve e un solo processo. I 12 GB della RTX 3060 sono la configurazione collaudata, non una garanzia per ogni GPU.</td>
+</tr>
+<tr>
+<td>Errore V3 o manca <code>t3_model</code></td>
+<td>Verificare che il pacchetto installato provenga dalla sottocartella <code>chatterbox</code> salvata, non da una versione differente.</td>
+</tr>
+<tr>
+<td>Modello Qwen mancante offline</td>
+<td>Ripristinare tutta la cartella modello, compreso <code>speech_tokenizer</code>, o eseguire il download con revisione fissata.</td>
+</tr>
+<tr>
+<td>Frase Qwen troncata</td>
+<td>Accorciare il testo o aumentare il limite token nel box.</td>
+</tr>
+<tr>
+<td>Dipendenze non più scaricabili</td>
+<td>Conservare l'errore; non sostituire versioni a caso. Occorrerà preparare un archivio pacchetti o collaudare una nuova combinazione.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="10-file-di-riferimento-inclusi">10. File di riferimento inclusi</h2>
+<p>Nella cartella <code>Ripristino-Sistema</code>: freeze originali di entrambi gli ambienti, elenchi ripuliti per la reinstallazione, risultato <code>pip check</code> Chatterbox e manifest SHA-256 dei principali file applicativi. Il manifest aiuta a riconoscere modifiche successive; non sostituisce il backup. Se l'app verrà modificata, aggiornare anche backup, guida e inventario.</p>
+<p>Stato attuale: l'utente ha confermato il funzionamento del box. Nei test precedenti sono riuscite generazione GPU Qwen, due varianti, assegnazione voce in cartella di prova e interruzione. <strong>Ripristino completo e trasferimento su altro PC ancora da provare.</strong></p></body></html>

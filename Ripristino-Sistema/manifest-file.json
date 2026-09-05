@@ -1,0 +1,46 @@
+[
+  {
+    "path": "D:\\Siti GitHub\\chattertext\\ChatterText_3.0.py",
+    "sha256": "f32056994096435fdec6a1479f642a3e6135f8704ef9b5501fb88d642d5e60ee"
+  },
+  {
+    "path": "D:\\Siti GitHub\\chattertext\\qwen_voice_box.py",
+    "sha256": "3850a00af4201535caa954ac6a84cdb4dd1e2311a6674bdb06d1d2da12c5fba0"
+  },
+  {
+    "path": "D:\\Siti GitHub\\chattertext\\qwen_voice_config.json",
+    "sha256": "36df8fd2754026460d8a3220c101aaea6bb4168f3868ec261dd571edebe85ab5"
+  },
+  {
+    "path": "D:\\Siti GitHub\\chattertext\\Avvia-Chattertext_3.bat",
+    "sha256": "2624be2d98a28b3336688bb2c4b6ff75512c6eef7656547d5ac9982ba921b2bb"
+  },
+  {
+    "path": "D:\\Siti GitHub\\chattertext\\chatterbox\\pyproject.toml",
+    "sha256": "f896db30b4ec89e0550ddb37814b791d8485045bbbe54f8be9ae256e387c3047"
+  },
+  {
+    "path": "D:\\Siti GitHub\\chattertext\\chatterbox\\src\\chatterbox\\mtl_tts.py",
+    "sha256": "96fd2dfbd947d3b617fdada8721264bc6597799e81ebf8e43603f083f72fe433"
+  },
+  {
+    "path": "C:\\Users\\gerar\\Documents\\Codex\\2026-09-05\\referenced-chatgpt-conversation-this-is-an-2\\outputs\\Qwen3-VoiceDesign\\generate.py",
+    "sha256": "74242a95e8d1b7751d7dad41f7d7b88881f9e2fe5550488d43fb5b21c55d17a2"
+  },
+  {
+    "path": "C:\\Users\\gerar\\Documents\\Codex\\2026-09-05\\referenced-chatgpt-conversation-this-is-an-2\\outputs\\Qwen3-VoiceDesign\\voice_worker.py",
+    "sha256": "1156fefca36d678a0e48186576e6d810b2ce344c66900a3ccc188d8613c9fc29"
+  },
+  {
+    "path": "C:\\Users\\gerar\\Documents\\Codex\\2026-09-05\\referenced-chatgpt-conversation-this-is-an-2\\outputs\\Qwen3-VoiceDesign\\voice_request.py",
+    "sha256": "71080dac7f8d018ee53a277274dc3fd472b00f4c63c97447361da5b58ae7e80c"
+  },
+  {
+    "path": "C:\\Users\\gerar\\Documents\\Codex\\2026-09-05\\referenced-chatgpt-conversation-this-is-an-2\\outputs\\Qwen3-VoiceDesign\\download_model.py",
+    "sha256": "746feaefddd987345ce7937316f4d2536e0d73a5dcfbb4314d5a582a0921fa42"
+  },
+  {
+    "path": "C:\\Users\\gerar\\Documents\\Codex\\2026-09-05\\referenced-chatgpt-conversation-this-is-an-2\\outputs\\Qwen3-VoiceDesign\\model-revision.txt",
+    "sha256": "33099fda57adaf548d8eab685a899a5178a9e136f79e9e672164733692d78d3a"
+  }
+]

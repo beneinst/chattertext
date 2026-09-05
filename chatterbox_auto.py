@@ -30,16 +30,15 @@ except Exception as e:
     exit(2)
 print('Modello su {}!'.format(DEVICE.type.upper()))
 chunks=[
-  "Benvenuto all'ascolto di Novelle per un anno, [p1] volume decimo, [p1] il vecchio dio, [p1] di luigi pirandello. [p1]. [p1]. [p1].",
-  "[p1] Benvenuto all'ascolto di Novelle per un anno, [p1] volume decimo, [p1] il vecchio dio, [p1] di luigi pirandello. [p1]. [p1]."
+  ". [p1]. [p1]. [p1] Storie diverse per personaggi e situazioni, ma unite da uno sguardo capace di cogliere ciò che si nasconde dietro le apparenze e le convenzioni della vita. [p1]. [p1]. [p1]."
 ]
-AUDIO_V1="2.Voci/2Raffaellaliuzzo.wav"
-AUDIO_V2="2.Voci/2Raffaellaliuzzo.wav"
-AUDIO_V3="2.Voci/2Raffaellaliuzzo.wav"
-AUDIO_V4="2.Voci/2Raffaellaliuzzo.wav"
-AUDIO_V5="2.Voci/2Raffaellaliuzzo.wav"
-AUDIO_V6="2.Voci/2Raffaellaliuzzo.wav"
-AUDIO_V7="2.Voci/2Raffaellaliuzzo.wav"
+AUDIO_V1="2.Voci/2raffaellaliuzzo.wav"
+AUDIO_V2="2.Voci/2raffaellaliuzzo.wav"
+AUDIO_V3="2.Voci/2raffaellaliuzzo.wav"
+AUDIO_V4="2.Voci/2raffaellaliuzzo.wav"
+AUDIO_V5="2.Voci/2raffaellaliuzzo.wav"
+AUDIO_V6="2.Voci/2raffaellaliuzzo.wav"
+AUDIO_V7="2.Voci/2raffaellaliuzzo.wav"
 HAS2=False
 HAS3=False
 HAS4=False

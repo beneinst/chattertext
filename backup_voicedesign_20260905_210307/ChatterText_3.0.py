@@ -1623,8 +1623,6 @@ class App(tk.Tk):
         self._hdr(r)
         self._inp_sec(r)
         self._voices_sec(r)
-        from qwen_voice_box import mount
-        mount(self, r, C)
         self._action_bar(r)
         self._stats_sec(r); self._log_sec(r); self._chunks_sec(r)
         self._style_sec(r)
@@ -2533,8 +2531,6 @@ class App(tk.Tk):
         messagebox.showinfo("Salvato", "Script:\n{}".format(p))
 
     def run_chatterbox(self):
-        if getattr(self, "_qwen_box", None) and self._qwen_box.busy:
-            messagebox.showwarning("GPU occupata", "Attendi o interrompi la generazione Qwen VoiceDesign."); return
         if self._proc and self._proc.poll() is None:
             messagebox.showwarning("In corso", "Generazione già in corso! Premi Stop."); return
         s = self._mk_script()
@@ -2555,7 +2551,6 @@ class App(tk.Tk):
         self.log.config(state="disabled")
         self.stopbtn.config(state="normal")
         self._t0 = time.time()
-        self._chatter_starting = True
         def _run():
             try:
                 env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
@@ -2564,7 +2559,6 @@ class App(tk.Tk):
                     text=True, encoding="utf-8", errors="replace", env=env,
                     **HIDDEN_SUBPROCESS)
                 self._proc = proc
-                self._chatter_starting = False
                 for line in proc.stdout:
                     self._alog(line)
                     if "Caricamento Chatterbox" in line:
@@ -2598,7 +2592,6 @@ class App(tk.Tk):
             except Exception as ex:
                 self._alog("\nErrore: {}\n".format(ex))
             finally:
-                self._chatter_starting = False
                 self.after(0, lambda: self.stopbtn.config(state="disabled"))
         threading.Thread(target=_run, daemon=True).start()
 
