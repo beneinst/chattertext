@@ -615,6 +615,36 @@ def analyze_text(text):
     return errs
 
 
+_LEADING_PAUSE_RE = re.compile(
+    r"^(?:\s*\[(?:p1|p2|p3|b|bd|cap|pausa|pausa_lunga|silenzio|"
+    r"verso|strofa|metro|enjambement|cesura)\]\s*)+",
+    re.IGNORECASE
+)
+
+def _rebalance_leading_pauses(chunks):
+    """
+    Se uno split (per frase o per parole) lascia un tag pausa in testa a un
+    chunk, lo sposta in coda al chunk precedente. Un chunk che comincia con
+    [p1]/[p2]/[b].../ viene convertito dalle Pause Naturali in punteggiatura+
+    newline PRIMA di qualsiasi parola: Chatterbox in quel caso spesso
+    "mangia" le prime parole reali del chunk.
+    """
+    out = []
+    for chunk in chunks:
+        m = _LEADING_PAUSE_RE.match(chunk)
+        if m and m.group(0).strip():
+            tags = re.findall(r"\[[^\]]+\]", m.group(0))
+            rest = chunk[m.end():].lstrip()
+            if out:
+                out[-1] = out[-1].rstrip() + " " + " ".join(tags)
+                chunk = rest
+            else:
+                # è il primissimo chunk in assoluto: la pausa iniziale si scarta
+                chunk = rest
+        out.append(chunk)
+    return out
+
+
 def chunk_text(text, min_w, max_w, max_c):
     tms = list(re.finditer(r"\[inizio\]([\s\S]*?)\[fine\]", text, re.IGNORECASE))
     if tms:
@@ -638,7 +668,8 @@ def chunk_text(text, min_w, max_w, max_c):
                         break
             else:
                 if cont: chunks.append(cont)
-        return chunks
+        return _rebalance_leading_pauses(chunks)
+
     paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
     chunks = []
 
@@ -690,7 +721,8 @@ def chunk_text(text, min_w, max_w, max_c):
             if choices:
                 _, left, right = min(choices, key=lambda item: item[0])
                 chunks[-2:] = [left, right]
-    return chunks
+
+    return _rebalance_leading_pauses(chunks)
 
 
 def chunk_status(words, chars):
@@ -1270,6 +1302,16 @@ natural_fn,
 "    txt = re.sub(r'\\[e[12p]\\]','',txt,flags=re.IGNORECASE)",
 "    txt = re.sub(r'\\[(?:join|cont|cambio|cambio3|cambio4|cambio5|cambio6|cambio7|para|stacco|lungo|scena|dissolvenza)\\]','',txt,flags=re.IGNORECASE)",
 "    return txt.strip()",
+"segs=[]; fail=[]",
+"print('Warm-up del modello (evita la perdita delle prime parole nel primo chunk)...')",
+"try:",
+"    _warm = model.generate('Prova.', language_id='it', audio_prompt_path=AUDIO_V1,",
+"        exaggeration=DEF_P['exaggeration'], cfg_weight=DEF_P['cfg_weight'],",
+"        temperature=DEF_P['temperature'], min_p=DEF_P['min_p'], top_p=DEF_P['top_p'],",
+"        repetition_penalty=REPETITION_PENALTY)",
+"    del _warm",
+"except Exception as _warm_err:",
+"    print('Warm-up non riuscito (non blocca la generazione): {}'.format(_warm_err))",
 "segs=[]; fail=[]",
 "st=time.time()",
 "print('\\n'+'='*55)",

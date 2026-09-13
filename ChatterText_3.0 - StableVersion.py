@@ -61,7 +61,7 @@ HIDDEN_SUBPROCESS = _hidden_subprocess_kwargs()
 # PALETTE
 # =========================================================
 C = {
-    "bg":       "#292929", "surface":  "#303030", "surface2": "#383838",
+    "bg":       "#25221b", "surface":  "#303030", "surface2": "#383838",
     "border":   "#4a4a4a", "accent":   "#81ecec", "accent2":  "#4a90e2",
     "text":     "#ededed", "text_dim": "#a0a5a6", "success":  "#00b894",
     "warning":  "#fdcb6e", "danger":   "#e84357", "v1":       "#3498db",
@@ -615,6 +615,36 @@ def analyze_text(text):
     return errs
 
 
+_LEADING_PAUSE_RE = re.compile(
+    r"^(?:\s*\[(?:p1|p2|p3|b|bd|cap|pausa|pausa_lunga|silenzio|"
+    r"verso|strofa|metro|enjambement|cesura)\]\s*)+",
+    re.IGNORECASE
+)
+
+def _rebalance_leading_pauses(chunks):
+    """
+    Se uno split (per frase o per parole) lascia un tag pausa in testa a un
+    chunk, lo sposta in coda al chunk precedente. Un chunk che comincia con
+    [p1]/[p2]/[b].../ viene convertito dalle Pause Naturali in punteggiatura+
+    newline PRIMA di qualsiasi parola: Chatterbox in quel caso spesso
+    "mangia" le prime parole reali del chunk.
+    """
+    out = []
+    for chunk in chunks:
+        m = _LEADING_PAUSE_RE.match(chunk)
+        if m and m.group(0).strip():
+            tags = re.findall(r"\[[^\]]+\]", m.group(0))
+            rest = chunk[m.end():].lstrip()
+            if out:
+                out[-1] = out[-1].rstrip() + " " + " ".join(tags)
+                chunk = rest
+            else:
+                # è il primissimo chunk in assoluto: la pausa iniziale si scarta
+                chunk = rest
+        out.append(chunk)
+    return out
+
+
 def chunk_text(text, min_w, max_w, max_c):
     tms = list(re.finditer(r"\[inizio\]([\s\S]*?)\[fine\]", text, re.IGNORECASE))
     if tms:
@@ -638,7 +668,8 @@ def chunk_text(text, min_w, max_w, max_c):
                         break
             else:
                 if cont: chunks.append(cont)
-        return chunks
+        return _rebalance_leading_pauses(chunks)
+
     paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
     chunks = []
 
@@ -690,7 +721,8 @@ def chunk_text(text, min_w, max_w, max_c):
             if choices:
                 _, left, right = min(choices, key=lambda item: item[0])
                 chunks[-2:] = [left, right]
-    return chunks
+
+    return _rebalance_leading_pauses(chunks)
 
 
 def chunk_status(words, chars):
@@ -1271,6 +1303,16 @@ natural_fn,
 "    txt = re.sub(r'\\[(?:join|cont|cambio|cambio3|cambio4|cambio5|cambio6|cambio7|para|stacco|lungo|scena|dissolvenza)\\]','',txt,flags=re.IGNORECASE)",
 "    return txt.strip()",
 "segs=[]; fail=[]",
+"print('Warm-up del modello (evita la perdita delle prime parole nel primo chunk)...')",
+"try:",
+"    _warm = model.generate('Prova.', language_id='it', audio_prompt_path=AUDIO_V1,",
+"        exaggeration=DEF_P['exaggeration'], cfg_weight=DEF_P['cfg_weight'],",
+"        temperature=DEF_P['temperature'], min_p=DEF_P['min_p'], top_p=DEF_P['top_p'],",
+"        repetition_penalty=REPETITION_PENALTY)",
+"    del _warm",
+"except Exception as _warm_err:",
+"    print('Warm-up non riuscito (non blocca la generazione): {}'.format(_warm_err))",
+"segs=[]; fail=[]",
 "st=time.time()",
 "print('\\n'+'='*55)",
 "print('AVVIO GENERAZIONE [{}]'.format(DEVICE.type.upper()))",
@@ -1620,12 +1662,16 @@ class App(tk.Tk):
         canvas.pack(side="left", fill="both", expand=True); scr.pack(side="right", fill="y")
         self.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(-1*(e.delta//120), "units"))
         r = self.sf
-        self._hdr(r); self._dev_sec(r); self._style_sec(r)
+        self._hdr(r)
         self._inp_sec(r)
-        self._param_sec(r)
-        self._action_bar(r)
         self._voices_sec(r)
+        from qwen_voice_box import mount
+        mount(self, r, C)
+        self._action_bar(r)
         self._stats_sec(r); self._log_sec(r); self._chunks_sec(r)
+        self._style_sec(r)
+        self._param_sec(r)
+        self._dev_sec(r)
         self._footer(r)
 
     def _action_bar(self, r):
@@ -1640,7 +1686,6 @@ class App(tk.Tk):
         b_gen.bind("<Enter>", lambda e: b_gen.config(bg=C["success"], fg="#fff"))
         b_gen.bind("<Leave>", lambda e: b_gen.config(bg="#1a3d2b", fg=C["text"]))
         sb_btn(br, "Analizza e Processa", self.process, color=C["accent2"]).pack(side="left", padx=(0,8))
-        sb_btn(br, "Incolla", self.paste_text, color="#6c5ce7").pack(side="left", padx=(0,8))
         self.stopbtn = sb_btn(br, "■ Stop", self._stop, color=C["danger"])
         self.stopbtn.pack(side="left", padx=(0,8))
         self.stopbtn.config(state="disabled")
@@ -1661,18 +1706,18 @@ class App(tk.Tk):
         return v
 
     def _hdr(self, r):
-        h = tk.Frame(r, bg="#0a1628", pady=24); h.pack(fill="x")
-        title_row = tk.Frame(h, bg="#0a1628"); title_row.pack(fill="x", padx=28)
+        h = tk.Frame(r, bg="#332f2c", pady=24); h.pack(fill="x")
+        title_row = tk.Frame(h, bg="#332f2c"); title_row.pack(fill="x", padx=28)
         if self._app_icon is not None:
-            tk.Label(title_row, image=self._app_icon, bg="#0a1628").pack(side="left", padx=(0,12))
-        title_text = tk.Frame(title_row, bg="#0a1628"); title_text.pack(side="left")
-        tk.Label(title_text, text="ChatterText", font=FH1, fg="#fff", bg="#0a1628",
+            tk.Label(title_row, image=self._app_icon, bg="#332f2c").pack(side="left", padx=(0,12))
+        title_text = tk.Frame(title_row, bg="#332f2c"); title_text.pack(side="left")
+        tk.Label(title_text, text="ChatterText", font=FH1, fg="#fff", bg="#332f2c",
                  anchor="w").pack(fill="x")
         tk.Label(title_text, text="Analizza e prepara il testo per Chatterbox TTS",
-                 font=FB, fg=C["text_dim"], bg="#0a1628", anchor="w").pack(fill="x", pady=(4,0))
+                 font=FB, fg=C["text_dim"], bg="#332f2c", anchor="w").pack(fill="x", pady=(4,0))
         tk.Label(title_text,
                  text="v3.0 + V3  |  Pause Naturali  |  4 Stili  |  Tag Poetici  |  Post-proc Audio  |  7 Voci",
-                 font=FS, fg=C["natural"], bg="#0a1628", anchor="w").pack(fill="x", pady=(2,0))
+                 font=FS, fg=C["natural"], bg="#332f2c", anchor="w").pack(fill="x", pady=(2,0))
 
     def _dev_sec(self, r):
         sec = self._sec(r, "Dispositivo di Calcolo")
@@ -1862,6 +1907,7 @@ class App(tk.Tk):
         tag_bar = tk.Frame(sec, bg="#10201d", highlightthickness=1,
                            highlightbackground="#285c50", padx=12, pady=8)
         tag_bar.pack(fill="x", pady=(0,10))
+        sb_btn(tag_bar, "Incolla", self.paste_text, color="#6c5ce7").pack(side="right", padx=(8,0))
         tk.Label(tag_bar, text="Altri tag", font=FL, fg=C["natural"],
                  bg="#10201d").pack(side="left", padx=(0,12))
         self.vquicktag = tk.StringVar(value="[p2]")
@@ -2529,6 +2575,8 @@ class App(tk.Tk):
         messagebox.showinfo("Salvato", "Script:\n{}".format(p))
 
     def run_chatterbox(self):
+        if getattr(self, "_qwen_box", None) and self._qwen_box.busy:
+            messagebox.showwarning("GPU occupata", "Attendi o interrompi la generazione Qwen VoiceDesign."); return
         if self._proc and self._proc.poll() is None:
             messagebox.showwarning("In corso", "Generazione già in corso! Premi Stop."); return
         s = self._mk_script()
@@ -2549,6 +2597,7 @@ class App(tk.Tk):
         self.log.config(state="disabled")
         self.stopbtn.config(state="normal")
         self._t0 = time.time()
+        self._chatter_starting = True
         def _run():
             try:
                 env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
@@ -2557,6 +2606,7 @@ class App(tk.Tk):
                     text=True, encoding="utf-8", errors="replace", env=env,
                     **HIDDEN_SUBPROCESS)
                 self._proc = proc
+                self._chatter_starting = False
                 for line in proc.stdout:
                     self._alog(line)
                     if "Caricamento Chatterbox" in line:
@@ -2590,6 +2640,7 @@ class App(tk.Tk):
             except Exception as ex:
                 self._alog("\nErrore: {}\n".format(ex))
             finally:
+                self._chatter_starting = False
                 self.after(0, lambda: self.stopbtn.config(state="disabled"))
         threading.Thread(target=_run, daemon=True).start()
 

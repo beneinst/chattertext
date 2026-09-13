@@ -30,15 +30,23 @@ except Exception as e:
     exit(2)
 print('Modello su {}!'.format(DEVICE.type.upper()))
 chunks=[
-  ". [p1]. [p1]. [p1] Storie diverse per personaggi e situazioni, ma unite da uno sguardo capace di cogliere ciò che si nasconde dietro le apparenze e le convenzioni della vita. [p1]. [p1]. [p1]."
+  "Edgar Wallace [p1] Il duca nel sobborgo [p1] Tra ironia, mistero e avventura, Edgar Wallace ci conduce in una storia dove l'imprevisto si nasconde dietro le apparenze e nulla è davvero come sembra. [p1] Lettura di Clara Zanon. [p1]",
+  "Audiolibro proveniente da Liber Liber. [p1] Edizione YouTube a cura di Beneinst, Onde Letterarie e Audiolibri. [p1] Buon ascolto. [p1] Poi lascerei una breve pausa e partirei direttamente con. [p1]",
+  "\"Apologia dello scrittore\" [p1] In alternativa, visto il tono particolare e anche ironico del romanzo, mi piace ancora di più una formulazione leggermente meno \"giallo classico\". [p2]. [p1]. [p1]. [p1]. [p1]",
+  "Edgar Wallace [p1] Il duca nel sobborgo [p1] Tra ironia, mistero e avventura, Edgar Wallace ci conduce in una storia dove l'imprevisto si nasconde dietro le apparenze e nulla è davvero come sembra. [p1] Lettura di Clara Zanon. [p1]",
+  "Audiolibro proveniente da Liber Liber. [p1] Edizione YouTube a cura di Beneinst, Onde Letterarie e Audiolibri. [p1] Buon ascolto. [p1] Poi lascerei una breve pausa e partirei direttamente con. [p1]",
+  "\"Apologia dello scrittore\" [p1] In alternativa, visto il tono particolare e anche ironico del romanzo, mi piace ancora di più una formulazione leggermente meno \"giallo classico\". [p1]. [p1]. [p1]. [p1]. [p1]",
+  "Edgar Wallace [p1] Il duca nel sobborgo [p1] Tra ironia, mistero e avventura, Edgar Wallace ci conduce in una storia dove l'imprevisto si nasconde dietro le apparenze e nulla è davvero come sembra. [p1] Lettura di Clara Zanon. [p1]",
+  "Audiolibro proveniente da Liber Liber. [p1] Edizione YouTube a cura di Beneinst, Onde Letterarie e Audiolibri. [p1] Buon ascolto. [p1] Poi lascerei una breve pausa e partirei direttamente con. [p1]",
+  "\"Apologia dello scrittore\" [p1] In alternativa, visto il tono particolare e anche ironico del romanzo, mi piace ancora di più una formulazione leggermente meno \"giallo classico\". [p1]. [p1]."
 ]
-AUDIO_V1="2.Voci/2raffaellaliuzzo.wav"
-AUDIO_V2="2.Voci/2raffaellaliuzzo.wav"
-AUDIO_V3="2.Voci/2raffaellaliuzzo.wav"
-AUDIO_V4="2.Voci/2raffaellaliuzzo.wav"
-AUDIO_V5="2.Voci/2raffaellaliuzzo.wav"
-AUDIO_V6="2.Voci/2raffaellaliuzzo.wav"
-AUDIO_V7="2.Voci/2raffaellaliuzzo.wav"
+AUDIO_V1="2.Voci/2RaffaellaLiuzzo_Nora.wav"
+AUDIO_V2="2.Voci/2RaffaellaLiuzzo_Nora.wav"
+AUDIO_V3="2.Voci/2RaffaellaLiuzzo_Nora.wav"
+AUDIO_V4="2.Voci/2RaffaellaLiuzzo_Nora.wav"
+AUDIO_V5="2.Voci/2RaffaellaLiuzzo_Nora.wav"
+AUDIO_V6="2.Voci/2RaffaellaLiuzzo_Nora.wav"
+AUDIO_V7="2.Voci/2RaffaellaLiuzzo_Nora.wav"
 HAS2=False
 HAS3=False
 HAS4=False
@@ -387,6 +395,16 @@ def prepare_text_for_tts(txt):
     txt = re.sub(r'\[e[12p]\]','',txt,flags=re.IGNORECASE)
     txt = re.sub(r'\[(?:join|cont|cambio|cambio3|cambio4|cambio5|cambio6|cambio7|para|stacco|lungo|scena|dissolvenza)\]','',txt,flags=re.IGNORECASE)
     return txt.strip()
+segs=[]; fail=[]
+print('Warm-up del modello (evita la perdita delle prime parole nel primo chunk)...')
+try:
+    _warm = model.generate('Prova.', language_id='it', audio_prompt_path=AUDIO_V1,
+        exaggeration=DEF_P['exaggeration'], cfg_weight=DEF_P['cfg_weight'],
+        temperature=DEF_P['temperature'], min_p=DEF_P['min_p'], top_p=DEF_P['top_p'],
+        repetition_penalty=REPETITION_PENALTY)
+    del _warm
+except Exception as _warm_err:
+    print('Warm-up non riuscito (non blocca la generazione): {}'.format(_warm_err))
 segs=[]; fail=[]
 st=time.time()
 print('\n'+'='*55)
