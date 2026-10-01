@@ -30,18 +30,19 @@ except Exception as e:
     exit(2)
 print('Modello su {}!'.format(DEVICE.type.upper()))
 chunks=[
-  "Pagina ventuno. Originale.",
-  "\"La caduta dell'impero romano portò a una serie di trasformazioni complesse che si svilupparono attraverso interazioni dinamiche tra elementi romani, greci e locali, dove la continuità storica si intrecciò con dinamiche di trasformazione",
-  "costante. \" Correzione. \"La caduta dell'impero romano portò a una serie di trasformazioni complesse.",
-  "Queste si svilupparono attraverso interazioni dinamiche tra elementi romani, greci e locali, dove la continuità storica si intrecciò con dinamiche di trasformazione costante. \""
+  "Epilogo. [p1]. [p1]. [p1] Un viaggio straordinario in un futuro immaginato quando il Novecento era appena cominciato. [p2] [p2]",
+  "Se questo audiolibro ti è piaciuto, [p1] lascia un laik e iscrìviti a Beneinst [p1] Onde Letterarie e Audiolibri. [p1] [p2] Il tuo sostegno ci aiuta a continuare a recuperare e condividere nuove opere della letteratura. [p1]. [p1]",
+  "Grazie per averci accompagnato [p1] in questo viaggio nel Duemila. [p1] [p2] Alla prossima lettura. [p1]. [p2] [p1]. [p1]. [p1]. [p1] Epilogo. [p1]. [p1]. [p2]",
+  "Un viaggio straordinario in un futuro immaginato quando il Novecento era appena cominciato. [p2] [p2] Se questo audiolibro ti è piaciuto, [p1] lascia un laik e iscrìviti a Beneinst [p1] Onde Letterarie e Audiolibri. [p1] [p2]",
+  "Il tuo sostegno ci aiuta a continuare a recuperare e condividere nuove opere della letteratura. [p2] [p2] Grazie per averci accompagnato [p1] in questo viaggio nel Duemila. [p1] [p2] Alla prossima lettura. [p1]. [p1]. [p1]."
 ]
-AUDIO_V1="2.Voci/2ClaudiaCaldi3.wav"
-AUDIO_V2="2.Voci/2ClaudiaCaldi3.wav"
-AUDIO_V3="2.Voci/2ClaudiaCaldi3.wav"
-AUDIO_V4="2.Voci/2ClaudiaCaldi3.wav"
-AUDIO_V5="2.Voci/2ClaudiaCaldi3.wav"
-AUDIO_V6="2.Voci/2ClaudiaCaldi3.wav"
-AUDIO_V7="2.Voci/2ClaudiaCaldi3.wav"
+AUDIO_V1="2.Voci/gerardo-persuasivo.mp3"
+AUDIO_V2="2.Voci/gerardo-persuasivo.mp3"
+AUDIO_V3="2.Voci/gerardo-persuasivo.mp3"
+AUDIO_V4="2.Voci/gerardo-persuasivo.mp3"
+AUDIO_V5="2.Voci/gerardo-persuasivo.mp3"
+AUDIO_V6="2.Voci/gerardo-persuasivo.mp3"
+AUDIO_V7="2.Voci/gerardo-persuasivo.mp3"
 HAS2=False
 HAS3=False
 HAS4=False
@@ -285,7 +286,25 @@ def pp(emo,ek=None):
 if SEED:
     random.seed(SEED); torch.manual_seed(SEED)
     if torch.cuda.is_available(): torch.cuda.manual_seed_all(SEED)
-tc=[pc(c) for c in chunks]
+tc=[]
+for chunk in chunks:
+    txt,vo,em,ps,tp,ek,jk=pc(chunk)
+    # Ogni pausa resta nel punto del testo in cui e' stata richiesta.
+    cursor=0; parts=[]
+    for match,(_,duration) in zip(PR.finditer(txt),ps):
+        piece=txt[cursor:match.start()].strip()
+        if piece:
+            parts.append([piece,vo,em,[],duration,ek,None])
+        elif parts:
+            parts[-1][4]+=duration
+        elif tc:
+            tc[-1][4]+=duration
+        cursor=match.end()
+    tail=txt[cursor:].strip()
+    if tail: parts.append([tail,vo,em,[],0.0,ek,None])
+    if parts:
+        parts[-1][6]=jk
+        tc.extend(parts)
 def noise_gate(wav, sr, gate_db=NOISE_GATE_DB, hpz=80, attack_ms=8, release_ms=60):
     thr=10**(gate_db/20)
     if wav.dim()==1: wav=wav.unsqueeze(0)
@@ -303,13 +322,14 @@ def noise_gate(wav, sr, gate_db=NOISE_GATE_DB, hpz=80, attack_ms=8, release_ms=6
     wav=wav*gate.unsqueeze(0)
     return wav
 def rms_normalize(wav, target_db=RMS_TARGET_DB):
+    # Guadagno lineare con margine di picco: non satura e non amplifica i silenzi.
     if wav.dim()==1: wav=wav.unsqueeze(0)
-    rms=torch.sqrt(torch.mean(wav**2)+1e-8)
-    target_rms=10**(target_db/20)
-    gain=target_rms/rms; gain=min(gain, 10.0)
-    wav=wav*gain
-    wav=torch.tanh(wav*0.9)*1.1
-    return wav.clamp(-0.98, 0.98)
+    peak=wav.abs().max().item()
+    if peak<=1e-8: return wav
+    active=wav[ wav.abs()>max(1e-5,peak*0.01) ]
+    rms=torch.sqrt(torch.mean(active**2)+1e-12).item()
+    gain=min(10**(target_db/20)/rms, 0.95/peak, 3.0)
+    return wav*gain
 def declick(wav, sr, window_ms=3):
     w=int(sr*window_ms/1000)
     if w%2==0: w+=1
@@ -334,7 +354,8 @@ def trim_silence(wav, sr, threshold_db=TRIM_DB, pad_ms=30):
     s=max(0, indices[0].item()-mg); e=min(len(en), indices[-1].item()+mg)
     return wav[...,s:e]
 def apply_fade(wav, sr, fade_ms=14):
-    f=int(sr*fade_ms/1000); wav=wav.clone()
+    f=min(int(sr*fade_ms/1000),wav.shape[-1]); wav=wav.clone()
+    if f<=0: return wav
     wav[...,:f]*=torch.linspace(0,1,f)
     wav[...,-f:]*=torch.linspace(1,0,f)
     return wav
@@ -367,14 +388,10 @@ def gentle_compressor(wav, sr, threshold_db=-20, ratio=2.5, attack_ms=8, release
     out=wav.clone(); out[0]=out[0]*gs*makeup
     return out.clamp(-0.98,0.98)
 def full_process(wav, sr):
-    wav=noise_gate(wav, sr)
+    # Protegge consonanti e riprese dopo una pausa: niente gate o compressore a scatti.
+    wav=trim_silence(wav, sr, threshold_db=min(TRIM_DB,-55), pad_ms=80)
     if AGGRESSIVE_CLEAN: wav=declick(wav, sr)
-    wav=trim_silence(wav, sr)
-    wav=spectral_balance(wav, sr)
-    wav=gentle_compressor(wav, sr)
-    wav=apply_fade(wav, sr)
-    wav=rms_normalize(wav)
-    return wav
+    return apply_fade(wav, sr, fade_ms=5)
 def prepare_text_for_tts(txt):
     '''
     v3.0: se NATURAL_PAUSES attivo, converte i tag pausa in
@@ -390,6 +407,70 @@ def prepare_text_for_tts(txt):
     txt = re.sub(r'\[e[12p]\]','',txt,flags=re.IGNORECASE)
     txt = re.sub(r'\[(?:join|cont|cambio|cambio3|cambio4|cambio5|cambio6|cambio7|para|stacco|lungo|scena|dissolvenza)\]','',txt,flags=re.IGNORECASE)
     return txt.strip()
+def speech_units(text, max_words=24, max_chars=180):
+    sentences=re.split(r'(?<=[.!?;])\s+|\n+',text.strip())
+    result=[]
+    for sentence in sentences:
+        buf=[]
+        for word in sentence.split():
+            if buf and (len(buf)>=max_words or len(' '.join(buf+[word]))>max_chars):
+                result.append(' '.join(buf)); buf=[]
+            buf.append(word)
+        if buf: result.append(' '.join(buf))
+    return result
+
+def generate_recoverable(tts_txt, vp, attempts, depth=0):
+    # I separatori senza parole sono pause, mai input da far pronunciare.
+    if not any(char.isalnum() for char in tts_txt):
+        return torch.zeros((1, max(1, int(model.sr*0.40*PAUSE_SCALE))))
+    if depth==0:
+        units=speech_units(tts_txt)
+        if len(units)>1:
+            print('   Generazione in {} frasi/parti brevi.'.format(len(units)),flush=True)
+            audio=[]
+            for unit in units:
+                audio.append(generate_recoverable(unit,vp,attempts,depth=1))
+            return torch.cat(audio,dim=-1)
+    words_n=max(1,len(tts_txt.split()))
+    min_dur=max(0.18, words_n/5.0)  # Controllo prudenziale per ogni frase
+    last_err=None
+    for attempt_i,ap in enumerate(attempts):
+        try:
+            wav=model.generate(tts_txt,language_id='it',audio_prompt_path=vp,
+                exaggeration=ap['exaggeration'],cfg_weight=ap['cfg_weight'],
+                temperature=ap['temperature'],min_p=ap['min_p'],top_p=ap['top_p'],repetition_penalty=REPETITION_PENALTY)
+            wav=wav.detach().cpu()
+            if wav.dim()==1: wav=wav.unsqueeze(0)
+            if not wav.numel() or not torch.isfinite(wav).all() or wav.abs().max()<1e-6:
+                raise ValueError('Audio vuoto, silenzioso o non valido')
+            wav=full_process(wav, model.sr)
+            # I silenzi interni non devono mascherare una frase saltata.
+            frame=max(1,int(model.sr*0.02))
+            envelope=wav.abs().amax(dim=0)
+            padded=torch.nn.functional.pad(envelope,(0,(-envelope.numel())%frame))
+            levels=padded.reshape(-1,frame).amax(dim=1)
+            threshold=max(1e-5,envelope.max().item()*0.015)
+            got_dur=(levels>threshold).sum().item()*frame/model.sr
+            if got_dur < min_dur:
+                print('   SOSPETTO: {:.1f}s per {} parole (atteso >= {:.1f}s) - possibile testo saltato, riprovo'.format(got_dur, words_n, min_dur))
+                last_err='audio troppo corto rispetto al testo (possibile salto)'
+                continue
+            return wav
+        except Exception as e:
+            last_err=e
+            print('   ERR tentativo {}: {}'.format(attempt_i+1, e), flush=True)
+    words=list(re.finditer(r'\S+', tts_txt))
+    if depth < 3 and len(words) >= 8:
+        middle=len(words)//2
+        boundaries=[n for n in range(3,len(words)-2)
+                    if tts_txt[:words[n].start()].rstrip().endswith(('.', '!', '?', ';', ':', ','))]
+        cut_word=min(boundaries,key=lambda n:abs(n-middle)) if boundaries else middle
+        cut=words[cut_word].start()
+        print('   Recupero: divido il blocco in due parti (livello {}).'.format(depth+1), flush=True)
+        left=generate_recoverable(tts_txt[:cut].strip(),vp,attempts,depth+1)
+        right=generate_recoverable(tts_txt[cut:].strip(),vp,attempts,depth+1)
+        return torch.cat([left,right],dim=-1)
+    raise RuntimeError('Recupero esaurito per {!r}: {}'.format(tts_txt[:100],last_err))
 print('Warm-up del modello (evita la perdita delle prime parole nel primo chunk)...')
 try:
     _warm = model.generate('Prova.', language_id='it', audio_prompt_path=AUDIO_V1,
@@ -436,36 +517,16 @@ for i,(txt,vo,em,ps,tp,ek,jk) in enumerate(tc):
     elif vo=='v2' and HAS2: vp=AUDIO_V2
     else:                   vp=AUDIO_V1
     p=pp(em,ek); ok=False
-    words_n=max(1,len(tts_txt.split()))
-    min_dur=words_n/4.5   # nessun lettore, nemmeno velocissimo, supera ~4.5 parole/sec
-    attempts=[dict(p),
-              dict(exaggeration=p['exaggeration']*0.85,
-                   cfg_weight=min(0.90,p['cfg_weight']+0.08),
-                   temperature=max(0.15,p['temperature']*0.85),
-                   min_p=p['min_p'],top_p=p['top_p']),
-              dict(exaggeration=0.0,cfg_weight=0.85,temperature=0.20,min_p=0.30,top_p=0.55)]
+    attempts=[dict(p) for _ in range(3)]
     last_err=None
-    for attempt_i,ap in enumerate(attempts):
-        try:
-            wav=model.generate(tts_txt,language_id='it',audio_prompt_path=vp,
-                exaggeration=ap['exaggeration'],cfg_weight=ap['cfg_weight'],
-                temperature=ap['temperature'],min_p=ap['min_p'],top_p=ap['top_p'],repetition_penalty=REPETITION_PENALTY)
-            if DEVICE.type=='cuda': wav=wav.cpu()
-            wav=full_process(wav, model.sr)
-            got_dur=wav.shape[-1]/model.sr
-            if got_dur < min_dur:
-                print('   SOSPETTO: {:.1f}s per {} parole (atteso >= {:.1f}s) - possibile testo saltato, riprovo'.format(got_dur, words_n, min_dur))
-                last_err='audio troppo corto rispetto al testo (possibile salto)'
-                continue
-            if tp>0:
-                sil=torch.zeros((wav.shape[0],int(model.sr*tp)))
-                wav=torch.cat([wav,sil],dim=-1)
-            segs.append(wav); ok=True
-            print('   OK!' if attempt_i==0 else '   Recuperato al tentativo {}!'.format(attempt_i+1))
-            break
-        except Exception as e:
-            last_err=e
-            print('   ERR tentativo {}: {} ...'.format(attempt_i+1, e))
+    try:
+        wav=generate_recoverable(tts_txt,vp,attempts)
+        if tp>0:
+            wav=torch.cat([wav,torch.zeros((wav.shape[0],int(model.sr*tp)))],dim=-1)
+        segs.append(wav); ok=True
+        print('   OK!')
+    except Exception as e:
+        last_err=e
     if not ok:
         print('   FALLITO:{}'.format(last_err)); fail.append(i)
 if not segs: print('Nessun audio.'); exit(1)
@@ -535,38 +596,38 @@ def ov(s1,s2,sr,oms=80):
     return torch.cat([s1[...,:-f],s1[...,-f:]*fo+s2[...,:f]*fi,s2[...,f:]],dim=-1)
 def fsf(s1,s2,sr,ss,foms=80,fims=60):
     fl=int(sr*foms/1000); il=int(sr*fims/1000)
-    sl=max(0,int(sr*ss)-fl-il)
+    sl=max(0,int(sr*ss))
     s1=s1.clone()
     if s1.shape[-1]>=fl: s1[...,-fl:]*=torch.linspace(1.0,0.0,fl)**1.8
     sil=torch.zeros((s2.shape[0],sl),dtype=s2.dtype)
     s2=s2.clone()
     if s2.shape[-1]>=il: s2[...,:il]*=torch.linspace(0.0,1.0,il)**1.8
     return torch.cat([s1,sil,s2],dim=-1)
-def asmb(s1,s2,sr,jt):
+def asmb(s1,s2,sr,jt,existing_pause=0.0):
     if jt is None: return None
     ss,mode=JM.get(jt,(0.5,'silence'))
-    ss=ss*PAUSE_SCALE
-    if mode=='overlap': return ov(s1,s2,sr)
-    if mode=='fade_sil_fade': return fsf(s1,s2,sr,ss)
+    ss=max(0.0,ss*PAUSE_SCALE-existing_pause)
+    if mode=='overlap': return torch.cat([s1,s2],dim=-1) if existing_pause>0 else ov(s1,s2,sr)
+    if mode=='fade_sil_fade': return fsf(s1,s2,sr,ss,foms=5,fims=5)
     sil=torch.zeros((s2.shape[0],int(sr*ss))) if ss>0 else None
-    if mode=='smooth': s2w=torch.cat([sil,s2],dim=-1) if sil is not None else s2; return cf(s1,s2w,sr,fms=30)
-    if mode=='cambio': s2w=torch.cat([sil,s2],dim=-1) if sil is not None else s2; return cf(s1,s2w,sr,fms=100)
-    if mode=='silence': s2w=torch.cat([sil,s2],dim=-1) if sil is not None else s2; return cf(s1,s2w,sr,fms=55)
+    if mode=='smooth': return torch.cat([s1,sil,s2],dim=-1) if sil is not None else torch.cat([s1,s2],dim=-1)
+    if mode=='cambio': return torch.cat([s1,sil,s2],dim=-1) if sil is not None else torch.cat([s1,s2],dim=-1)
+    if mode=='silence': return torch.cat([s1,sil,s2],dim=-1) if sil is not None else torch.cat([s1,s2],dim=-1)
     if mode=='hard': return torch.cat([s1,sil,s2],dim=-1) if sil is not None else torch.cat([s1,s2],dim=-1)
     return cf(s1,s2,sr)
 jl=[x[6] for x in tc]
 fa=None
 for i,seg in enumerate(segs):
     if fa is None: fa=seg; continue
-    jt=jl[i-1]; res=asmb(fa,seg,model.sr,jt)
+    jt=jl[i-1]; res=asmb(fa,seg,model.sr,jt,existing_pause=tc[i-1][4])
     if res is None:
         if tc[i-1][4]>0:
             # La pausa esplicita è già stata aggiunta al segmento precedente.
-            fa=cf(fa,seg,model.sr); js='tag-pausa'
+            fa=torch.cat([fa,seg],dim=-1); js='tag-pausa'
         else:
-            pau=dyn_pause(chunks[i-1], emo=tc[i-1][2])
+            pau=dyn_pause(tc[i-1][0], emo=tc[i-1][2])
             sil=torch.zeros((seg.shape[0],int(model.sr*pau)))
-            fa=cf(fa,torch.cat([sil,seg],dim=-1),model.sr)
+            fa=torch.cat([fa,sil,seg],dim=-1)
             js='auto({:.2f}s)'.format(pau)
     else: fa=res; js=jt if jt else 'auto'
     print(f'   -> join {i}: {js}')
@@ -581,7 +642,7 @@ print(f'   Pause Naturali: {"ATTIVE" if NATURAL_PAUSES else "disattive"}')
 voci_attive=[('V2',HAS2),('V3',HAS3),('V4',HAS4),('V5',HAS5),('V6',HAS6),('V7',HAS7)]
 voci_str=' | '.join(n for n,a in voci_attive if a) or '-'
 print(f'   Voci: V1 + {voci_str}')
-print(f'   OK: {len(segs)}/{len(chunks)}')
+print(f'   OK: {len(segs)}/{len(tc)}')
 if fail: print(f'   FAIL: {fail}')
 print('\nProcesso completato!')
 print('__CHATTERTEXT_DONE__')
