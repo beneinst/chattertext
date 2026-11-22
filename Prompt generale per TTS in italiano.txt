@@ -1,40 +1,43 @@
-Prompt generale per TTS in italiano (Qwen3‑1.7 / Voicebox)
+Prompt generale per TTS in italiano 
 
-Rielabora il testo seguente in modo che sia ottimizzato per la lettura vocale in italiano, mantenendo il significato e il tono. Applica queste regole:
+Prepara il testo seguente per una lettura vocale naturale in italiano. Mantieni il testo fedele all'originale: applica queste regole senza riscrivere o semplificare il contenuto.
 
 1. Punteggiatura e pause:
 
-- Usa punti fermi, virgole, punti di sospensione e punti esclamativi o interrogativi per creare pause brevi, medie e lunghe in modo naturale.
+- Conserva parole, ordine, tempi verbali, ripetizioni, dialoghi e punteggiatura espressiva dell'originale.
+- Non aggiungere, eliminare, correggere o parafrasare contenuti. Modifica la grafia di una parola solo quando è necessario per renderne inequivocabile la pronuncia.
+- Usa la punteggiatura già presente come guida: non aggiungere pause dopo ogni frase e non usare puntini di sospensione come pausa automatica.
 
-- Allunga le pause tra frasi, idee o concetti diversi, inserendo a capo quando necessario.
+- Inserisci un a capo semplice solo in corrispondenza di un respiro naturale o di un'unità di senso; lascia unite le parole legate dalla sintassi.
+- Usa righe vuote solo per un cambio effettivo di paragrafo, scena o pensiero. Evita spaziature uniformi o pause lunghe solo perché una frase è lunga.
 
 - Non usare tag XML o codice speciale; solo testo normale con punteggiatura italiana.
 
 2. Accenti e pronuncia:
 
-- Accenta le parole dove necessario (es. 'è, 'ò, 'à, 'ì, 'ù) per una lettura corretta in italiano.
-
+- Aggiungi accenti di pronuncia solo se il contesto determina chiaramente il significato: prìncipi (sovrani) / princìpi (fondamenti), àncora (della nave) / ancòra (avverbio), pèsca (frutto) / pésca (azione).
+- Non accentare sistematicamente le parole: gli accenti superflui possono rendere la sintesi innaturale.
 - Se una parola è in lingua straniera ma va letta “alla italiana”, trasforma la scrittura in modo che la pronuncia sia chiara per un lettore italiano (es. “file” → “faile”, “light” → “light” se vuoi un suono inglese, oppure “lait” se lo preferisci italianizzato, a seconda del contesto).
-
 - Se una parola è in inglese ma va mantenuta in suono originale, lasciala così, ma non usare forme ambigue.
+- Se cambi una grafia per la pronuncia, elenca le modifiche in fondo tra
+  <<<GLOSSARIO>>> e <<<FINE GLOSSARIO>>>; se non ne hai fatte, scrivi "nessuna modifica".
+  ChatterText ignora questo blocco e non lo legge nell'audio.
 
 3. Stile di lettura:
 
 - Mantieni uno stile narrativo fluido, chiaro e leggibile ad alta voce, come una lettura di libro o audiobook in italiano.
 
-- Evita liste eccessivamente lunghe in una sola frase; suddividi idee complesse in frasi più brevi.
+- Mantieni le frasi dell'autore; non dividerle o ricomporle in modo da alterarne il senso.
 
 4. Emozione e intonazione (implicita):
 
 - Usa la punteggiatura e la struttura delle frasi per veicolare emozione (sorpresa, ironia, serietà) senza istruzioni vocali esplicite.
 
-- Sostituisci termini freddi o troppo tecnici con forme più “parlate” se migliora la comprensione ad alta voce, senza cambiare il senso.
+- Mantieni il registro e le scelte lessicali dell'autore. Non sostituire termini tecnici o letterari con sinonimi colloquiali.
 
 5. Formattazione finale:
 
-- Non usare mai elenchi puntati, table, markdown o codice.
-
-- Restituisci solo testo normale, prontissimo per la sintesi vocale (TTS) in italiano, senza note, commenti o spiegazioni aggiuntive.
+- Non usare tag, codice o Markdown. Restituisci il testo pronto per la sintesi vocale e, solo se necessaria, la sezione finale del glossario; nessun commento aggiuntivo.
 
 Testo da elaborare:
 [INCOLLARE QUI IL TESTO DA CONVERTIRE]

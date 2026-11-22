@@ -1,0 +1,144 @@
+[inizio]
+[V1_solenne]
+Epilogo
+.
+.
+[/V1_solenne]
+[fine]
+
+[inizio]
+[V1_riflessivo]
+Siamo giunti al tèrmine di questa terza e ùltima pàrte di Gein Èr,
+[r2]il cèlebre romànzo di Sciàrlot Brònte
+.
+.
+[/V1_riflessivo]
+[fine]
+
+[inizio]
+[V1_riflessivo]
+Con questi capitoli si conclùde il viàggio di Gein,
+una giòvane dònna che, fin dall’infànzia,
+ha dovùto affrontàre la solitùdine, le ingiustìzie e numeròse pròve,
+[r2]senza mai rinunciare alla propria dignità e alla propria libertà interiòre
+.
+.
+.
+[/V1_riflessivo]
+[fine]
+
+[inizio]
+[V1_serio]
+Nel còrso della sua stòria abbiamo seguìto la crescita
+di una protagonista coraggiòsa e indipendènte,
+[r2]capace di difèndere le pròprie convinzioni anche nei moménti più difficili
+.
+.
+[/V1_serio]
+[fine]
+
+[inizio]
+[V1_serio]
+Le sue esperiènze ci hanno mostràto quanto sia importante restàre fedèli a sé stèssi,
+riconóscere il valóre dei pròpri sentiménti
+e cercàre un amóre fondàto sul rispètto e sulla libertà
+.
+.
+.
+[/V1_serio]
+[fine]
+
+[inizio]
+[V1_riflessivo]
+Tra segrèti, separazióni, speranze e nuòve rivelazióni,
+la vicènda giunge finalménte alla sua conclusióne,
+[r2]dàndo un significàto più profóndo al cammìno umàno ed emotìvo della protagonista
+.
+.
+.
+[/V1_riflessivo]
+[fine]
+
+[inizio]
+[V1_solenne]
+Gein Èr non è soltànto una stòria d’amóre,
+ma anche un raccónto di formazióne, di emancipàzione
+e di ricèrca della felicità
+.
+.
+[/V1_solenne]
+[fine]
+
+[inizio]
+[V1_serio]
+Attraverso Gein, lautrice ci ricòrda
+che la dignità personàle non deve èssere sacrificàta
+per ottenère l’approvazióne degli àltri
+[r2]e che la vèra serenità nàsce anche dalla consapevolezza del pròprio valóre
+.
+.
+.
+[/V1_serio]
+[fine]
+
+[inizio]
+[V1_gentile]
+Con questo epilogo si conclùde il nòstro viàggio 
+attraverso uno dei grandi capolavóri della letteratùra inglése dell’Ottocento,
+[r2]un’òpera che contìnua a parlàre ai lettori di ogni epoca
+per la fòrza dei suoi personàggi e l’attualità dei suoi tèmi
+.
+.
+.
+[/V1_gentile]
+[fine]
+
+[inizio]
+[V1_calmo]
+Il testo utilizzàto per questa lettùra proviene dalla Biblioteca di LiberLiber
+ed è tratto dall’edizióne dei Fratelli Treves Editori,
+Milano, mille novecento quattro
+.
+[/V1_calmo]
+[fine]
+
+[inizio]
+[V1_calmo]
+La lettùra è di Silvia Cecchini
+.
+.
+[/V1_calmo]
+[fine]
+
+[inizio]
+[V1_gentile]
+Se avete apprezzàto questo ascólto,
+aiutàteci a far crèscere Benèinst,
+Onde Letterarie e Audiolibri
+.
+[/V1_gentile]
+[fine]
+
+[inizio]
+[V1_gentile]
+Lasciate un Mi piace,
+iscrivètevi al canale
+e attivate la campanella,
+per èssere avvisàti quando verranno pubblicàti nuovi audiolibri
+.
+.
+[/V1_gentile]
+[fine]
+
+[inizio]
+[V1_gentile]
+Grazie per il vòstro sostègno!
+.
+[/V1_gentile]
+[fine]
+
+[inizio]
+[V1_gentile]
+Un cordiale saluto e alla pròssima òpera.
+[/V1_gentile]
+[fine]

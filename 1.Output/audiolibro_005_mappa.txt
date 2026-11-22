@@ -1,0 +1,12 @@
+MAPPA DEI BLOCCHI - audiolibro_005.wav
+Durata totale: 01:11.5
+Tempi indicativi (+/- mezzo secondo). Per rigenerare: scrivi i numeri in "Rigenera blocchi".
+
+0001  00:00.0 - 00:05.1  V1  Capitolo quarto. / Francesco si libera delle sue ricchezze. [pausa x5]
+0002  00:05.5 - 00:13.5  V1  Deciso a cambiare vita, / Francesco vende a Foligno alcuni tessuti di pregio / e perfino il cavallo con cui è arrivato.
+0003  00:13.8 - 00:25.1  V1  Tornando verso Assisi, / si chiede come usare il denaro ricavato, / ma presto capisce che non vuole più tenerlo. / per lui, in quel momento, vale meno della sabbia. [pausa x2]
+0004  00:25.7 - 00:37.0  V1  Lungo la strada incontra la chiesa di San Damiano, / cadente e bisognosa di aiuto. / Vi entra e offre il denaro al sacerdote, / raccontandogli il suo nuovo proposito.
+0005  00:37.7 - 00:47.8  V1  Il sacerdote, sorpreso e incredulo, / teme che i parenti di Francesco possano reclamarlo / e rifiuta di accettare i soldi. / Accetta però di ospitarlo. [pausa x2]
+0006  00:48.4 - 00:52.4  V1  Francesco allora getta il denaro da una finestra. [pausa x3]
+0007  00:52.7 - 01:03.5  V1  Il gesto mostra quanto sia deciso / a separarsi dai beni materiali / e a cercare una ricchezza diversa. / la sapienza e una vita dedicata a Dio. [pausa x2]
+0008  01:04.4 - 01:11.5  V1  La sua scelta è ormai concreta, / anche se le conseguenze con la famiglia / devono ancora arrivare. [pausa x4]

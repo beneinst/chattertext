@@ -1,0 +1,998 @@
+{
+  "sample_rate": 24000,
+  "chunks": [
+    [
+      "e vedendo che non le veniva fatto di rimuoverlo dal suo propo nimento,\nsentì per lui commuoversi, a materna tenerezza,\n\ne spezzàtine i legami,\nlasciollo andar libero.\n.\n.\n.",
+      "v1",
+      "serio",
+      [],
+      0.0,
+      null,
+      "[para]",
+      1.0
+    ]
+  ],
+  "completed": {
+    "449811593cda6822": {
+      "file": "blocco_00001_44981159.wav",
+      "frames": 175321,
+      "channels": 1,
+      "sha256": "fc9dc73bd25d22afab8cc4bdffaabca44f4e93dbc40e43168dea65761b76263b"
+    },
+    "e0f79ca9515296c9": {
+      "file": "blocco_00002_e0f79ca9.wav",
+      "frames": 250958,
+      "channels": 1,
+      "sha256": "c8b480044cc09bdba3f5129acfc889c3720d9b798616f1b9e05894b44bcc152c"
+    },
+    "fadd1c7ea1aa0167": {
+      "file": "blocco_00003_fadd1c7e.wav",
+      "frames": 251458,
+      "channels": 1,
+      "sha256": "92b8ea08583b11a40e979a57438d317d3e66a6f13a584d972b89926199c606f3"
+    },
+    "b319aa811ee74791": {
+      "file": "blocco_00004_b319aa81.wav",
+      "frames": 232808,
+      "channels": 1,
+      "sha256": "d5a38c703220fb4534d1bedc64d9a9c23b18101812a83c8d62fd438e1ace5dad"
+    },
+    "8675b1385e9d20b4": {
+      "file": "blocco_00005_8675b138.wav",
+      "frames": 220751,
+      "channels": 1,
+      "sha256": "ed68ac0ce4dabb95374b927e9e428e062efea598f9fd413e4924b942aa2aa050"
+    },
+    "c93a700ffb798c0d": {
+      "file": "blocco_00006_c93a700f.wav",
+      "frames": 255280,
+      "channels": 1,
+      "sha256": "6ded113cf11278476868bef55cf3658fa94f6ffe810eac10269eabd1d84bb458"
+    },
+    "6a11986a88158fb3": {
+      "file": "blocco_00007_6a11986a.wav",
+      "frames": 262146,
+      "channels": 1,
+      "sha256": "29328a932c844a3e65bfcf07e78b75987fc39fa665e31e82447ae6a3fd87d85d"
+    },
+    "562c5c92dbaa88dd": {
+      "file": "blocco_00008_562c5c92.wav",
+      "frames": 213908,
+      "channels": 1,
+      "sha256": "26d5da344e230ead3f3fe2802de87666b3eb5b0808b775e97ef6abb06a3fb46c"
+    },
+    "e67387dad7228543": {
+      "file": "blocco_00009_e67387da.wav",
+      "frames": 68975,
+      "channels": 1,
+      "sha256": "a78c5e99bb9a6de020ca8c951e1ae51da2a0727282ce5bc56fb54f89541f3d20"
+    },
+    "fd7582470791c89a": {
+      "file": "blocco_00010_fd758247.wav",
+      "frames": 222490,
+      "channels": 1,
+      "sha256": "c33448821e298ac34ac7fea8c0ad2fc518f3158a599b2b8fb55d27b82e4115c2"
+    },
+    "efafb9290756a319": {
+      "file": "blocco_00011_efafb929.wav",
+      "frames": 236789,
+      "channels": 1,
+      "sha256": "3381d691e2b5ea30dd2dd05a05f6b39b4c0ea85a733c6ccdb6a0ff229fff237d"
+    },
+    "c0004d3326fe7124": {
+      "file": "blocco_00012_c0004d33.wav",
+      "frames": 152012,
+      "channels": 1,
+      "sha256": "4e8b0cb83ad10dcbe5caae53636c35566e961084557ddc890453d884be123622"
+    },
+    "7d9735d161e4ea7f": {
+      "file": "blocco_00013_7d9735d1.wav",
+      "frames": 125587,
+      "channels": 1,
+      "sha256": "4bf18c56e18f4538b14ba2ac4fffc68a442555d442e524b8b5de0d9e2bb87f61"
+    },
+    "90819bf1893d1b5b": {
+      "file": "blocco_00014_90819bf1.wav",
+      "frames": 176280,
+      "channels": 1,
+      "sha256": "5cbdc2afb77208cb9d8335669da1f1aeea7524d8947adb7027052c9d64552297"
+    },
+    "13eb0926501ce35d": {
+      "file": "blocco_00015_13eb0926.wav",
+      "frames": 132201,
+      "channels": 1,
+      "sha256": "6edbf7b6e77171b27d9651dbe1ba7b9fc51d5597b7793ec1246a7d0ad74e8460"
+    },
+    "6e61a60f4880756d": {
+      "file": "blocco_00016_6e61a60f.wav",
+      "frames": 217884,
+      "channels": 1,
+      "sha256": "0ce877d1db03060c7ec05a8ce42065b342d2148cfe56d3c57b5a5fb8249a54f1"
+    },
+    "83bc5bfc24c52c0c": {
+      "file": "blocco_00017_83bc5bfc.wav",
+      "frames": 268387,
+      "channels": 1,
+      "sha256": "d3c76e087766e105b3ba310976a1e6b93852d437e86dc527d31a2faecbfa4e2f"
+    },
+    "e1c9c7c3e4c3e9a5": {
+      "file": "blocco_00018_e1c9c7c3.wav",
+      "frames": 188886,
+      "channels": 1,
+      "sha256": "075de5e8e0a91fca2b6900ea61d41f711bf71a824a460535878265cbd45a30c8"
+    },
+    "a3351203184670ed": {
+      "file": "blocco_00019_a3351203.wav",
+      "frames": 169300,
+      "channels": 1,
+      "sha256": "4cb19a14fdf2eecef69f7ac24ddf110aebc9c36de3d576c22462e1e11aca3919"
+    },
+    "331ecd7d9287de6d": {
+      "file": "blocco_00020_331ecd7d.wav",
+      "frames": 248716,
+      "channels": 1,
+      "sha256": "569d083e8235a1e0cfee770af0cd3cdaf203c1846bf77a9c723d358292680bc4"
+    },
+    "57e09ffe3ef01590": {
+      "file": "blocco_00002_57e09ffe.wav",
+      "frames": 357390,
+      "channels": 1,
+      "sha256": "00d63197f6b32e4fa809f29315111ffe42e174f4b4c554992a9d45ca2261f255"
+    },
+    "a90b636f07193e5f": {
+      "file": "blocco_00003_a90b636f.wav",
+      "frames": 174047,
+      "channels": 1,
+      "sha256": "7de2f6988288e50f7b36c18be5860f9e7c286ee5cd4b04d8f7b5217f5b18a8a0"
+    },
+    "fe166c6dd9658247": {
+      "file": "blocco_00004_fe166c6d.wav",
+      "frames": 225978,
+      "channels": 1,
+      "sha256": "7799aa616a797bb093d701a7b1094cce8ebf9582de0357d82636cd750a5902d3"
+    },
+    "e7851277a2dbb9ba": {
+      "file": "blocco_00005_e7851277.wav",
+      "frames": 221614,
+      "channels": 1,
+      "sha256": "2c075af561ee4367e2ceb3726d63018dfdde325465e7fc6c9095053cb0fe13c5"
+    },
+    "f76eb7c1846457a7": {
+      "file": "blocco_00007_f76eb7c1.wav",
+      "frames": 264310,
+      "channels": 1,
+      "sha256": "5a4e737036801cc59e5a46e781457db803588ccc5731e2b65ee8eb2cf371e5af"
+    },
+    "93243a9a0a8350c8": {
+      "file": "blocco_00008_93243a9a.wav",
+      "frames": 206604,
+      "channels": 1,
+      "sha256": "8097ba5633bf723e165bf194bd2b8eb4092b28fad7e9083836f06e158d2210bd"
+    },
+    "d926631f2de7f653": {
+      "file": "blocco_00010_d926631f.wav",
+      "frames": 197877,
+      "channels": 1,
+      "sha256": "6b62ccec8e49b3f2790c2aad6b3acd773b181e2483f00218739b9fdf7692353e"
+    },
+    "1b944ed18f30107f": {
+      "file": "blocco_00011_1b944ed1.wav",
+      "frames": 216855,
+      "channels": 1,
+      "sha256": "6f4ace424f99fbf976c94042625f2e040e9febfd61bf275b4fb56ef285260671"
+    },
+    "24471d2f73791429": {
+      "file": "blocco_00012_24471d2f.wav",
+      "frames": 168251,
+      "channels": 1,
+      "sha256": "18548392124357e6eaae2d384b1b1178a3488aed58e45178ef2a098ae9c8b68e"
+    },
+    "e8cc6f45ac08d52e": {
+      "file": "blocco_00014_e8cc6f45.wav",
+      "frames": 192879,
+      "channels": 1,
+      "sha256": "77f5a894d0432a1636044692aa0a3087805cab9d9e0fc43f4910c45ee79efad2"
+    },
+    "5e9b7592191621c0": {
+      "file": "blocco_00016_5e9b7592.wav",
+      "frames": 220340,
+      "channels": 1,
+      "sha256": "a28f0bae734fb7c90dfb02b8cc96ebc985e5eab84723d7906ddc91d895f7037d"
+    },
+    "e4472ae63de5819c": {
+      "file": "blocco_00017_e4472ae6.wav",
+      "frames": 274621,
+      "channels": 1,
+      "sha256": "f934ccd334df2053d4ccc2bac3f94daf2f369acd93f11742a0258171c01a7a16"
+    },
+    "1f5863cfa85cc2b5": {
+      "file": "blocco_00018_1f5863cf.wav",
+      "frames": 188826,
+      "channels": 1,
+      "sha256": "856a550d7d08a32d16cf4f5b8784fe34498794ca6ef569da6dadd8a1c752a6b6"
+    },
+    "dce2bc295e2557d9": {
+      "file": "blocco_00019_dce2bc29.wav",
+      "frames": 186241,
+      "channels": 1,
+      "sha256": "ed382568501f0d683641d7f2574e18a8a1ae1f901dcb462c48489e18c36813ce"
+    },
+    "245b7d32d7faf82c": {
+      "file": "blocco_00020_245b7d32.wav",
+      "frames": 219632,
+      "channels": 1,
+      "sha256": "bf0452ded91549f16bd36295eb4862bbca2d43317e09c6533e964f86f006608e"
+    },
+    "b530ec3a0872746f": {
+      "file": "blocco_00001_b530ec3a.wav",
+      "frames": 216892,
+      "channels": 1,
+      "sha256": "7fa2fa6cafe7899a65037d8f78eb1bafa5c4971c7dc2347982f5943c37b2c5ec"
+    },
+    "2860d7257f6a8b7f": {
+      "file": "blocco_00002_2860d725.wav",
+      "frames": 275249,
+      "channels": 1,
+      "sha256": "1de36b4c6340a4483bd95b11ffdc31722bda5b1d15bab07a10e0344ebdacc89e"
+    },
+    "88d7b7c17a2f8eb5": {
+      "file": "blocco_00001_88d7b7c1.wav",
+      "frames": 204135,
+      "channels": 1,
+      "sha256": "b8f4fd345c20726010c03288facfee4b2a6d4b9ed01c112c53e2b1eda284c35c"
+    },
+    "4eaf1fbaf87e7619": {
+      "file": "blocco_00002_4eaf1fba.wav",
+      "frames": 495383,
+      "channels": 1,
+      "sha256": "2d02e4db1c6267ca94476f60ad7cb4d0dc1d8b7e06ab5ce3cb2937a3dd13bc75"
+    },
+    "5e71e41d4836b5a5": {
+      "file": "blocco_00001_5e71e41d.wav",
+      "frames": 175235,
+      "channels": 1,
+      "sha256": "975d922482c5465df7cec840b044fb25f0befeb2d72235fee8a1b2d104463e0f"
+    },
+    "def9bba08d6147f9": {
+      "file": "blocco_00001_def9bba0.wav",
+      "frames": 177187,
+      "channels": 1,
+      "sha256": "ea869f657aa5110513bbc8cc6ab32dc3851bdc7bb840354fbf3d6d2b4805dfce"
+    },
+    "ed8e49a680cb3688": {
+      "file": "blocco_00001_ed8e49a6.wav",
+      "frames": 178283,
+      "channels": 1,
+      "sha256": "b7cbcf24b90294f78fc9b2a049c2edaeda883a6fa3236752fbc9078d0050ecae"
+    },
+    "943a2672ba4ab0a8": {
+      "file": "blocco_00001_943a2672.wav",
+      "frames": 177426,
+      "channels": 1,
+      "sha256": "296be923fdfa95a9f2c8139c5ec3efae9ed3ddf780d1bc0f720cfb1db27f112b"
+    },
+    "01290031434fd65d": {
+      "file": "blocco_00001_01290031.wav",
+      "frames": 169285,
+      "channels": 1,
+      "sha256": "16580cac64cf5992fdae3db3c5f4e70accd5a1b22ba6b72fbd0f6d8a39f6e2c6"
+    },
+    "c1a30f2c1592ec55": {
+      "file": "blocco_00001_c1a30f2c.wav",
+      "frames": 168398,
+      "channels": 1,
+      "sha256": "4d5df15441a1f1ddb3f8c712f86883be8f3979ecab158d692a19716417c10fca"
+    },
+    "b723f33c54e687d6": {
+      "file": "blocco_00001_b723f33c.wav",
+      "frames": 272236,
+      "channels": 1,
+      "sha256": "438a83db4f7ff42afbf90a8b26dcb218b1b6ad64452ffeb488756b8e53e99dd4"
+    },
+    "d788c61cd605cc2a": {
+      "file": "blocco_00001_d788c61c.wav",
+      "frames": 293810,
+      "channels": 1,
+      "sha256": "4a9fd156cfd71d7ac76426c248709e4baf39a4a5e80a5ffe9b6999ce452de7e7"
+    },
+    "1236c1e33db0a289": {
+      "file": "blocco_00001_1236c1e3.wav",
+      "frames": 267621,
+      "channels": 1,
+      "sha256": "fe86031f2cf36852a4b50d3f7f9035dc26dcd01f3581f482a1dd105b8a77fd19"
+    },
+    "9982367ad19e4046": {
+      "file": "blocco_00001_9982367a.wav",
+      "frames": 272035,
+      "channels": 1,
+      "sha256": "10b525d7a900692865539a8bad3ca17d7774d7a68af05d5761b2a91888519a0e"
+    },
+    "0a13fdd39efd0a60": {
+      "file": "blocco_00001_0a13fdd3.wav",
+      "frames": 272067,
+      "channels": 1,
+      "sha256": "8e3bb04088dde7d34861a251e38d5dd73d85d83bea00e2807fc6c1950b130968"
+    },
+    "980b64a334c1892b": {
+      "file": "blocco_00001_980b64a3.wav",
+      "frames": 137098,
+      "channels": 1,
+      "sha256": "b1ab598930511e800da54715bc3763dfa7f425fd807811842b55ce2cee6f0dc4"
+    },
+    "445fb2dc932dc0bc": {
+      "file": "blocco_00002_445fb2dc.wav",
+      "frames": 310331,
+      "channels": 1,
+      "sha256": "68ca1035b4613feffc4e72e5d3cffff0d7bbf73ba40ae466dae921ae4e869901"
+    },
+    "90c643f77d8d7f7b": {
+      "file": "blocco_00003_90c643f7.wav",
+      "frames": 203339,
+      "channels": 1,
+      "sha256": "4ebc8b21a03cc0212f57ef3567a541ffdbc23689e5821b7a051af9490f007df4"
+    },
+    "d37c4a82ff676085": {
+      "file": "blocco_00004_d37c4a82.wav",
+      "frames": 176837,
+      "channels": 1,
+      "sha256": "6c5909273fda9cc715c60639c798fd1794cd8694a759260d367de287522ec683"
+    },
+    "a5a773c3357353b7": {
+      "file": "blocco_00005_a5a773c3.wav",
+      "frames": 162598,
+      "channels": 1,
+      "sha256": "0da4f2ce5e59a7f7801392867e93daeee5dc5504b31263681f750afd88d7e4a0"
+    },
+    "1eb03ba6cdc25acc": {
+      "file": "blocco_00006_1eb03ba6.wav",
+      "frames": 144319,
+      "channels": 1,
+      "sha256": "5820efa02091fc48e2eb9ea02b8f0ee11e34da491b5ca0b6d3a2d0fb9f46043c"
+    },
+    "58ec2fc99e473cbf": {
+      "file": "blocco_00007_58ec2fc9.wav",
+      "frames": 287402,
+      "channels": 1,
+      "sha256": "5abbeb16ee088d338b993300b4ec8ec01c0f8db837a9387bc6dded2d20a1ea54"
+    },
+    "ca5e56c1116b4769": {
+      "file": "blocco_00008_ca5e56c1.wav",
+      "frames": 167533,
+      "channels": 1,
+      "sha256": "62464a52e5d6230c7280a85a39ea81afca5e24c7e6b8cc88b2a852abc918024b"
+    },
+    "f5a1323bed70547f": {
+      "file": "blocco_00009_f5a1323b.wav",
+      "frames": 284454,
+      "channels": 1,
+      "sha256": "2e7f2b8a8a70d9ba815363a7a1ff203583df7ae85c5ad1067182dd635dcc6d3b"
+    },
+    "dd4a906ba19ac96f": {
+      "file": "blocco_00010_dd4a906b.wav",
+      "frames": 189762,
+      "channels": 1,
+      "sha256": "8637bd63d73f3d06041fe1576051dbb035d6c43ecbba41337c3bd9a82079b548"
+    },
+    "4d9ed142af95d179": {
+      "file": "blocco_00011_4d9ed142.wav",
+      "frames": 192499,
+      "channels": 1,
+      "sha256": "e21905b0111ab2ff121a25a9a430336baee234d53d1ae10e01dd7ac951206bde"
+    },
+    "ceeff8b4afb5e9e3": {
+      "file": "blocco_00012_ceeff8b4.wav",
+      "frames": 174350,
+      "channels": 1,
+      "sha256": "de437ffeee259c21d7de0c69d48c5464d60bbbcf511e7583aa5e87f1aaef8cc6"
+    },
+    "85c980b232ce6c55": {
+      "file": "blocco_00013_85c980b2.wav",
+      "frames": 182704,
+      "channels": 1,
+      "sha256": "b5c1bbd0975f7da8d6cb273b3a0c430c229dc779efe26dcb278951f29ce2f82a"
+    },
+    "d04bc80966129b47": {
+      "file": "blocco_00014_d04bc809.wav",
+      "frames": 272773,
+      "channels": 1,
+      "sha256": "18470f2e0409e1d1bb6d6fc635d5ecb743157425458bd5afcd3a8b8d32498c0a"
+    },
+    "863b83ec5644416c": {
+      "file": "blocco_00015_863b83ec.wav",
+      "frames": 210808,
+      "channels": 1,
+      "sha256": "b4ff29172febe1121d2d89ebc4480d8b545f445b3682b1b16404d84213feec7e"
+    },
+    "65a19e27c88b3629": {
+      "file": "blocco_00016_65a19e27.wav",
+      "frames": 280087,
+      "channels": 1,
+      "sha256": "f108d7a413ceb89aaefc30175b2637c36183db7ae690d5f2e64f917d1c941cb5"
+    },
+    "a7c63760d3e04b0e": {
+      "file": "blocco_00017_a7c63760.wav",
+      "frames": 129020,
+      "channels": 1,
+      "sha256": "7e6fd94ae79caa8a3159473da79347a844855f1787ee4d84ecc67edaa7b163b3"
+    },
+    "421e073b1deb58e2": {
+      "file": "blocco_00018_421e073b.wav",
+      "frames": 338975,
+      "channels": 1,
+      "sha256": "da001935e9df984c531d39b943fcd53700ffbb87c8224b300e2c51928ccd083d"
+    },
+    "17ad6c6a7ced8fcd": {
+      "file": "blocco_00019_17ad6c6a.wav",
+      "frames": 189202,
+      "channels": 1,
+      "sha256": "4050fb6ddeab6f6241ad6828c9b39705fdfc6f350648f727882b5219fe5138cc"
+    },
+    "fcad40fea30d3752": {
+      "file": "blocco_00020_fcad40fe.wav",
+      "frames": 111564,
+      "channels": 1,
+      "sha256": "82a4e408d8ac1ca186c94f63072cae9f6c0fb70c35fa679b2c10e297b395ad3b"
+    },
+    "d9ee88f0804e0209": {
+      "file": "blocco_00021_d9ee88f0.wav",
+      "frames": 290384,
+      "channels": 1,
+      "sha256": "202ac9039a2a4afa52ed164de4599b094383af082b88fd91180fe59e452e8273"
+    },
+    "f37e82e17e0dc86d": {
+      "file": "blocco_00022_f37e82e1.wav",
+      "frames": 117807,
+      "channels": 1,
+      "sha256": "ee34b3355f7797c6ac3df2c44d9e48de103b850ea208e5c23f890c2b54a9b795"
+    },
+    "15cf1a0e77bd01c8": {
+      "file": "blocco_00023_15cf1a0e.wav",
+      "frames": 285187,
+      "channels": 1,
+      "sha256": "4a53899857dc88fd0f443cf17c4591604e6d868b1948e08b4f2f6c1842e04e9e"
+    },
+    "b073a8b453cc181c": {
+      "file": "blocco_00024_b073a8b4.wav",
+      "frames": 213489,
+      "channels": 1,
+      "sha256": "21240aa4317787e2b7114e4822adeffa86baa9118f63557d927a5324a7e710b4"
+    },
+    "5d78d54b2cfd9509": {
+      "file": "blocco_00025_5d78d54b.wav",
+      "frames": 182561,
+      "channels": 1,
+      "sha256": "0a210727618309716e9849e415e7ac4c0506e1eb4e3b44bef30b35f8ec932bb4"
+    },
+    "3086c5b6f272bad5": {
+      "file": "blocco_00026_3086c5b6.wav",
+      "frames": 232260,
+      "channels": 1,
+      "sha256": "d70a1009acc3eff2e37999c521ac22941cd4b782d9d7be9b48094b4c916491f0"
+    },
+    "51d03054d6dd3017": {
+      "file": "blocco_00027_51d03054.wav",
+      "frames": 275481,
+      "channels": 1,
+      "sha256": "a83e3c92f31e9c1b99b9ffcd0289e3724f5a439de591a5ae1c2a867404549127"
+    },
+    "6c81ee9a6381ed28": {
+      "file": "blocco_00028_6c81ee9a.wav",
+      "frames": 272670,
+      "channels": 1,
+      "sha256": "b38e84f6fd1bfb20d67ea4508170dc80c681fab7f526660255483b7f8f2e2fcf"
+    },
+    "eb46fd8c4ba2c71a": {
+      "file": "blocco_00029_eb46fd8c.wav",
+      "frames": 341078,
+      "channels": 1,
+      "sha256": "b3ab13fd49843c5001fc8d8560ae3ff55a9929136930032a33f594e12bca3464"
+    },
+    "e7f150fa4539d50a": {
+      "file": "blocco_00002_e7f150fa.wav",
+      "frames": 327908,
+      "channels": 1,
+      "sha256": "c0ceab78222dbf7dda178468c38811a78e87b9ad65c0c393bc94540f719aa41c"
+    },
+    "fe49e69c2145a1e8": {
+      "file": "blocco_00003_fe49e69c.wav",
+      "frames": 213704,
+      "channels": 1,
+      "sha256": "a861f6d75a9b3d78d4c91521837cc7c0ca6e732d72bf629e6a60c444f466ed03"
+    },
+    "405a83e7bdaf5217": {
+      "file": "blocco_00004_405a83e7.wav",
+      "frames": 195432,
+      "channels": 1,
+      "sha256": "b0aa79fb3daef9d45ab4035e2150e42ed98ca8ba6876f1d8b0f6e789b1e6eb9b"
+    },
+    "0b59ea64dc64dc75": {
+      "file": "blocco_00005_0b59ea64.wav",
+      "frames": 164631,
+      "channels": 1,
+      "sha256": "c63bb6b0ce0cad4c1d77b716a653a11e005a83e92b589739d57b0add1204e04a"
+    },
+    "d9922c2557e27e67": {
+      "file": "blocco_00006_d9922c25.wav",
+      "frames": 154696,
+      "channels": 1,
+      "sha256": "016d125d36e14c5d566921b59304e7ba7a9bc343b437abfdd6eae582b446cd41"
+    },
+    "f11736c669939619": {
+      "file": "blocco_00007_f11736c6.wav",
+      "frames": 269275,
+      "channels": 1,
+      "sha256": "b743b79b319cd91a1af7fb2add22479c285d0beae8c74bc687cb4716f818351e"
+    },
+    "6df4fb86ea03dd12": {
+      "file": "blocco_00008_6df4fb86.wav",
+      "frames": 175508,
+      "channels": 1,
+      "sha256": "70783aa6eceea8be3cd97fb6a0de48d9def3c05c7de91a6dd1d0244c288fcbb7"
+    },
+    "5d9fd9e99fd4ec58": {
+      "file": "blocco_00009_5d9fd9e9.wav",
+      "frames": 280073,
+      "channels": 1,
+      "sha256": "c71360e606e84382d8f21424c2959eda54ac2312238470593b9798d4f9b8b982"
+    },
+    "63c6c9dafe01e262": {
+      "file": "blocco_00010_63c6c9da.wav",
+      "frames": 183628,
+      "channels": 1,
+      "sha256": "dfe913076cae3044104090627e78dfbb7077011ea4507e09f67bd6aa49e6b3db"
+    },
+    "1fd4ab86ea4b1271": {
+      "file": "blocco_00011_1fd4ab86.wav",
+      "frames": 210325,
+      "channels": 1,
+      "sha256": "1966e69faf92fa8af1918d7752879972bc5f9fda4c275c7a8ffc10a5c66eec67"
+    },
+    "4366e10183a7383c": {
+      "file": "blocco_00012_4366e101.wav",
+      "frames": 175205,
+      "channels": 1,
+      "sha256": "b0dbd37eb97df52530d3a47ef3282c7b3f1e9d690f13db6d87e53088c671e9ec"
+    },
+    "17bb57014c903323": {
+      "file": "blocco_00013_17bb5701.wav",
+      "frames": 182417,
+      "channels": 1,
+      "sha256": "38c8ed73481e144b13883855c98ac18c154721bbbf45ae0978bdfd4a51f9ab44"
+    },
+    "1ee38fa0dcf494d4": {
+      "file": "blocco_00014_1ee38fa0.wav",
+      "frames": 268578,
+      "channels": 1,
+      "sha256": "0ba62a68ca70c832816733ff8468f72734bd6b45ad9c3a9b6e6f6648608d9cc2"
+    },
+    "3abb70fa3f892b3b": {
+      "file": "blocco_00015_3abb70fa.wav",
+      "frames": 227017,
+      "channels": 1,
+      "sha256": "3b0a350c86eb6ba7159338a83666f105f8c84c6e10a8cad1972415cc7bf8df5d"
+    },
+    "d2dd0f895f15d7c6": {
+      "file": "blocco_00018_d2dd0f89.wav",
+      "frames": 372805,
+      "channels": 1,
+      "sha256": "9e78fb3c821be42fa60016b4a7e1cd91441090eb241cbc33e12771607ef85f5e"
+    },
+    "f43e027a6f0cd1db": {
+      "file": "blocco_00019_f43e027a.wav",
+      "frames": 175995,
+      "channels": 1,
+      "sha256": "57ead4ea960ae9193693bcea31244ba66ab2f0eb922126c3887919432940a059"
+    },
+    "659e55841abc52a2": {
+      "file": "blocco_00021_659e5584.wav",
+      "frames": 297821,
+      "channels": 1,
+      "sha256": "cf6977405996a239a4b6b806f4fae984246df93638fb9d09ecddf1dd9e225d78"
+    },
+    "e4b609020993a194": {
+      "file": "blocco_00022_e4b60902.wav",
+      "frames": 118434,
+      "channels": 1,
+      "sha256": "3e05b9b2c1b8495d6160bac0124701be2f5f7fc905e05d691369ef2dfea26bb1"
+    },
+    "d365d16c47d97610": {
+      "file": "blocco_00023_d365d16c.wav",
+      "frames": 279298,
+      "channels": 1,
+      "sha256": "41c0f5ecb33d3495de5a7ac618e44a6cc13aa3b11bf8875bd1fce8058a1e1ea6"
+    },
+    "3cc057cc017976c2": {
+      "file": "blocco_00024_3cc057cc.wav",
+      "frames": 244913,
+      "channels": 1,
+      "sha256": "d4ad24ae10f9c2ea4cb0d2e45e507fdba72c8bd62073a108204db06f084c422e"
+    },
+    "ca3ab7ea613d6dd8": {
+      "file": "blocco_00025_ca3ab7ea.wav",
+      "frames": 185970,
+      "channels": 1,
+      "sha256": "92b4c459ddce42b179ba8c213abb4892e4e2ec18fb7ae2f49c18929d8a954b5d"
+    },
+    "dd959561ac7f7241": {
+      "file": "blocco_00026_dd959561.wav",
+      "frames": 229139,
+      "channels": 1,
+      "sha256": "bd7a68136c64aa8eb6d023e8118ace2f8db0869c0e180fedba457f9c7e2402c9"
+    },
+    "1ccae4e0885ba844": {
+      "file": "blocco_00027_1ccae4e0.wav",
+      "frames": 273404,
+      "channels": 1,
+      "sha256": "2f821cc840fb785c84329280ffdf58265d465e24319725d67cd81e75d5bc6555"
+    },
+    "2ed812c69e08843a": {
+      "file": "blocco_00028_2ed812c6.wav",
+      "frames": 273448,
+      "channels": 1,
+      "sha256": "b2aaa858ceca796a4abf2d64d99076f6b39455ca88930788135a2a4ba5fe98a0"
+    },
+    "067757269fa617bf": {
+      "file": "blocco_00029_06775726.wav",
+      "frames": 367277,
+      "channels": 1,
+      "sha256": "67f3b7938e3fb1515352fb97bc8c4020d018897dc956285818b67eb7cc60837b"
+    },
+    "c90ea16a995a2633": {
+      "file": "blocco_00001_c90ea16a.wav",
+      "frames": 288633,
+      "channels": 1,
+      "sha256": "a6a63e963615d2d68eb38fa8aab7b02a490f7368261c8843c63da2497a7a35ee"
+    },
+    "3820fc0c547a65c8": {
+      "file": "blocco_00002_3820fc0c.wav",
+      "frames": 181751,
+      "channels": 1,
+      "sha256": "e96e4cfe957d0a6e53613e795b02479604424dc8013d1280579a88c953cc8d70"
+    },
+    "b2c5549fdd704cb8": {
+      "file": "blocco_00003_b2c5549f.wav",
+      "frames": 278529,
+      "channels": 1,
+      "sha256": "bb5779a50332a88b1bc7ae16887291119b90d854d30463204c822ae762a33341"
+    },
+    "431917b37551c569": {
+      "file": "blocco_00004_431917b3.wav",
+      "frames": 193070,
+      "channels": 1,
+      "sha256": "02cbf92863eab4c8d2cf276cf6679d8dbe9a4ad60f721d9b67bd97b81dd16d20"
+    },
+    "20f462df66e7c514": {
+      "file": "blocco_00001_20f462df.wav",
+      "frames": 186093,
+      "channels": 1,
+      "sha256": "033cd266a111a78a56770e5d96ce522ad302b09c5f412d6da9cd4e5861f5e642"
+    },
+    "fdf47ecffd0c93db": {
+      "file": "blocco_00002_fdf47ecf.wav",
+      "frames": 281601,
+      "channels": 1,
+      "sha256": "278576264d5b014471b01b230f544fe80ba1fc39f15e4ba78046a4bb0645be4f"
+    },
+    "a1e2243e144c5388": {
+      "file": "blocco_00003_a1e2243e.wav",
+      "frames": 179164,
+      "channels": 1,
+      "sha256": "80fc3b31788a03dac492df5ba59cf3abd3ff71c0f02464c93e946bf44fd970b4"
+    },
+    "e4fe2925235dd8d4": {
+      "file": "blocco_00004_e4fe2925.wav",
+      "frames": 234831,
+      "channels": 1,
+      "sha256": "fc9026adf2f9a0c8d3a43b3df8556bf50c125d30d53367dd530fcec183a20c09"
+    },
+    "4c15f1a9bf5c8f29": {
+      "file": "blocco_00005_4c15f1a9.wav",
+      "frames": 148779,
+      "channels": 1,
+      "sha256": "a0ce86da8a267db14300152af4cd671ce54644ed5e2d9a0a9849629faf22ad37"
+    },
+    "e280435bd37805f8": {
+      "file": "blocco_00006_e280435b.wav",
+      "frames": 271316,
+      "channels": 1,
+      "sha256": "aa7de5ef71b8d3277f4690fa813b5e9a70e9842485a3e7791cc5c4e3003a65be"
+    },
+    "f7e30327d0e2e390": {
+      "file": "blocco_00007_f7e30327.wav",
+      "frames": 167361,
+      "channels": 1,
+      "sha256": "61ceef3fca2b0e834f32f8a05b471b60bc555e6b0196c6dbf9a5317a7b78f615"
+    },
+    "09a70b6944cf938d": {
+      "file": "blocco_00008_09a70b69.wav",
+      "frames": 178804,
+      "channels": 1,
+      "sha256": "b8021ce214f3d285531c24147ce488e83ce64a86e7967a891efec5d594294225"
+    },
+    "adb06738eacd0768": {
+      "file": "blocco_00009_adb06738.wav",
+      "frames": 193844,
+      "channels": 1,
+      "sha256": "a37dc190821f49746886937119e1c37fca949bce1f59ab64648b039a6ede96f6"
+    },
+    "ed289e7688331501": {
+      "file": "blocco_00010_ed289e76.wav",
+      "frames": 199678,
+      "channels": 1,
+      "sha256": "ad2858c3fae7ac8f3f5e13bbd45542cb003ab35a265344bbbc7c1060daac6446"
+    },
+    "9f144355b07505dd": {
+      "file": "blocco_00011_9f144355.wav",
+      "frames": 127711,
+      "channels": 1,
+      "sha256": "99b88ddbfebc4a153ba07b9a0c960b8480e9e1743aeb6e9e173566ac5a87149c"
+    },
+    "42aed9bd82fedb4b": {
+      "file": "blocco_00012_42aed9bd.wav",
+      "frames": 145888,
+      "channels": 1,
+      "sha256": "37cf5ba380249a37ac9e53ab413a238435fbc6b3265fbde8c1d1950afccf7ffe"
+    },
+    "29cb2c1c44281998": {
+      "file": "blocco_00013_29cb2c1c.wav",
+      "frames": 179015,
+      "channels": 1,
+      "sha256": "24f4b6543b177051e3dd328d8755f1f4b53e9ecd5249b47dcd133143bf386328"
+    },
+    "b4d63cd9b7ad4d42": {
+      "file": "blocco_00014_b4d63cd9.wav",
+      "frames": 166466,
+      "channels": 1,
+      "sha256": "4fb3d98fe82a912823010e9252f927d580c4e5403dde802802138954a4a2700f"
+    },
+    "da9273d709d0ab98": {
+      "file": "blocco_00015_da9273d7.wav",
+      "frames": 316420,
+      "channels": 1,
+      "sha256": "825c34e752c86438d31c03e732c5a755cb7a2df126a0c7f280e0296629fcef1f"
+    },
+    "f6b635fb59dddea2": {
+      "file": "blocco_00016_f6b635fb.wav",
+      "frames": 228766,
+      "channels": 1,
+      "sha256": "dbb7d7b1f08f64e636d8f2dd53c6bfb94fa07af7c3a7bef8b5437295613dfba1"
+    },
+    "c2e9dc6930adfa0c": {
+      "file": "blocco_00017_c2e9dc69.wav",
+      "frames": 194511,
+      "channels": 1,
+      "sha256": "868548a056e09ad13fb43fee48d7b6a8d303c4246b50039f412644adbe3a3d7c"
+    },
+    "efb999e6e651afbb": {
+      "file": "blocco_00018_efb999e6.wav",
+      "frames": 132595,
+      "channels": 1,
+      "sha256": "795a9284da492a2f2843ce11c282577bc3512bdda83d5ade3f2db6a7d6621327"
+    },
+    "a705483866c8b746": {
+      "file": "blocco_00019_a7054838.wav",
+      "frames": 216066,
+      "channels": 1,
+      "sha256": "8b4ffd661056cfb9aaaf7e5d071ad23b4dda80b3e6945518b701def90d758c8e"
+    },
+    "157336a9755e1fd9": {
+      "file": "blocco_00020_157336a9.wav",
+      "frames": 141740,
+      "channels": 1,
+      "sha256": "0621248a22f2c9645df8c6c1da0358a604c4431140a4846a5ac1f044b04d377f"
+    },
+    "0a41178d8a1a0bee": {
+      "file": "blocco_00021_0a41178d.wav",
+      "frames": 202819,
+      "channels": 1,
+      "sha256": "62f76211faad9300822a2ba8a8ebbe45096c52ec79a7d9f9dff9d14b4eb0329a"
+    },
+    "10c0d63c76f7cfb6": {
+      "file": "blocco_00022_10c0d63c.wav",
+      "frames": 136763,
+      "channels": 1,
+      "sha256": "5d4d5521a8b95dd1377c4a7b453bdd8a34f65ba8bc985066af2480156c741309"
+    },
+    "fb463fe7c03b02d0": {
+      "file": "blocco_00023_fb463fe7.wav",
+      "frames": 263927,
+      "channels": 1,
+      "sha256": "fe2c52c2e891948990c0c259c98ce5e65fc3ca0bc7507f577f72949fdf74f9eb"
+    },
+    "877b5ecddac04ca0": {
+      "file": "blocco_00024_877b5ecd.wav",
+      "frames": 225406,
+      "channels": 1,
+      "sha256": "e12145446d5b3d9372ce2c5d5d1fec386a07832be7697dc40fb67ffe547bf26a"
+    },
+    "c8836548b63996c9": {
+      "file": "blocco_00025_c8836548.wav",
+      "frames": 173690,
+      "channels": 1,
+      "sha256": "75084848b1a0ee477d2fdfb0e62ebc9f026484edef8a12dcf0b29c8856bb3909"
+    },
+    "0b43441feb264967": {
+      "file": "blocco_00026_0b43441f.wav",
+      "frames": 217139,
+      "channels": 1,
+      "sha256": "b17cfdad769ab8984d4cbc1c0aa35c59032764a30e85d11ec56c05ab5333edf7"
+    },
+    "d00e52b47f3efc5b": {
+      "file": "blocco_00027_d00e52b4.wav",
+      "frames": 165125,
+      "channels": 1,
+      "sha256": "b8350bdc3380b193c64251c076f6e3fe019d1be2ce72ece0ef4e1fdc791f810c"
+    },
+    "228ae7a6e14330fc": {
+      "file": "blocco_00028_228ae7a6.wav",
+      "frames": 164242,
+      "channels": 1,
+      "sha256": "86647dd30812de72b5b619d3c08a402a004da76664bb73c088af2dd776406030"
+    },
+    "666bc8b70d758519": {
+      "file": "blocco_00002_666bc8b7.wav",
+      "frames": 289938,
+      "channels": 1,
+      "sha256": "1b2cd73c3388d91859af41304a88d225bd4070017e7114aa76513f9e6eb242b8"
+    },
+    "e825015b560864f3": {
+      "file": "blocco_00004_e825015b.wav",
+      "frames": 246873,
+      "channels": 1,
+      "sha256": "b2b51ec610c1257ebfbedec7b6cc062395fdce3e3b66e4b3db0335122fb65c32"
+    },
+    "5a64996f5f26b4d4": {
+      "file": "blocco_00005_5a64996f.wav",
+      "frames": 134162,
+      "channels": 1,
+      "sha256": "9a8e4f16b9f0502889bd6868f1db29508c09072931900c316a28bd9c35ab6ff1"
+    },
+    "cf045f96318e9f6b": {
+      "file": "blocco_00006_cf045f96.wav",
+      "frames": 323150,
+      "channels": 1,
+      "sha256": "9d0df9be7a36b62d852b46ffdcd48c521c56e8ac59bdb8c8dd273ea0ea60403d"
+    },
+    "10dc56257958eafe": {
+      "file": "blocco_00007_10dc5625.wav",
+      "frames": 176834,
+      "channels": 1,
+      "sha256": "6e3617909c4533469d7000f5b1ee8499a8805411fba19c74590fb39dc6d891ef"
+    },
+    "0651693ba3a35a87": {
+      "file": "blocco_00008_0651693b.wav",
+      "frames": 169798,
+      "channels": 1,
+      "sha256": "d90627a1dfeb39614f62007095d064008b85262598bd2c73b84bc038564a86ba"
+    },
+    "831f1749126f5278": {
+      "file": "blocco_00009_831f1749.wav",
+      "frames": 227117,
+      "channels": 1,
+      "sha256": "aba5326b8880090fdd3f6a442d11daa08b3d4d828084ad80105813617ab4ad66"
+    },
+    "b399ad18b2aa000c": {
+      "file": "blocco_00010_b399ad18.wav",
+      "frames": 205788,
+      "channels": 1,
+      "sha256": "736311ded2fd06d7eb6196b5a8c0b521d5427b7480c808392b54624c11802414"
+    },
+    "5c3169074cda11b9": {
+      "file": "blocco_00011_5c316907.wav",
+      "frames": 141541,
+      "channels": 1,
+      "sha256": "491a11bd6d09e42ebb2364bbb3bfcefc2dc8c4e99fc0f01937cfe31d85f5414a"
+    },
+    "a7b60ebd17a38512": {
+      "file": "blocco_00012_a7b60ebd.wav",
+      "frames": 155735,
+      "channels": 1,
+      "sha256": "e75f606060907a435c0e1af4339a273906dbb116c8be0559cf61cb56cb1fa785"
+    },
+    "03f51f623fc20ebe": {
+      "file": "blocco_00013_03f51f62.wav",
+      "frames": 200028,
+      "channels": 1,
+      "sha256": "9c77061d5dadd742363445848c3e4ed855d82148448af2a82378572e18b781f0"
+    },
+    "ddd1eb633899850d": {
+      "file": "blocco_00014_ddd1eb63.wav",
+      "frames": 179762,
+      "channels": 1,
+      "sha256": "856170c7883798f66a7380e20f1895ddf380a23763434c4019c54935f42aab10"
+    },
+    "1db63be72b5b5435": {
+      "file": "blocco_00015_1db63be7.wav",
+      "frames": 309624,
+      "channels": 1,
+      "sha256": "a0641e9e6b98216a299711605ebe207374134cc0d3e02d36a23805ad8d2d9424"
+    },
+    "fd173fbcc99d73a2": {
+      "file": "blocco_00016_fd173fbc.wav",
+      "frames": 235179,
+      "channels": 1,
+      "sha256": "f9d7b47b4476b88ec4f6ad6aa50312dbe6bea03afa2078b7c25345c523cf3492"
+    },
+    "7b879c62a429ce19": {
+      "file": "blocco_00017_7b879c62.wav",
+      "frames": 199809,
+      "channels": 1,
+      "sha256": "a29c91661fb80e57c1104fe792ab76776914bc6d7adf55d30618d294b65fa4bb"
+    },
+    "1de0b4c885f80df7": {
+      "file": "blocco_00018_1de0b4c8.wav",
+      "frames": 135954,
+      "channels": 1,
+      "sha256": "26c38189b2bfc8b66cb567f8cd1cca28c901b21a8b3700ad8a43823faf421b1f"
+    },
+    "d5be89869bc3052c": {
+      "file": "blocco_00019_d5be8986.wav",
+      "frames": 200670,
+      "channels": 1,
+      "sha256": "43d9664159eba4ad9ccfe4d39bb93b5702e0ce495397c417bc23fbb5a4a5d9e6"
+    },
+    "4f8c9a0f5d5a0bb2": {
+      "file": "blocco_00020_4f8c9a0f.wav",
+      "frames": 142339,
+      "channels": 1,
+      "sha256": "d50359be0bdeb989c1eee22e934406e6128485d290e497dc0f6b30280fa442f1"
+    },
+    "288dbd10101322d7": {
+      "file": "blocco_00021_288dbd10.wav",
+      "frames": 189658,
+      "channels": 1,
+      "sha256": "07b15dfb32cf1bd018cf323f3816fcc900483293af06aaa06ecd623ec1a2e7c8"
+    },
+    "7d7b078895f415e5": {
+      "file": "blocco_00022_7d7b0788.wav",
+      "frames": 156748,
+      "channels": 1,
+      "sha256": "26d8468f318a4225065a19e2e848dafdf2c7d738b5b22bd0a1bdfe35cbec542d"
+    },
+    "726a1538a8015d92": {
+      "file": "blocco_00023_726a1538.wav",
+      "frames": 270010,
+      "channels": 1,
+      "sha256": "d22ec1ddb2e36222b6172177da684e384bf318573687d5c6a3e4f101455e07a3"
+    },
+    "cec036c79a8fda9a": {
+      "file": "blocco_00024_cec036c7.wav",
+      "frames": 248340,
+      "channels": 1,
+      "sha256": "b1eb8d9a7db180511010b4afa41bcdfea21fc91bcefe7381f6adb504b7c15a14"
+    },
+    "4c52ef0a6e8706aa": {
+      "file": "blocco_00025_4c52ef0a.wav",
+      "frames": 184182,
+      "channels": 1,
+      "sha256": "6dc607325209df65909d7663fe8c60cc57818de379a3a2f83e448b372901d939"
+    },
+    "950e869d1719cbc7": {
+      "file": "blocco_00026_950e869d.wav",
+      "frames": 225579,
+      "channels": 1,
+      "sha256": "78f79cc6a712f6a7b6fdec29c9bbd48b87d236ea6914b2a1f33dcc8714c966d5"
+    },
+    "7f74698cd6ef36ce": {
+      "file": "blocco_00027_7f74698c.wav",
+      "frames": 187356,
+      "channels": 1,
+      "sha256": "3a388060ca1da9b5a343351881f2a68353e1f3bcf611adea9a6519e70d97b60d"
+    },
+    "5ba727c205a9a324": {
+      "file": "blocco_00028_5ba727c2.wav",
+      "frames": 170041,
+      "channels": 1,
+      "sha256": "6b360b67da308e179cc85854cfe13d45c42f768c0f29785f22ae522877cbe492"
+    },
+    "dd5b6679e1954b94": {
+      "file": "blocco_00001_dd5b6679.wav",
+      "frames": 253046,
+      "channels": 1,
+      "sha256": "70c66814d057e2967cb05cb9b5c946e61c8770fdccc9aef01756c2d0932b04b4"
+    }
+  },
+  "errors": {},
+  "status": "completato",
+  "output": "D:\\Siti GitHub\\chattertext\\1.Output\\audiolibro_023.wav"
+}

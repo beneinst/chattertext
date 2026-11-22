@@ -1,0 +1,138 @@
+{
+  "sample_rate": 24000,
+  "chunks": [
+    [
+      "Capitolo quarto.\nFrancesco si libera delle sue ricchezze.\n.\n.\n.\n.\n.",
+      "v1",
+      "solenne",
+      [],
+      0.0,
+      null,
+      null,
+      1.0
+    ],
+    [
+      "Deciso a cambiare vita,\nFrancesco vende a Foligno alcuni tessuti di pregio\ne perfino il cavallo con cui è arrivato.",
+      "v1",
+      "deciso",
+      [],
+      0.0,
+      null,
+      null,
+      1.0
+    ],
+    [
+      "Tornando verso Assisi,\nsi chiede come usare il denaro ricavato,\nma presto capisce che non vuole più tenerlo.\nper lui, in quel momento, vale meno della sabbia.\n.\n.",
+      "v1",
+      "riflessivo",
+      [],
+      0.0,
+      null,
+      null,
+      1.0
+    ],
+    [
+      "Lungo la strada incontra la chiesa di San Damiano,\ncadente e bisognosa di aiuto.\nVi entra e offre il denaro al sacerdote,\nraccontandogli il suo nuovo proposito.",
+      "v1",
+      "calmo",
+      [],
+      0.0,
+      null,
+      null,
+      1.0
+    ],
+    [
+      "Il sacerdote, sorpreso e incredulo,\nteme che i parenti di Francesco possano reclamarlo\ne rifiuta di accettare i soldi.\nAccetta però di ospitarlo.\n.\n.",
+      "v1",
+      "preoccupato",
+      [],
+      0.0,
+      null,
+      null,
+      1.0
+    ],
+    [
+      "Francesco allora getta il denaro da una finestra.\n.\n.\n.",
+      "v1",
+      "deciso",
+      [],
+      0.0,
+      "e1",
+      null,
+      1.0
+    ],
+    [
+      "Il gesto mostra quanto sia deciso\na separarsi dai beni materiali\ne a cercare una ricchezza diversa.\nla sapienza e una vita dedicata a Dio.\n.\n.",
+      "v1",
+      "riflessivo",
+      [],
+      0.0,
+      null,
+      null,
+      1.0
+    ],
+    [
+      "La sua scelta è ormai concreta,\nanche se le conseguenze con la famiglia\ndevono ancora arrivare.\n.\n.\n.\n.",
+      "v1",
+      "serio",
+      [],
+      0.0,
+      null,
+      null,
+      0.93
+    ]
+  ],
+  "completed": {
+    "11120129ae7dfe11": {
+      "file": "blocco_00001_11120129.wav",
+      "frames": 122151,
+      "channels": 1,
+      "sha256": "bf21885e9ecad31833d1ccf80997fc4c545413db2698c2a7956b8d428489c656"
+    },
+    "c7f7de6db8ff7d72": {
+      "file": "blocco_00002_c7f7de6d.wav",
+      "frames": 190560,
+      "channels": 1,
+      "sha256": "49895ce00b60fea84d195913d54fa1cc996f390f224e5d1ee19439149dd7f765"
+    },
+    "17231c48ed9d1e8f": {
+      "file": "blocco_00003_17231c48.wav",
+      "frames": 271053,
+      "channels": 1,
+      "sha256": "de25e73f34c5368032bf072f40b16599740d3e15a67f10bd6278b90739c1ca81"
+    },
+    "bda93f8748833045": {
+      "file": "blocco_00004_bda93f87.wav",
+      "frames": 269598,
+      "channels": 1,
+      "sha256": "43dee8d09e6ec6ae8a96031b0d3d909677cab9479e38d4e988ede5f88c3cf17e"
+    },
+    "cd0e415e4c7ebc8a": {
+      "file": "blocco_00005_cd0e415e.wav",
+      "frames": 242493,
+      "channels": 1,
+      "sha256": "4e4bea3af20f6b0fd76bed86989e2cb170a0d0563ab620bc3601ab4930fac23d"
+    },
+    "39eecbb3d81f9a25": {
+      "file": "blocco_00006_39eecbb3.wav",
+      "frames": 97350,
+      "channels": 1,
+      "sha256": "0ca549a52eb7ef5d01905cc76928ef86b6078573a1147eba61ec21dcd349b929"
+    },
+    "9072508c3bcef9de": {
+      "file": "blocco_00007_9072508c.wav",
+      "frames": 259982,
+      "channels": 1,
+      "sha256": "b5e529cd9f0381cb79883c5ce7719eae43a704e1a1f9cefa476b0b3a661c84ab"
+    },
+    "e1fa40ebfa37482a": {
+      "file": "blocco_00008_e1fa40eb.wav",
+      "frames": 170090,
+      "channels": 1,
+      "sha256": "c870b5ab4b43ca0c83444e3088efb1a7d1c9308225506226fae4c79d510f4338"
+    }
+  },
+  "errors": {},
+  "status": "completato",
+  "output": "D:\\Siti GitHub\\chattertext\\1.Output\\audiolibro_005.wav"
+}

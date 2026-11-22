@@ -1,0 +1,6 @@
+MAPPA DEI BLOCCHI - audiolibro_004.wav
+Durata totale: 00:30.5
+Tempi indicativi (+/- mezzo secondo). Per rigenerare: scrivi i numeri in "Rigenera blocchi".
+
+0001  00:00.0 - 00:08.5  V1  E venendosene di nuovo alla volta d Assisi / vide lungo il cammino una chiesa, / ch era in antico stata edificata, ad onore di San Damiàno
+0002  00:09.9 - 00:30.5  V1  e che per vecchiezza minacciava allora un imminente rovina. [pausa x3] / Alla quale venendo il novello soldato di Cristo, /  / commosso a pietà di così urgente bisogno, /  / con te

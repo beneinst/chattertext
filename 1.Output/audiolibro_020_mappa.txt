@@ -1,0 +1,10 @@
+MAPPA DEI BLOCCHI - audiolibro_020.wav
+Durata totale: 01:01.3
+Tempi indicativi (+/- mezzo secondo). Per rigenerare: scrivi i numeri in "Rigenera blocchi".
+
+0001  00:00.0 - 00:12.0  V1  Era quella fossa in una casa, / e nota ad uno solamente, /  / e quivi per ispazio d un mese stette, si fattamente nascosto, / che appena osava uscirne, per soddisfare alle necessit
+0002  00:12.9 - 00:20.5  V1  E se cibo alcuna volta gli era dato, / prendevalo nella fossa, / né servigio di sorta alcuna, gli si faceva se non di soppiatto,
+0003  00:21.9 - 00:33.5  V1  e standosi del continuo in orazione, / pregava con abbondanza di lagrime, / acciò che Dio il liberasse dalle mani dei suoi persecutori, / e i suoi desidèri pietosamente e benigname
+0004  00:34.4 - 00:42.4  V1  Così nel digiuno e nel pianto supplicava la clemenza del Salvatore, / e di sé medesimo diffidando, [pausa x1] / tutto s abbandonava nel Signore
+0005  00:43.8 - 00:52.6  V1  ed ancora che si ritrovasse in una fossa e fra le tenebre, / era nientedimeno inondato da un indicibile giocondità, / insino allora a lui sconosciuta
+0006  00:54.0 - 01:01.3  V1  dalla quale sentendosi tutto infiammare, / abbandonata la fossa, / pubblicamente s espose alle ingiurie de persecutori. [pausa x3]

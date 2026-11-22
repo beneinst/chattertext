@@ -29,14 +29,14 @@ def tensor(data): return np.asarray(data, dtype=float).view(Tensor)
 
 class RegressionTests(unittest.TestCase):
     def test_complete_generated_script(self):
-        scope = dict(json=json, ALL_EMO=['calmo'])
+        scope = dict(json=json, ALL_EMO=['calmo'], CHECKPOINT_RUNTIME=next(ast.literal_eval(n.value) for n in APP.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='CHECKPOINT_RUNTIME' for t in n.targets)))
         functions(APP, ['build_python_script'], scope)
         script = scope['build_python_script'](['Prima frase. Seconda frase.'], .5,.5,.7,
                     'voice.wav','','','','','','',{})
         compile(script, '<generated>', 'exec')
         generated = ast.parse(script)
         current = ast.parse(WORKER)
-        for name in ['generate_recoverable','speech_units','rms_normalize','full_process','asmb']:
+        for name in ['generate_recoverable','speech_units','rms_normalize','full_process','asmb','initialize_job','save_chunk','cached_chunk','assemble_saved']:
             get = lambda tree: next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name==name)
             self.assertEqual(ast.dump(get(generated)), ast.dump(get(current)), name)
 

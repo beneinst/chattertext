@@ -1,8 +1,48 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ChatterText - App Desktop Python v3.0 + Multilingual V3
+ChatterText - App Desktop Python v3.3 + Multilingual V3
 Posizionare nella root di Chatterbox ed eseguire con: python chattertext_app.py
+
+NOVITA v3.3 (correzioni mirate senza rifare tutto):
+  - MAPPA DEI BLOCCHI: accanto a ogni audiolibro_NNN.wav viene scritto audiolibro_NNN_mappa.txt
+    con tempo di inizio/fine, voce e testo di ogni blocco.
+  - RIGENERA BLOCCHI: scrivi i numeri dei blocchi difettosi (con cfg_weight facoltativo) e
+    si rifanno solo quelli; gli altri vengono riusati identici.
+  - CACHE PER CONTENUTO: la sessione dipende dalle impostazioni, non dal testo. Se correggi
+    una parola (es. una pronuncia) si rigenera solo il blocco modificato.
+
+NOVITA v3.2:
+  - FIX: le righe con il solo "." (pause esplicite) venivano fuse dalla pulizia del testo
+    (3 righe diventavano 1, 4 diventavano 2). Ora la scala da 1 a 5 righe e' rispettata.
+  - PROMPT REGISTA v3.2: da TXT/MD a testo ChatterText con respiri (accapo) e pause da
+    livello 0 a 5, controllo pronuncia (parole straniere, numeri, romani, sigle, accenti)
+    e GLOSSARIO finale (l'app lo ignora quando incolli il risultato).
+
+NOVITA v3.4 (espressione di apertura / continuazione):
+  - TAG [r1] [r2] [r3] [r4]: scelgono la "lettura" di ogni parte del testo. [r1] = lettura
+    normale (uso comune). [r2] = la parte viene generata 2 volte di
+    seguito e si tiene solo la 2a (espressione di continuazione); [r3]/[r4] tengono la 3a/4a.
+    Il tag vale fino al tag successivo o a fine blocco; senza tag = lettura normale.
+    Esempio: [r1]Il sole tramontava,\n[r2]e nessuno parlava.  (due righe, due espressioni)
+
+  - PARAMETRI DI SICUREZZA [r2]: sui blocchi con tag [r] i parametri vengono portati vicino ai
+    default ufficiali di Chatterbox (meno accento straniero/voce robotica); le parti [r2] piu'
+    lunghe di 16 parole sono lette una volta sola. Casella nel pannello "Ritmo e velocita",
+    spenta di default (attivala solo se senti accento straniero o voce robotica).
+
+NOVITA v3.1 (ritmo e naturalezza della lettura):
+  - PAUSE AUTOMATICHE TRA FRASI: ogni fine frase (. ? ! ;) riceve una pausa
+    proporzionata, anche dentro lo stesso blocco (prima le frasi erano incollate).
+    Le righe con solo "." restano pause ESPLICITE e sostituiscono quella automatica.
+  - VIRGOLE DI RITMO: nei tratti lunghi senza punteggiatura aggiunge virgole
+    davanti a congiunzioni (ma, mentre, che...). Non cambia mai le parole.
+  - TAGLI INTELLIGENTI: le frasi lunghe si dividono ai confini naturali e il
+    frammento tagliato riceve una virgola (intonazione "continua").
+  - TEMPO DI LETTURA: slider globale + tag [lento] [lentissimo] [veloce] per blocco
+    (time-stretch WSOLA, richiede pytsmod; default 1.00 = spento).
+  - NUMERAZIONE FILE FINALI robusta: audiolibro_001.wav, 002... (+ nome nel log).
+  - PROMPT REGISTA DI LETTURA: analizza genere/opera e produce una scheda riusabile.
 
 NOVITA v3.0 (Sistema Pause Naturali per Chatterbox):
   - PAUSE NATURALI (nuovo sistema "Natural Pause Mode"):
@@ -38,7 +78,7 @@ import os
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 import tkinter as tk
 from tkinter import scrolledtext, messagebox, filedialog, ttk
-import os, subprocess, threading, sys, re, json, pathlib, time
+import os, subprocess, threading, sys, re, json, pathlib, time, hashlib
 
 
 def _hidden_subprocess_kwargs():
@@ -116,6 +156,7 @@ ALL_EMO = list(EMOTION_PRESETS.keys())
 # =========================================================
 READING_STYLES = {
     "narrativa": {
+        "tempo": 1.00,
         "label": "Narrativa",
         "color": "#3498db",
         "desc": "Romanzi, racconti, prosa standard",
@@ -126,6 +167,7 @@ READING_STYLES = {
         "notes": "Stile bilanciato. Pause naturali. Emozioni moderate.",
     },
     "poesia": {
+        "tempo": 1.00,
         "label": "Poesia",
         "color": "#9b59b6",
         "desc": "Poesie, versi, testi lirici — lettura recitata",
@@ -137,6 +179,7 @@ READING_STYLES = {
         "extra_tags": ["verso","strofa","metro","enjambement","cesura"],
     },
     "teatro": {
+        "tempo": 1.00,
         "label": "Teatro",
         "color": "#e74c3c",
         "desc": "Testi teatrali, monologhi, dialoghi drammatici",
@@ -147,6 +190,7 @@ READING_STYLES = {
         "notes": "Dinamica ampia teatrale. Enfasi forti. Transizioni nette tra personaggi.",
     },
     "audiolibro_lungo": {
+        "tempo": 1.00,
         "label": "Audiolibro lungo",
         "color": "#00b894",
         "desc": "Capitoli lunghi, saga, consistenza su ore di audio",
@@ -316,7 +360,8 @@ ALL_JOIN_NAMES = ["join","cont","cambio","cambio3","cambio4","cambio5","cambio6"
 QUICK_TAGS = (
     ["[p1]", "[p2]", "[p3]", "[b]", "[bd]", "[cap]", "[pausa]", "[pausa_lunga]", "[silenzio]"]
     + ["[verso]", "[strofa]", "[metro]", "[enjambement]", "[cesura]"]
-    + ["[e1]", "[e2]", "[ep]"]
+    + ["[e1]", "[e2]", "[ep]", "[lento]", "[lentissimo]", "[veloce]"]
+    + ["[r1]", "[r2]", "[r3]", "[r4]"]
     + ["[join]", "[cont]", "[cambio]", "[cambio3]", "[cambio4]", "[cambio5]",
        "[cambio6]", "[cambio7]", "[para]", "[stacco]", "[lungo]", "[scena]", "[dissolvenza]"]
     + ["[inizio]…[fine]"]
@@ -339,13 +384,155 @@ JOIN_BADGE_C = {
 }
 
 # =========================================================
+# PROSODIA CONDIVISA (app + script generato)
+# =========================================================
+PROSODY_CORE = r'''
+import re as _re
+
+# Modulo condiviso tra app e script generato (solo Python puro, nessuna dipendenza).
+# Regola d'oro: NON cambia mai le parole, aggiunge solo virgole e sceglie dove tagliare.
+
+# Parole DAVANTI alle quali un respiro e' naturale.
+STRONG_BOUNDARY = {
+    "ma", "però", "pero", "perché", "perche", "mentre", "quando", "finché", "finche",
+    "sebbene", "benché", "benche", "poiché", "poiche", "affinché", "affinche",
+    "oppure", "eppure", "tuttavia", "dunque", "anzi", "bensì", "bensi", "cioè", "cioe",
+    "ovvero", "altrimenti", "nonostante", "siccome", "giacché", "giacche", "quindi",
+}
+SOFT_BOUNDARY = {"e", "ed", "che", "o", "né", "dove", "cui", "come"}
+
+# Parole con cui un frammento NON deve mai terminare (articoli, preposizioni, ausiliari...).
+NO_END = {
+    "il", "lo", "la", "i", "gli", "le", "un", "uno", "una", "di", "a", "da", "in", "con",
+    "su", "per", "tra", "fra", "del", "dello", "della", "dei", "degli", "delle", "al",
+    "allo", "alla", "ai", "agli", "alle", "dal", "dallo", "dalla", "dai", "dagli",
+    "dalle", "nel", "nello", "nella", "nei", "negli", "nelle", "sul", "sullo", "sulla",
+    "sui", "sugli", "sulle", "non", "si", "mi", "ti", "ci", "vi", "è", "era", "e", "ed",
+    "o", "ma", "che", "se", "come", "più", "molto", "tanto", "mio", "tuo", "suo",
+    "nostro", "vostro", "loro", "mia", "tua", "sua", "nostra", "vostra", "miei", "tuoi",
+    "suoi", "ha", "hanno", "aveva", "avevano", "sono", "fu", "furono", "sarà", "sarebbe",
+}
+
+_END_PUNCT = ",;:.!?"
+_TAG_RE = _re.compile(r"(\[[^\]\n]*\])")
+_STRIP = ",.;:!?\"'«»“”()…"
+
+
+def _wkey(word):
+    return word.lower().strip(_STRIP)
+
+
+def _ends_punct(word):
+    return word.rstrip("\"'»”)")[-1:] in _END_PUNCT and word.rstrip("\"'»”)") != ""
+
+
+def smart_cut(words, max_words=22, max_chars=180):
+    """Quante parole tenere nel primo frammento (>=1), tagliando dove il respiro e' naturale."""
+    n_total = len(words)
+    limit, chars = 0, 0
+    for i, w in enumerate(words):
+        chars += len(w) + (1 if i else 0)
+        if i + 1 > max_words or chars > max_chars:
+            break
+        limit = i + 1
+    limit = max(1, limit)
+    if n_total <= limit:
+        return n_total
+    lo = max(3, limit // 2)
+    best = None
+    for n in range(limit, lo - 1, -1):          # dal piu' lungo al piu' corto
+        prev = _wkey(words[n - 1])
+        nxt = _wkey(words[n]) if n < n_total else ""
+        if _ends_punct(words[n - 1]):
+            score = 4
+        elif nxt in STRONG_BOUNDARY:
+            score = 3
+        elif nxt in SOFT_BOUNDARY:
+            score = 2
+        elif prev not in NO_END:
+            score = 1
+        else:
+            score = 0
+        if n_total - n < 3:
+            score -= 2                             # evita code di 1-2 parole
+        if best is None or score > best[0]:
+            best = (score, n)
+    return best[1] if best else limit
+
+
+def auto_rhythm(text, strong_run=7, soft_run=12, min_tail=3):
+    """Aggiunge virgole di respiro nei tratti lunghi senza punteggiatura.
+    Restituisce (testo, numero_virgole_aggiunte). Non tocca tag, accapo o parole."""
+    added = 0
+    out_lines = []
+    for line in text.split("\n"):
+        res = []
+        run = 0
+        for part in _TAG_RE.split(line):
+            if _TAG_RE.fullmatch(part):
+                res.append(part)
+                run = 0
+                continue
+            tokens = _re.split(r"(\s+)", part)
+            idx = [i for i, t in enumerate(tokens) if t and not t.isspace()]
+            for k, i in enumerate(idx):
+                w = tokens[i]
+                key = _wkey(w)
+                if k > 0 and run > 0:
+                    pi = idx[k - 1]
+                    pw = tokens[pi]
+                    if key in STRONG_BOUNDARY:
+                        need = strong_run
+                    elif key in SOFT_BOUNDARY:
+                        need = soft_run
+                    else:
+                        need = None
+                    if (need and run >= need and len(idx) - k >= min_tail + 1
+                            and not _ends_punct(pw) and _wkey(pw) not in NO_END):
+                        tokens[pi] = pw + ","
+                        added += 1
+                        run = 0
+                run += 1
+                if _ends_punct(w):
+                    run = 0
+            res.append("".join(tokens))
+        out_lines.append("".join(res))
+    return "\n".join(out_lines), added
+
+
+def split_units(text, max_words=22, max_chars=180):
+    """Divide il testo in unita da sintetizzare. Le righe di soli segni (es. '.') restano
+    unita a parte: sono pause esplicite. Le frasi lunghe si tagliano ai confini naturali
+    e il frammento tagliato riceve una virgola (intonazione 'continua')."""
+    units = []
+    for line in text.strip().split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        if not any(c.isalnum() for c in line):
+            units.append(line)
+            continue
+        for sentence in _re.split(r"(?<=[.!?;])\s+", line):
+            words = sentence.split()
+            while words:
+                n = smart_cut(words, max_words, max_chars - 1)
+                piece = " ".join(words[:n])
+                words = words[n:]
+                if words and piece[-1] not in _END_PUNCT + "]":
+                    piece += ","
+                units.append(piece)
+    return units
+'''
+exec(PROSODY_CORE, globals())   # definisce smart_cut, auto_rhythm, split_units
+
+# =========================================================
 # HELPERS TESTO
 # =========================================================
 def _protected():
     emo = "|".join(ALL_EMO)
     return re.compile(
         r"\[/?(?:v1|v2|v3|v4|v5|v6|v7|inizio|fine|pausa|pausa_lunga|silenzio"
-        r"|p1|p2|p3|b|bd|cap|e1|e2|ep"
+        r"|p1|p2|p3|b|bd|cap|e1|e2|ep|lento|lentissimo|veloce|r1|r2|r3|r4"
         r"|verso|strofa|metro|enjambement|cesura|dissolvenza"
         r"|join|cont|cambio|cambio3|cambio4|cambio5|cambio6|cambio7|para|stacco|lungo|scena"
         r"|(?:(?:v1|v2|v3|v4|v5|v6|v7)_)?(?:"+emo+r"))\]", re.IGNORECASE)
@@ -410,6 +597,14 @@ def normalize_text(text):
         ph = "ZZCHT{}ZZCHT".format(idx[0])
         tm[ph] = m.group(0); idx[0] += 1; return ph
     text = pat.sub(sv, text)
+
+    # v3.1: le righe con il SOLO punto sono pause esplicite (1 riga = 0.40 s).
+    # Vanno protette, altrimenti le regole sui "puntini" qui sotto le fondono
+    # (3 righe diventavano 1, 4 diventavano 2...) e la scala da 1 a 5 non funziona.
+    def sv_dot(m):
+        ph = "ZZCHT{}ZZCHT".format(idx[0]); tm[ph] = "."; idx[0] += 1
+        return ph
+    text = re.sub(r"(?m)^[ \t]*\.[ \t]*$", sv_dot, text)
 
     # Virgolette tipografiche -> standard ASCII
     text = text.replace('\u201c', '"').replace('\u201d', '"')
@@ -571,7 +766,7 @@ def newlines_to_pauses(text):
 def analyze_text(text):
     errs = []
     if len(text) > 10000:
-        errs.append(("warning", "Testo troppo lungo ({} car.)".format(len(text))))
+        errs.append(("info", "Testo lungo ({} caratteri): generazione a blocchi con salvataggio progressivo.".format(len(text))))
     tnt = _protected().sub("", text)
     wc = {}
     for w in re.findall(r"\b\w+\b", tnt.lower()):
@@ -594,19 +789,28 @@ def analyze_text(text):
     # Controllo strutturale dei tag voce/emozione.
     emo = "|".join(ALL_EMO)
     tag_re = re.compile(r"\[(/?)(v[1-7])(?:_("+emo+r"))?\]", re.IGNORECASE)
+    def _where(pos, after=False):
+        # Numero del blocco [inizio] e un frammento di testo per ritrovare il punto esatto.
+        blk = max(1, len(re.findall(r"\[inizio\]", text[:pos], re.IGNORECASE)))
+        seg = text[pos:pos + 70] if after else text[max(0, pos - 70):pos]
+        seg = re.sub(r"\s*\n\s*", " / ", seg).strip()
+        return "blocco {}, {} \"{}\"".format(blk, "inizia con" if after else "dopo", seg)
+
     stack = []
     for match in tag_re.finditer(text):
         closing, voice, emotion = match.group(1), match.group(2).lower(), (match.group(3) or "").lower()
         if not closing:
-            stack.append((voice, emotion, match.group(0)))
+            stack.append((voice, emotion, match.group(0), match.start()))
         elif not stack:
-            errs.append(("error", "Tag di chiusura senza apertura: {}".format(match.group(0))))
+            errs.append(("error", "Tag di chiusura senza apertura: {} ({}). Dopo [inizio] manca l'apertura del tag voce?".format(
+                match.group(0), _where(match.start()))))
         else:
-            open_voice, open_emotion, open_tag = stack.pop()
+            open_voice, open_emotion, open_tag, open_pos = stack.pop()
             if (voice, emotion) != (open_voice, open_emotion):
-                errs.append(("error", "Tag discordanti: {} chiuso da {}".format(open_tag, match.group(0))))
-    for _, _, open_tag in stack:
-        errs.append(("error", "Tag senza chiusura: {}".format(open_tag)))
+                errs.append(("error", "Tag discordanti: {} ({}) chiuso da {} ({})".format(
+                    open_tag, _where(open_pos, after=True), match.group(0), _where(match.start()))))
+    for _, _, open_tag, open_pos in stack:
+        errs.append(("error", "Tag senza chiusura: {} ({})".format(open_tag, _where(open_pos, after=True))))
 
     starts = len(re.findall(r"\[inizio\]", text, re.IGNORECASE))
     ends = len(re.findall(r"\[fine\]", text, re.IGNORECASE))
@@ -681,19 +885,16 @@ def chunk_text(text, min_w, max_w, max_c):
     chunks = []
 
     def split_oversized(piece):
+        # v3.1: taglia ai confini naturali (prima di "ma", "mentre", "che"...) e
+        # chiude il frammento con una virgola: il modello continua l'intonazione.
         words = piece.split()
-        if not words:
-            return []
-        result, buf = [], []
-        for word in words:
-            candidate = " ".join(buf + [word])
-            if buf and (len(candidate.split()) > max_w or len(candidate) > max_c):
-                result.append(" ".join(buf))
-                buf = [word]
-            else:
-                buf.append(word)
-        if buf:
-            result.append(" ".join(buf))
+        result = []
+        while words:
+            n = smart_cut(words, max_w, max_c - 1)
+            frag = " ".join(words[:n]); words = words[n:]
+            if words and frag[-1] not in ",;:.!?]":
+                frag += ","
+            result.append(frag)
         return result
 
     for p in paragraphs:
@@ -841,9 +1042,35 @@ testo originale con eventuali tag interni
 - Crea blocchi semantici di circa 20-35 parole e mai oltre 240 caratteri, quando possibile.
 - Non spezzare nomi propri, locuzioni, citazioni o frasi in punti innaturali.
 - Un blocco corto è accettabile per una battuta breve o un effetto drammatico.
-- Usa gli accapo soltanto tra elementi strutturali; usa i tag per le pause interne.
+- Usa accapo e righe con punto anche dentro i blocchi, seguendo le regole di respiro qui sotto.
 - Non mettere virgola o punto immediatamente prima di un tag pausa: il tag genera
   automaticamente la punteggiatura e il respiro necessari.
+
+## RESPIRI E PAUSE CON PUNTI E ACCAPO
+
+Usa accapo e righe contenenti un solo punto per dare alla lettura un ritmo naturale da audiolibro. Questa regola sostituisce il precedente divieto di usare accapo dentro il testo dei blocchi.
+
+Distribuisci i respiri secondo il significato e la sintassi, senza modificare le parole:
+
+- Respiro brevissimo: un semplice accapo, senza aggiungere un punto.
+- Pausa breve: una riga contenente solo un punto.
+- Pausa media: due o tre righe consecutive, ciascuna contenente solo un punto.
+- Pausa lunga: quattro o cinque righe consecutive, ciascuna contenente solo un punto.
+- Pausa eccezionale: sei o più righe con punto, soltanto per aperture, chiusure o passaggi particolarmente significativi.
+
+Nei periodi di media lunghezza, inserisci un respiro dove termina un’unità di senso. Nei periodi lunghi, distingui le proposizioni con accapo semplici e riserva le pause più ampie alla conclusione di un pensiero.
+
+Non assegnare pause lunghe soltanto perché una frase contiene molte parole. Non separare articoli e nomi, preposizioni e complementi, ausiliari e verbi, nomi propri o locuzioni unite nel significato. Non andare mai a capo tra soggetto e verbo, verbo e oggetto o complemento, nome e complemento: es. "Questo romanzo rappresenta uno dei vertici assoluti della letteratura mondiale." resta su una riga. Se non c'è un confine naturale (virgola, congiunzione, subordinata, elenco), lascia la riga intera anche se lunga.
+
+Varia la distribuzione delle pause: evita una sequenza identica in tutti i blocchi. Mantieni più rapidi gli scambi brevi e concedi maggiore spazio alle riflessioni e ai cambi d’argomento.
+
+Ogni punto di pausa deve occupare una riga distinta, senza spazi, numeri o altri caratteri. Non usare puntini di sospensione al suo posto.
+
+Mantieni tutti i respiri dentro i tag della voce, prima della chiusura. Nello stesso punto usa un solo sistema di pausa: accapo semplice, righe con punto oppure tag di pausa o giunzione. Se le righe con punto chiudono il blocco, non aggiungere anche un tag di giunzione.
+
+Quando inserisci righe con punto, elimina l’eventuale virgola o punto fermo immediatamente precedente per evitare una pausa duplicata. Conserva i punti interrogativi ed esclamativi necessari all’intonazione.
+
+Le quantità di righe indicano livelli relativi di respiro, non durate garantite in secondi. Conserva sempre le parole originali e il loro ordine.
 
 ## VOCI ED EMOZIONI
 - V1: narratore principale.
@@ -864,6 +1091,11 @@ testo originale con eventuali tag interni
 - Inserisci le pause solo dove il significato e la sintassi originali le giustificano.
 - Non aggiungere tag a ogni frase: evita una lettura frammentata o artificiale.
 - Usa [e2] con parsimonia, al massimo una volta ogni 2-3 blocchi.
+- Tag di lettura [r1] e [r2], per dare ritmo alla lettura (decidi TU, in base al testo che stai riscrivendo):
+  [r1] = lettura normale. E' l'uso comune: vale per la maggior parte delle frasi. Senza tag la lettura e' gia r1, quindi non serve scriverlo.
+  [r2] = uso NON frequente, e SEMPRE su una frase intera, dall'inizio alla fine, scritta su una riga a parte. Mai su una parte di frase: non spezzare mai una frase in due righe per usare [r2]. Usalo su una frase che ha un di piu espressivo o un cambio di tono, oppure che continua il pensiero della frase precedente (alternanza: una frase normale, poi una frase [r2]). Scrivilo all'inizio della riga, subito prima della frase. La frase [r2] deve essere breve o media (fino a circa 16 parole) e sia la frase prima sia la frase [r2] devono finire con punteggiatura (. ? !). Non metterlo all'inizio di un discorso o di un blocco, tranne quando il blocco continua la frase precedente.
+  Il testo resta identico: non ripeterlo e non copiarlo due volte.
+  Esempio: Il sole tramontava lentamente sulla valle.\n[r2]Nessuno nel villaggio osava parlare.
 
 ## GIUNZIONE TRA BLOCCHI
 [join] continuità immediata | [cont] passaggio morbido
@@ -878,7 +1110,11 @@ testo originale con eventuali tag interni
 ## ESEMPIO DI SOLA STRUTTURA
 [inizio]
 [V1_riflessivo]
-Era una sera strana[p2] il tipo di sera in cui l\'aria sembrava ferma.[para]
+Era una sera strana
+.
+il tipo di sera in cui l\'aria sembrava ferma
+.
+.
 [/V1_riflessivo]
 [fine]
 
@@ -893,7 +1129,8 @@ Non posso aspettare ancora.[cambio]
 2. Controlla che ogni [inizio] abbia un [fine].
 3. Controlla che ogni tag voce/emozione abbia una chiusura identica.
 4. Controlla che pause e giunzioni siano dentro il tag voce.
-5. Rimuovi qualsiasi spiegazione esterna al testo preparato.
+5. Controlla che ogni punto di pausa occupi una riga distinta e che non ci siano pause duplicate.
+6. Rimuovi qualsiasi spiegazione esterna al testo preparato.
 
 TESTO DA PREPARARE:
 
@@ -984,14 +1221,542 @@ POESIA DA PREPARARE:
 '''
 
 # =========================================================
+# PROMPT REGISTA DI LETTURA (tutti i generi)
+# =========================================================
+DIRECTOR_PROMPT = '''# PROMPT REGISTA DI LETTURA v3.2 — DA TXT/MD A TESTO CHATTERTEXT
+
+Sei un regista di lettura e un editor tecnico per audiolibri in italiano letti con Chatterbox TTS (app ChatterText).
+Il tuo lavoro: trasformare il testo che ricevi (TXT o Markdown) in una versione che una voce sintetica legga come un lettore umano, con respiri, pause e pronuncia corrette. Lavori in due fasi: prima capisci l'opera (scheda), poi prepari il testo.
+
+## DATI SULL'OPERA (compilati dall'utente: se vuoti, deducili dal testo)
+TITOLO:
+AUTORE:
+GENERE / EPOCA:
+NOTE PER LA LETTURA (tono, ritmo, personaggi):
+SCHEDA GIÀ DEFINITA (solo se questo testo continua un'opera già preparata: incollala qui e NON rifarla):
+GLOSSARIO PRONUNCIA GIÀ DEFINITO (solo se continua: incollalo qui e usa le stesse pronunce):
+
+## 1. COSA PUOI E NON PUOI TOCCARE
+NON toccare mai: parole, ordine, dialoghi, nomi, ripetizioni, stile. Non riassumere, non correggere, non censurare, non completare. Se vedi un possibile errore nel testo, lascialo.
+PUOI toccare solo:
+a) accapo, righe con un solo punto, virgole di respiro e i tag ChatterText elencati più sotto;
+b) la PRONUNCIA, solo nei casi della sezione 5 (parole straniere, numeri, numeri romani, sigle, simboli, accenti), e ogni modifica va nel glossario finale;
+c) la pulizia del Markdown (sezione 2).
+Non rimuovere mai i segni di fine frase (. ? !): servono all'intonazione.
+
+## 2. PULIZIA DELL'INPUT (TXT / MD)
+- Titoli (# ## ###): leggi il testo del titolo come frase a sé, poi una pausa: titolo di capitolo = 5 righe di punti, sottotitolo = 3 righe.
+- Grassetto, corsivo, citazioni (>), elenchi puntati: togli i simboli e tieni il testo. Ogni voce di elenco è una frase con la sua punteggiatura.
+- Linee orizzontali (---): una pausa di livello 5.
+- Link: leggi solo l'etichetta, mai l'indirizzo. Immagini, codice, tabelle, note a piè pagina, numeri di pagina, intestazioni ripetute: togli, a meno che non siano parte del discorso.
+- Parole spezzate a fine riga (con-trollo): ricomponi. Spazi doppi e righe vuote inutili: togli.
+- Parentesi: sostituisci con virgole se sono incisi; se il contenuto non va letto, toglilo (e segnalalo nel glossario come OMESSO).
+- Non usare "..." né "…": scrivi un punto, oppure una pausa con le righe di punti.
+
+## 3. RESPIRO E PAUSE: LA SCALA DA 0 A 5
+Il ritmo si scrive con gli accapo e con righe che contengono SOLO un punto.
+
+LIVELLO 0 — un accapo semplice, senza punto: respiro breve (circa 0,1-0,2 s). Per spezzare una frase lunga dove un lettore umano riprende fiato.
+LIVELLO 1 — 1 riga con un punto: pausa di circa 0,4 s (fine di un pensiero).
+LIVELLO 2 — 2 righe con un punto: circa 0,8 s (fine periodo, cambio di soggetto o di immagine).
+LIVELLO 3 — 3 righe: circa 1,2 s (cambio di argomento, dopo una battuta forte, prima di una rivelazione).
+LIVELLO 4 — 4 righe: circa 1,6 s (stacco di momento o di luogo, tensione).
+LIVELLO 5 — 5 righe: circa 2 s, il massimo (fine scena o capitolo, silenzio drammatico).
+Non superare mai 5 righe di punti. Le durate sono moltiplicate dal fattore dello stile scelto nell'app, ma i livelli restano questi.
+
+Regole di funzionamento (fondamentali):
+- La riga di punti contiene solo il carattere ".", senza spazi né altri segni, e occupa una riga da sola.
+- Le righe di punti SOSTITUISCONO la pausa automatica in quel punto, non si sommano. Dopo una frase che finisce con ". ? !" l'app mette già circa 0,4 s: il livello 1 lì è inutile, non metterlo.
+- Il livello 1 serve per trasformare una riga che non finisce con punto (o che finisce con virgola) in una vera pausa.
+- Mai righe di punti all'inizio di un blocco. Di solito stanno alla fine della frase o del periodo.
+- Non usare insieme una pausa a punti e i tag [para] [stacco] [lungo] [scena] [dissolvenza] [b] [p1] [p2] [p3]: duplicano la pausa. In questa versione usa solo accapo e punti.
+- Varia: un lettore umano non fa tutte le pause uguali. Alterna livelli 0, 1, 2 e usa i livelli 3-5 solo nei punti che lo meritano (al massimo uno ogni 8-10 frasi nella narrativa, più rari nella saggistica).
+- Dentro una battuta di dialogo usa solo il livello 0 o le virgole. Dopo la battuta, livello 1 o 2.
+
+## 4. COME SPEZZARE LE RIGHE (RESPIRO NATURALE)
+Ogni riga è un respiro: di solito 5-14 parole, mai oltre 18.
+Dove andare a capo: prima di congiunzioni e subordinate (ma, perché, mentre, quando, che, dove, anche se); dopo vocativi, incisi e avverbi d'apertura; tra elementi di un elenco; tra un soggetto lungo (oltre 6 parole) e il suo verbo; dove l'autore farebbe una virgola.
+Dove NON andare a capo: tra articolo e nome, preposizione e complemento, ausiliare e participio, aggettivo e nome, nome e cognome, verbo e pronome legato, numero e unità, titolo e nome (il signor Rossi).
+MAI a capo tra soggetto e verbo, verbo e oggetto o complemento, nome e complemento, verbo e infinito: un legame di senso non si spezza.
+Sbagliato: "Questo romanzo rappresenta" / "uno dei vertici assoluti della letteratura mondiale." Giusto: tutto su una riga.
+Giusto: "Anna incontra Vronskij alla stazione," / "e da quell'incontro cambia la sua vita." (virgola e due proposizioni).
+Una frase fino a 14 parole resta su una sola riga. Una frase lunga va spezzata solo dove esiste un confine naturale; se non esiste, lasciala intera anche oltre 18 parole (fino a 24): meglio una riga lunga di un respiro sbagliato.
+Se una riga finisce senza punteggiatura e la frase continua, il respiro è livello 0. Se serve una virgola vera, scrivila (non servono entrambi).
+
+## 5. CONTROLLO DELLA PRONUNCIA ITALIANA
+Il modello legge ciò che è scritto. Dove la grafia originale verrebbe letta male, riscrivi la parola COME SI LEGGE, con ortografia italiana. Fallo solo quando serve: le parole già italianizzate (bar, film, sport, tram, euro, computer, hotel) restano invariate.
+
+a) PAROLE STRANIERE E NOMI STRANIERI → come si leggono
+   like → laik; smartphone → smartfon; weekend → uichend; email → imeil; wi-fi → uai-fai; software → softuer; business → bìsnes; manager → mànager; feedback → fidbèk; streaming → strìming; design → disàin; brand → brend; jeans → gins; whisky → uìski; hashtag → eshtàg; cloud → claud; podcast → pòdcast; WhatsApp → uotsàp; okay → oukèi.
+   Nomi: Chopin → Sciopèn; Goethe → Gète; Bordeaux → Bordò; Churchill → Ciùrcill; Hugo → Ugò (se francese); Washington → Uòscinton.
+   Frasi latine, francesi, inglesi ecc. dentro il testo: riscrivi tutta la frase come si pronuncia (carpe diem → càrpe diem).
+   Criterio: se un italiano colto la leggerebbe con una pronuncia diversa dalla grafia, riscrivi. Se non sei sicuro di una pronuncia, scegli la più diffusa in Italia e mettila nel glossario.
+   Usa il minor numero di lettere possibile, solo lettere e accenti italiani (a e i o u, è é à ò ù ì), niente simboli fonetici (IPA).
+
+b) NUMERI → scritti per esteso, con genere e concordanza
+   1943 → millenovecentoquarantatré; 3,5 → tre virgola cinque; 25% → venticinque per cento; 12/03/1980 → il dodici marzo millenovecentottanta; 15:30 → le quindici e trenta; 2 euro e 50 → due euro e cinquanta; 21 anni → ventun anni; 1 donna → una donna; 3° → terzo (terza se femminile); 1/2 → mezzo; 1/3 → un terzo; 5 km → cinque chilometri.
+   Telefoni, codici e numeri di conto si leggono cifra per cifra. Intervalli: 1914-1918 → dal millenovecentoquattordici al millenovecentodiciotto.
+
+c) NUMERI ROMANI → in lettere, con l'ordinale giusto
+   Luigi XIV → Luigi quattordicesimo; XX secolo → ventesimo secolo; capitolo IV → capitolo quarto; Papa Pio XII → Papa Pio dodicesimo; atto II → atto secondo.
+
+d) SIGLE
+   Lette come parola (si dicono di seguito): NASA → Nasa; ONU → Onu; UNESCO → Unesco; FIAT → Fiat.
+   Lette lettera per lettera, scritte come si dicono, con trattini: FBI → èffe-bi-ài; DNA → di-enne-à; PC → pi-ci; TV → ti-vù; CD → ci-di; USA → ù-esse-à (o Usa, se il contesto è quello parlato); BBC → bi-bi-ci; UFO → ufo.
+   Scegli sempre l'uso italiano più comune e restane coerente per tutta l'opera.
+
+e) ACCENTI DI PRONUNCIA SULLE PAROLE AMBIGUE (omografi)
+   Solo quando il significato lo richiede e il contesto lo determina senza dubbi: àncora (della nave) / ancòra (avverbio); prìncipi / princìpi; càpitano / capitàno; mèta / metà; pèsca (frutto) / pésca (azione); àmbito / ambìto; sèguito / seguìto; e i nomi o termini con accento irregolare che un lettore sbaglierebbe.
+   Non mettere accenti su parole che sono già lette bene.
+
+f) SIMBOLI, ABBREVIAZIONI, INDIRIZZI
+   € $ £ % & @ # e le abbreviazioni più comuni (Dott., Prof., Sig., ecc., es.) l'app li gestisce già: lasciali. Scrivi per esteso quelli rari o ambigui (a.C. → avanti Cristo; d.C. → dopo Cristo; s.p.a. → società per azioni).
+   Indirizzi web ed e-mail: se vanno letti, scrivili come si dicono (info chiocciola esempio punto it); altrimenti omettili.
+
+g) GLOSSARIO DI PRONUNCIA (obbligatorio)
+   Alla fine della risposta, dopo l'ultimo [fine], elenca ogni modifica di pronuncia, una per riga, così:
+   <<<GLOSSARIO>>>
+   originale → come lo hai scritto
+   <<<FINE GLOSSARIO>>>
+   Se non hai modificato nulla, scrivi il blocco con "nessuna modifica". L'app ignora questo blocco, non verrà letto.
+
+## 6. STRUTTURA DEI BLOCCHI, VOCI E TAG
+Ogni blocco ha questa forma, con la chiusura identica all'apertura:
+
+[inizio]
+[V1_emozione]
+righe del testo, con accapo e righe di punti
+[/V1_emozione]
+[fine]
+
+- Blocchi di 20-35 parole e mai oltre 240 caratteri, chiusi dove finisce un'unità di senso (frase o periodo). Le righe di punti stanno DENTRO il blocco, in fondo.
+- Una voce e una emozione principale per blocco. Voci V1-V7: V1 narratore; ogni personaggio ha una voce fissa per tutta l'opera. La frase del narratore ("disse lui") va in un blocco V1 a parte, con [cambio] sul confine.
+- Emozioni: calmo | appassionato | arrabbiato | triste | ironico | sussurrato | riflessivo | deciso | preoccupato | gentile | serio | solenne | estatico | malinconico | vibrante | intimo
+- Tag facoltativi dentro il blocco: [e1] enfasi leggera, [e2] forte (al massimo uno ogni 2-3 blocchi), [ep] poetica; [lento] [lentissimo] [veloce] per cambiare la velocità dell'intero blocco (solo se tutto il blocco lo richiede; senza tag la velocità è quella base).
+- Tag di lettura [r1] e [r2], per dare ritmo (decidi TU, in base al testo): [r1] = lettura normale, uso comune e maggioritario, valido per la maggior parte delle frasi; senza tag la lettura e' gia r1, quindi non serve scriverlo. [r2] = uso NON frequente, e SEMPRE su una frase intera, dall'inizio alla fine, scritta su una riga a parte: mai su una parte di frase, non spezzare mai una frase in due righe per usare [r2]. Usalo su una frase con un di piu espressivo o un cambio di tono, oppure che continua il pensiero della frase precedente (alternanza: frase normale, poi frase [r2]). Va all'inizio della riga, subito prima della frase; la frase [r2] e' breve o media (fino a circa 16 parole) e sia la frase prima sia la frase [r2] finiscono con punteggiatura (. ? !). Mai all'inizio di un discorso o di un blocco, tranne per continuare la frase precedente. Il testo resta identico: non ripeterlo mai. Esempio: Il sole tramontava lentamente sulla valle. a capo [r2]Nessuno nel villaggio osava parlare.
+- Giunzioni consentite: [join] (continuità), [cont] (passaggio morbido), [cambio] (cambio di voce), da mettere in fondo al blocco, prima della chiusura voce.
+- Se l'opera è letta da un solo narratore usa solo V1, variando l'emozione con il senso del testo.
+
+## 7. FASE 1 — SCHEDA DI LETTURA (solo la prima volta)
+Prima del testo scrivi una scheda breve (massimo 12 righe). Riusala per tutte le parti e non cambiarla.
+<<<SCHEDA>>>
+GENERE E REGISTRO:
+NARRATORE: emozione di base e perché
+RITMO BASE: lento / medio / sostenuto; dove usare [lento] o [veloce]
+VOCI: V1 narratore; V2..V7 = nome e carattere
+DENSITÀ DELLE PAUSE: dove usare i livelli alti (3-5) in questa opera
+PRONUNCIA: scelte generali (sigle, nomi stranieri, accenti ricorrenti)
+<<<FINE SCHEDA>>>
+Indicazioni per genere: romanzo (narratore calmo o riflessivo, [lento] sulle descrizioni); giallo (serio o deciso, pause 3-4 prima delle rivelazioni, [veloce] per l'azione); storico o saggio (serio o gentile, ritmo regolare, pause 2-3 ai cambi di argomento); filosofia (voce per interlocutore, [lento] sulle tesi); fiabe e ragazzi (gentile, vivace, voci distinte); memorie e lettere (intimo o malinconico, pause irregolari); testi sacri o solenni (solenne, [lento], pause ampie).
+
+## 8. TESTI LUNGHI
+Se il testo supera circa 2500 parole, prepara solo le prime 2000 circa, chiudendo a fine paragrafo, poi scrivi: <<<CONTINUA DA: prime sei parole del punto di ripresa>>> e il glossario. Alla ripresa l'utente ti ridarà la scheda e il glossario: applicali senza modifiche.
+
+## 9. ESEMPIO
+Input: Era una sera strana di fine estate quando il vecchio Aurelio decise di scendere al porto ma nessuno dei pescatori seppe dirgli dove fosse finita la barca. «Non è possibile» disse. Nel 1943 il molo era già un deposito della Wehrmacht e lui ci mise un like.
+
+Output:
+[inizio]
+[V1_riflessivo][lento]
+Era una sera strana di fine estate
+quando il vecchio Aurelio decise di scendere al porto,
+ma nessuno dei pescatori seppe dirgli
+dove fosse finita la barca.
+.
+.
+[/V1_riflessivo]
+[fine]
+
+[inizio]
+[V2_preoccupato]
+"Non è possibile", disse.[cambio]
+[/V2_preoccupato]
+[fine]
+
+[inizio]
+[V1_calmo]
+Nel millenovecentoquarantatré
+il molo era già un deposito della Vèrmacht
+.
+e lui ci mise un laik.
+[/V1_calmo]
+[fine]
+
+<<<GLOSSARIO>>>
+1943 → millenovecentoquarantatré
+Wehrmacht → Vèrmacht
+like → laik
+<<<FINE GLOSSARIO>>>
+
+## 10. FORMATO DELLA RISPOSTA E CONTROLLO FINALE
+La risposta contiene, in ordine: la scheda (solo la prima volta), i blocchi, <<<CONTINUA DA...>>> se serve, il glossario. Nessun'altra spiegazione, niente Markdown, niente blocchi di codice.
+Controlla prima di rispondere:
+1. Le parole coincidono con l'originale, tranne le modifiche di pronuncia elencate nel glossario.
+2. Ogni [inizio] ha il suo [fine]; ogni tag voce ha la chiusura identica.
+3. Ogni riga di punti contiene solo ".", è dentro un blocco e non supera 5 righe di fila.
+4. Nessun livello 1 subito dopo una frase che finisce con ". ? !"; nessuna pausa duplicata con tag di pausa.
+5. Nessun accapo in mezzo a un legame di senso (soggetto|verbo, verbo|oggetto, nome|complemento); riga oltre 18 parole solo se non c'e' un confine naturale.
+6. Nessun numero in cifre, nessun numero romano, nessuna sigla o parola straniera lasciata in forma ambigua.
+7. Voci, emozioni e pronunce coerenti con la scheda e con il glossario.
+
+TESTO DA PREPARARE (TXT o MD):
+
+[INCOLLA QUI IL TESTO]
+'''
+
+# =========================================================
 # BUILD SCRIPT PYTHON v3.0
 # =========================================================
+READS_CODE = r"""
+RR=re.compile(r'\[r([1-4])\]',re.IGNORECASE)
+RMERGED=[]
+def split_reads(t):
+    # [(testo, letture)] : il tag vale fino al tag successivo; prima del primo tag = 1.
+    # Guardia: se la parte prima del tag non finisce con punteggiatura, il confine taglia una
+    # frase in mezzo (soggetto|verbo, verbo|oggetto...): le due parti restano sulla stessa riga
+    # nella modalita' della prima e il tag viene ignorato.
+    out=[]; mode=1; pos=0
+    def push(seg,md):
+        if out and out[-1][0].rstrip('"\'»”)]')[-1:] not in ',.;:!?…—–':
+            RMERGED.append(out[-1][0][-30:]); out[-1]=(out[-1][0]+' '+seg,out[-1][1])
+        else:
+            out.append((seg,md))
+    for m in RR.finditer(t):
+        seg=t[pos:m.start()].strip()
+        if seg: push(seg,mode)
+        mode=int(m.group(1)); pos=m.end()
+    seg=t[pos:].strip()
+    if seg: push(seg,mode)
+    return out
+R2_CFG_MAX=0.60; R2_EXAG_MAX=0.65; R2_TEMP_MIN=0.60; R2_TOPP_MIN=0.85; R2_MINP_MAX=0.10
+R2_MAX_WORDS=16
+def safe_params(p):
+    # Parametri di sicurezza per i blocchi con [r2]: restano vicini ai default ufficiali di
+    # Chatterbox (cfg 0.5, exaggeration 0.5, temperature 0.8, top_p 1.0, min_p 0.05) per ridurre
+    # accento straniero e voce robotica. Si applicano a TUTTE le parti del blocco, cosi' r1 e r2
+    # restano coerenti tra loro.
+    q=dict(p); ch=[]
+    for k,f,v in (('cfg_weight',min,R2_CFG_MAX),('exaggeration',min,R2_EXAG_MAX),
+                  ('temperature',max,R2_TEMP_MIN),('top_p',max,R2_TOPP_MIN),('min_p',min,R2_MINP_MAX)):
+        n=f(q[k],v)
+        if abs(n-q[k])>1e-9: ch.append('{} {:.2f}->{:.2f}'.format(k,q[k],n)); q[k]=n
+    return q, ', '.join(ch)
+def carry_reads(piece, mode):
+    # Quando una pausa spezza il blocco, il pezzo successivo eredita la modalita' corrente.
+    ms=RR.findall(piece); new=int(ms[-1]) if ms else mode
+    if not RR.sub('',piece).strip(): return '', new
+    if mode>1 and not RR.match(piece.lstrip()): piece='[r%d] '%mode+piece
+    return piece, new
+"""
+
+PROSODY_RUNTIME = r'''
+def repeat_text(t, n):
+    # n copie dello stesso testo in UNA generazione: la 1a suona come inizio di discorso, la 2a
+    # come continuazione, la 3a/4a piu' espressive. Si tiene solo l'ultima. Le copie scartate
+    # chiudono con un punto (confine piu' netto); l'ULTIMA e' il testo originale identico.
+    t = t.strip()
+    lc = t.rstrip('"\'»”)')[-1:]
+    head = t if lc in '.!?…' else (t.rstrip(' ,;:') + '.')
+    return '\n'.join([head] * (n - 1) + [t])
+
+def take_last_copy(wav, sr, n):
+    # Taglia via le prime n-1 letture; restituisce (ultima_copia, None) oppure (None, motivo).
+    env = wav.detach().cpu().abs().amax(dim=0)
+    fr = max(1, int(sr * 0.010))
+    pad = (-env.numel()) % fr
+    lv = torch.nn.functional.pad(env, (0, pad)).reshape(-1, fr).amax(dim=1)
+    peak = lv.max().item()
+    if peak < 1e-6: return None, 'audio silenzioso'
+    voiced = (lv > max(1e-5, peak * 0.02)).tolist()
+    if True not in voiced: return None, 'nessun parlato'
+    first = voiced.index(True); last = len(voiced) - 1 - voiced[::-1].index(True)
+    cum = []; c = 0
+    for v in voiced:
+        c += 1 if v else 0
+        cum.append(c)
+    total_v = cum[last]
+    min_gap = 14                     # 140 ms di silenzio minimo tra due letture
+    gaps = []; i = first
+    while i <= last:
+        if not voiced[i]:
+            j = i
+            while j <= last and not voiced[j]: j += 1
+            if j - i >= min_gap: gaps.append((i, j, cum[i] / total_v))
+            i = j
+        else:
+            i += 1
+    cuts = []; prev_end = -1
+    for k in range(1, n):
+        target = k / n
+        cand = [(abs(f - target) - min(e - s, 80) * 0.0015, s, e) for s, e, f in gaps
+                if s > prev_end and abs(f - target) <= 0.15]
+        if not cand: return None, 'confine tra le letture non trovato ({}/{})'.format(k, n - 1)
+        _, s_, e_ = min(cand)
+        cuts.append((s_ + e_) // 2); prev_end = e_
+    # Tra le due letture il modello a volte inserisce un respiro/rumore a bassa energia: se il
+    # primo tratto dopo il confine e' breve e debole (< 8% del picco) lo si salta.
+    st = cuts[-1]
+    while True:
+        i = st
+        while i <= last and not voiced[i]: i += 1
+        if i > last: return None, 'nessun parlato dopo il confine'
+        j = i
+        while j <= last and voiced[j]: j += 1
+        if (j - i) <= 60 and j <= last and lv[i:j].max().item() < peak * 0.08:
+            st = j
+            continue
+        break
+    st = max(cuts[-1], i - 5)                  # parte 50 ms prima dell'attacco del parlato
+    tail_v = total_v - cum[st]
+    if not (0.5 / n <= tail_v / total_v <= 1.8 / n):
+        return None, 'ultima lettura sproporzionata ({:.0f}% del parlato)'.format(100 * tail_v / total_v)
+    out = wav[..., st * fr:].clone()
+    nf = min(out.shape[-1], int(sr * 0.008))   # dissolvenza d'ingresso di 8 ms contro i click
+    if nf > 1: out[..., :nf] *= torch.linspace(0.0, 1.0, nf)
+    return out, None
+'''
+
+PROSODY_RUNTIME += r'''
+def inner_gap(prev):
+    # Pausa automatica DOPO una unita di parlato, in base alla punteggiatura finale.
+    # Le righe con solo "." (pause esplicite) la sostituiscono: vedi generate_recoverable.
+    t = prev.strip()
+    lc = t.rstrip('"\'»”)')[-1:]
+    base = {'.': 0.38, '?': 0.46, '!': 0.42, ';': 0.30, ':': 0.32, ',': 0.17}.get(lc, 0.12)
+    if t.endswith('...'): base = 0.60
+    n = len(t.split())
+    if n < 5: base *= 0.80
+    elif n > 20: base *= 1.12
+    base *= PAUSE_SCALE * INNER_SCALE
+    raw = random.gauss(base, base * 0.15)
+    return max(base * 0.60, min(raw, base * 1.40))
+
+_TEMPO_WARNED = [False]
+def apply_tempo(wav, rate):
+    # rate < 1 = piu' lento, > 1 = piu' veloce. Usa WSOLA (nel dominio del tempo): sul parlato
+    # non produce l'effetto "eco metallico" del vocoder di fase. Se pytsmod manca, NON applica
+    # nulla (meglio una voce pulita che una voce con riverbero robotico).
+    if abs(rate - 1.0) < 0.01:
+        return wav
+    try:
+        import numpy as np, pytsmod
+        y = wav.detach().cpu().numpy().astype('float32')
+        out = [np.asarray(pytsmod.wsola(ch, 1.0 / rate), dtype='float32') for ch in y]
+        n = min(len(o) for o in out)
+        return torch.from_numpy(np.stack([o[:n] for o in out]))
+    except Exception as e:
+        if not _TEMPO_WARNED[0]:
+            print('   Tempo di lettura NON applicato (serve: pip install pytsmod): {}'.format(e), flush=True)
+            _TEMPO_WARNED[0] = True
+        return wav
+'''
+
+CHECKPOINT_RUNTIME = r'''
+import hashlib
+import json
+import soundfile as sf
+import numpy as np
+
+
+def file_digest(path):
+    h=hashlib.sha256()
+    with open(path,'rb') as stream:
+        for block in iter(lambda: stream.read(1024*1024),b''): h.update(block)
+    return h.hexdigest()
+
+
+def save_progress():
+    temp=job_dir/'stato.tmp'
+    with open(temp,'w',encoding='utf-8') as stream:
+        json.dump(progress,stream,ensure_ascii=False,indent=2)
+        stream.flush(); os.fsync(stream.fileno())
+    os.replace(temp,job_dir/'stato.json')
+
+
+def initialize_job():
+    global job_dir,progress,job_lock,tc
+    # Script, modelli e campioni voce identificano la configurazione esatta.
+    identity=[SETTINGS_ID]
+    for voice in sorted(set([AUDIO_V1]+[p for p,enabled in
+            [(AUDIO_V2,HAS2),(AUDIO_V3,HAS3),(AUDIO_V4,HAS4),
+             (AUDIO_V5,HAS5),(AUDIO_V6,HAS6),(AUDIO_V7,HAS7)] if enabled])):
+        identity.append((str(pathlib.Path(voice).resolve()),file_digest(voice)))
+    source=inspect.getsourcefile(type(model))
+    if source: identity.append(file_digest(source))
+    identity.append(model.sr)
+    key=hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()[:24]
+    job_dir=pathlib.Path('1.Output')/'sessioni'/key
+    job_dir.mkdir(parents=True,exist_ok=True)
+    job_lock=open(job_dir/'session.lock','a+b')
+    job_lock.seek(0); job_lock.write(b'0'); job_lock.flush(); job_lock.seek(0)
+    try:
+        if sys.platform=='win32':
+            import msvcrt
+            msvcrt.locking(job_lock.fileno(),msvcrt.LK_NBLCK,1)
+        else:
+            import fcntl
+            fcntl.flock(job_lock.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
+    except OSError:
+        raise RuntimeError('Questa sessione e gia in esecuzione: attendi o arrestala.')
+    state=job_dir/'stato.json'
+    if state.exists():
+        progress=json.loads(state.read_text(encoding='utf-8'))
+        if progress['sample_rate']!=model.sr:
+            raise RuntimeError('Stato di ripresa incompatibile: '+str(state))
+        # v3.3: la sessione dipende dalle IMPOSTAZIONI, non dal testo. I blocchi si
+        # riconoscono dal contenuto: se modifichi una parola si rigenera solo quel blocco.
+        progress['chunks']=tc
+    else:
+        progress=dict(sample_rate=model.sr,chunks=tc,completed={},errors={},status='in_corso')
+    progress['status']='in_corso'
+    save_progress()
+    print('SALVATAGGIO PROGRESSIVO: {}'.format(job_dir.resolve()),flush=True)
+
+
+def block_sig(txt,vo,em,ek,rate,occ):
+    raw=json.dumps([txt,vo,em,ek,round(rate,3),occ],ensure_ascii=False)
+    return hashlib.sha256(raw.encode('utf-8')).hexdigest()[:16]
+
+
+def cached_chunk(index,sig,force=False):
+    if force:
+        print('   Rigenerazione forzata del blocco {}.'.format(index+1),flush=True)
+        return None
+    record=progress['completed'].get(sig)
+    if not record: return None
+    path=job_dir/record['file']
+    if path.exists():
+        try:
+            info=sf.info(path)
+            if (info.samplerate==model.sr and info.frames==record['frames']
+                    and info.channels==record['channels'] and file_digest(path)==record['sha256']):
+                return path
+        except (OSError,RuntimeError): pass
+    progress['completed'].pop(sig,None); save_progress()
+    print('   Blocco salvato non valido: rigenerazione.',flush=True)
+    return None
+
+
+def save_chunk(index,sig,wav):
+    path=job_dir/('blocco_{:05d}_{}.wav'.format(index+1,sig[:8]))
+    temp=path.with_suffix('.tmp.wav')
+    data=wav.detach().cpu().numpy().T
+    if not data.size or not np.isfinite(data).all(): raise ValueError('Audio non valido al salvataggio')
+    sf.write(temp,data,model.sr,subtype='FLOAT')
+    os.replace(temp,path)
+    old=progress['completed'].get(sig)
+    if old and old.get('file')!=path.name:
+        (job_dir/old['file']).unlink(missing_ok=True)
+    progress['completed'][sig]=dict(file=path.name,frames=len(data),channels=data.shape[1],sha256=file_digest(path))
+    progress['errors'].pop(str(index+1),None)
+    save_progress()
+    return path
+
+
+def publish_numbered(temp,directory):
+    # Numerazione progressiva dei file finali: audiolibro_001.wav, 002, 003...
+    # Non sovrascrive mai file esistenti (anche con due sessioni in parallelo).
+    numbers=[]
+    for path in directory.glob('audiolibro_*.wav'):
+        match=re.fullmatch(r'audiolibro_(\d{1,6})\.wav',path.name,re.IGNORECASE)
+        if match: numbers.append(int(match.group(1)))
+    number=max(numbers,default=0)+1
+    while True:
+        output=directory/('audiolibro_{:03d}.wav'.format(number))
+        try:
+            os.link(temp,output)
+        except FileExistsError:
+            number+=1
+            continue
+        except OSError:
+            # Filesystem senza hard link (exFAT, alcune unita di rete o cloud):
+            # prenota il nome in modo esclusivo e poi sostituisce.
+            try:
+                with open(output,'xb'): pass
+            except FileExistsError:
+                number+=1
+                continue
+            os.replace(temp,output)
+            return output
+        temp.unlink()
+        return output
+
+
+def fmt_t(s):
+    h=int(s//3600); m=int(s%3600//60); sec=s%60
+    return '{:d}:{:02d}:{:04.1f}'.format(h,m,sec) if h else '{:02d}:{:04.1f}'.format(m,sec)
+
+
+def write_map(out,marks,duration):
+    try:
+        lines=['MAPPA DEI BLOCCHI - {}'.format(out.name),'Durata totale: {}'.format(fmt_t(duration)),
+               'Tempi indicativi (+/- mezzo secondo). Per rigenerare: scrivi i numeri in "Rigenera blocchi".','']
+        for i,(a,b) in enumerate(marks):
+            body=tc[i][0].strip()
+            body=re.sub(r'(?:\n\.)+(?=\n|$)',lambda m:' [pausa x{}]'.format(m.group(0).count('\n.')),body)
+            body=body.replace('\n',' / ')
+            lines.append('{:04d}  {} - {}  {}  {}'.format(i+1,fmt_t(a/model.sr),fmt_t(b/model.sr),tc[i][1].upper(),body[:180]))
+        path=out.parent/(out.stem+'_mappa.txt')
+        path.write_text('\n'.join(lines),encoding='utf-8')
+        print('MAPPA: {}'.format(path),flush=True)
+    except Exception as e:
+        print('Mappa blocchi non scritta: {}'.format(e),flush=True)
+
+
+def assemble_saved(paths,out):
+    # Conserva in memoria solo un blocco e la coda necessaria alle giunzioni.
+    raw=job_dir/'assemblaggio.tmp.wav'
+    tail=None; hold=max(1,int(model.sr*.25)); written=0; marks=[]
+    with sf.SoundFile(raw,'w',samplerate=model.sr,channels=1,subtype='FLOAT',format='WAV') as stream:
+        for i,path in enumerate(paths):
+            data,sr=sf.read(path,dtype='float32',always_2d=True)
+            if sr!=model.sr or data.shape[1]!=1: raise ValueError('Formato del blocco incompatibile')
+            seg=torch.from_numpy(data.T.copy())
+            if tail is None:
+                tail=seg; start=0
+            else:
+                previous=tc[i-1]
+                joined=asmb(tail,seg,model.sr,previous[6],existing_pause=previous[4])
+                if joined is None:
+                    pause=0 if previous[4]>0 else dyn_pause(previous[0],emo=previous[2])
+                    joined=torch.cat([tail,torch.zeros((1,int(model.sr*pause))),seg],dim=-1)
+                tail=joined
+                start=written+tail.shape[-1]-seg.shape[-1]
+            marks.append((start,start+seg.shape[-1]))
+            if tail.shape[-1]>hold:
+                stream.write(tail[...,:-hold].numpy().T)
+                written+=tail.shape[-1]-hold
+                tail=tail[...,-hold:].clone()
+        if tail is not None: stream.write(tail.numpy().T)
+    # Normalizzazione globale in streaming: i silenzi non aumentano il guadagno.
+    peak=0.0
+    with sf.SoundFile(raw) as stream:
+        for block in stream.blocks(blocksize=262144,dtype='float32'):
+            peak=max(peak,float(np.abs(block).max()))
+    total=0.0; count=0
+    with sf.SoundFile(raw) as stream:
+        for block in stream.blocks(blocksize=262144,dtype='float32'):
+            active=block[np.abs(block)>max(1e-5,peak*.01)].astype('float64')
+            total+=float(np.sum(active*active)); count+=active.size
+    gain=min(10**(RMS_TARGET_DB/20)/max((total/max(count,1))**.5,1e-8),.95/max(peak,1e-8),3.0)
+    temp=out.with_suffix('.tmp.wav')
+    with sf.SoundFile(raw) as source, sf.SoundFile(temp,'w',samplerate=model.sr,channels=1,subtype='PCM_16',format='WAV') as dest:
+        for block in source.blocks(blocksize=262144,dtype='float32'): dest.write(block*gain)
+        duration=len(source)/model.sr
+    out=publish_numbered(temp,out.parent)
+    raw.unlink(missing_ok=True)
+    progress['status']='completato'; progress['output']=str(out.resolve()); save_progress()
+    write_map(out,marks,duration)
+    return duration
+'''
+
 def build_python_script(chunks, exag, cfg, temp, v1, v2, v3, v4, v5, v6, v7,
                         epreset, devmode="auto", reading_style="narrativa",
                         noise_gate_db=-50, rms_target_db=-18, trim_threshold_db=-45,
                         pause_scale=1.0, preset_scale=1.0, aggressive_clean=False,
                         natural_pauses=True, min_p=0.05,
-                        top_p=1.0, repetition_penalty=1.2, seed=0):
+                        top_p=1.0, repetition_penalty=1.2, seed=0,
+                        tempo=1.0, inner_pauses=True, inner_scale=1.0, compare_r=False, safe_r=True):
     """
     Genera lo script Python per Chatterbox.
     natural_pauses=True: converte i tag pausa in punteggiatura+newline
@@ -1122,6 +1887,14 @@ def pauses_to_natural_text(text):
 "SAMPLER_MIN_P={}".format(min_p),
 "REPETITION_PENALTY={}".format(repetition_penalty),
 "SEED={}".format(seed),
+"SETTINGS_ID='@@SETTINGS_ID@@'",
+"REGEN=set(int(x) for x in re.findall(r'\\d+',os.environ.get('CHATTERTEXT_REGEN','')))",
+"def _rcfg():",
+"    try: return max(0.0,min(1.0,float(os.environ.get('CHATTERTEXT_REGEN_CFG','').replace(',','.'))))",
+"    except ValueError: return None",
+"REGEN_CFG=_rcfg()",
+"SEEN={}",
+"if REGEN: print('RIGENERAZIONE FORZATA blocchi {}{}'.format(sorted(REGEN),'  (cfg_weight '+str(REGEN_CFG)+')' if REGEN_CFG is not None else ''),flush=True)",
 "PAUSE_SCALE={}".format(pause_scale),
 "PRESET_SCALE={}".format(preset_scale),
 "NOISE_GATE_DB={}".format(noise_gate_db),
@@ -1129,6 +1902,17 @@ def pauses_to_natural_text(text):
 "TRIM_DB={}".format(trim_threshold_db),
 "AGGRESSIVE_CLEAN={}".format(aggressive_clean),
 "NATURAL_PAUSES={}".format(natural_pauses),
+"INNER_PAUSES={}".format(bool(inner_pauses)),
+"INNER_SCALE={}".format(inner_scale),
+"TEMPO={}".format(tempo),
+"CUR_RATE=[TEMPO]",
+READS_CODE,
+"CUR_READS=[1]",
+"COMPARE_R={}".format(bool(compare_r)),
+"COMPARE_GAP=2.0",
+"SAFE_R={}".format(bool(safe_r)),
+"TEMPO_TAGS={'[lento]':0.93,'[lentissimo]':0.86,'[veloce]':1.06}",
+PROSODY_CORE,
 natural_fn,
 "PM={",
 "    '[p1]':(0.18,0.03), '[p2]':(0.40,0.05), '[p3]':(0.65,0.07),",
@@ -1153,6 +1937,7 @@ natural_fn,
 'EN=r"{}"'.format(emop),
 "PR=re.compile(r'(\\[p[123]\\]|\\[b(?:d)?\\]|\\[cap\\]|\\[pausa(?:_lunga)?\\]|\\[silenzio\\]|\\[verso\\]|\\[strofa\\]|\\[metro\\]|\\[enjambement\\]|\\[cesura\\])',re.IGNORECASE)",
 "ER=re.compile(r'\\[e[12p]\\]',re.IGNORECASE)",
+"TR=re.compile(r'\\[(?:lento|lentissimo|veloce)\\]',re.IGNORECASE)",
 "JR=re.compile(r'\\[(?:join|cont|cambio|cambio3|cambio4|cambio5|cambio6|cambio7|para|stacco|lungo|scena|dissolvenza)\\]',re.IGNORECASE)",
 "def pc(chunk):",
 "    rp=PR.findall(chunk)",
@@ -1162,7 +1947,7 @@ natural_fn,
 "    # si_meta: rimuove SOLO tag voce/emozione/enfasi/giunzioni",
 "    # LASCIA i tag pausa [p1][p2][b]... intatti: servono a prepare_text_for_tts()",
 "    def si_meta(t):",
-"        t=ER.sub('',t); t=JR.sub('',t); return t.strip()",
+"        t=ER.sub('',t); t=JR.sub('',t); t=TR.sub('',t); return t.strip()",
 "    # si_voice: rimuove anche i tag voce dal testo pulito",
 "    def si_voice(t):",
 "        t=re.sub(r'\\[/?(?:v1|v2|v3|v4|v5|v6|v7)(?:_'+EN+r')?\\]','',t,flags=re.IGNORECASE)",
@@ -1200,25 +1985,28 @@ natural_fn,
 "        p['exaggeration']=min(1.0,p['exaggeration']+EP[ek]['exaggeration_delta'])",
 "        p['cfg_weight']=max(0.1,p['cfg_weight']+EP[ek]['cfg_weight_delta'])",
 "    return p",
-"if SEED:",
+"if SEED and not REGEN:",
 "    random.seed(SEED); torch.manual_seed(SEED)",
 "    if torch.cuda.is_available(): torch.cuda.manual_seed_all(SEED)",
 "tc=[]",
 "for chunk in chunks:",
 "    txt,vo,em,ps,tp,ek,jk=pc(chunk)",
+"    _tt=TR.findall(chunk); tmf=TEMPO_TAGS[_tt[-1].lower()] if _tt else 1.0",
 "    # Ogni pausa resta nel punto del testo in cui e' stata richiesta.",
-"    cursor=0; parts=[]",
+"    cursor=0; parts=[]; _rm=1",
 "    for match,(_,duration) in zip(PR.finditer(txt),ps):",
 "        piece=txt[cursor:match.start()].strip()",
+"        if piece: piece,_rm=carry_reads(piece,_rm)",
 "        if piece:",
-"            parts.append([piece,vo,em,[],duration,ek,None])",
+"            parts.append([piece,vo,em,[],duration,ek,None,tmf])",
 "        elif parts:",
 "            parts[-1][4]+=duration",
 "        elif tc:",
 "            tc[-1][4]+=duration",
 "        cursor=match.end()",
 "    tail=txt[cursor:].strip()",
-"    if tail: parts.append([tail,vo,em,[],0.0,ek,None])",
+"    if tail: tail,_rm=carry_reads(tail,_rm)",
+"    if tail: parts.append([tail,vo,em,[],0.0,ek,None,tmf])",
 "    if parts:",
 "        parts[-1][6]=jk",
 "        tc.extend(parts)",
@@ -1309,6 +2097,7 @@ natural_fn,
 "    wav=trim_silence(wav, sr, threshold_db=min(TRIM_DB,-55), pad_ms=80)",
 "    if AGGRESSIVE_CLEAN: wav=declick(wav, sr)",
 "    return apply_fade(wav, sr, fade_ms=5)",
+PROSODY_RUNTIME,
 # --- Nuova sezione: generazione con pause naturali ---
 "def prepare_text_for_tts(txt):",
 "    '''",
@@ -1323,44 +2112,62 @@ natural_fn,
 "        txt = re.sub(r'\\[(?:p[123]|b(?:d)?|cap|pausa(?:_lunga)?|silenzio|verso|strofa|metro|enjambement|cesura)\\]','',txt,flags=re.IGNORECASE)",
 "    # Rimuovi eventuali tag residui (enfasi, giunzioni) che non devono andare al TTS",
 "    txt = re.sub(r'\\[e[12p]\\]','',txt,flags=re.IGNORECASE)",
+"    txt = re.sub(r'\\[(?:lento|lentissimo|veloce)\\]','',txt,flags=re.IGNORECASE)",
 "    txt = re.sub(r'\\[(?:join|cont|cambio|cambio3|cambio4|cambio5|cambio6|cambio7|para|stacco|lungo|scena|dissolvenza)\\]','',txt,flags=re.IGNORECASE)",
 "    return txt.strip()",
-"def speech_units(text, max_words=24, max_chars=180):",
-"    sentences=re.split(r'(?<=[.!?;])\\s+|\\n+',text.strip())",
-"    result=[]",
-"    for sentence in sentences:",
-"        buf=[]",
-"        for word in sentence.split():",
-"            if buf and (len(buf)>=max_words or len(' '.join(buf+[word]))>max_chars):",
-"                result.append(' '.join(buf)); buf=[]",
-"            buf.append(word)",
-"        if buf: result.append(' '.join(buf))",
-"    return result",
+"def speech_units(text, max_words=22, max_chars=180):",
+"    return split_units(text, max_words, max_chars)",
 "",
 "def generate_recoverable(tts_txt, vp, attempts, depth=0):",
 "    # I separatori senza parole sono pause, mai input da far pronunciare.",
-"    if not any(char.isalnum() for char in tts_txt):",
+"    if not any(char.isalnum() for char in RR.sub('',tts_txt)):",
 "        return torch.zeros((1, max(1, int(model.sr*0.40*PAUSE_SCALE))))",
 "    if depth==0:",
-"        units=speech_units(tts_txt)",
-"        if len(units)>1:",
+"        units=[]",
+"        for _st,_sr in split_reads(tts_txt):",
+"            units+= [(_u,_sr) for _u in speech_units(_st)]",
+"        if RMERGED:",
+"            print('   [r] tag ignorato: la parte prima non finisce con punteggiatura (\"...'+RMERGED[0]+'\"), le due parti restano unite',flush=True); RMERGED.clear()",
+"        if len(units)==1: tts_txt=units[0][0]; CUR_READS[0]=units[0][1]",
+"        if len(units)>1 or (COMPARE_R and any(_u[1]>1 for _u in units)):",
 "            print('   Generazione in {} frasi/parti brevi.'.format(len(units)),flush=True)",
-"            audio=[]",
-"            for unit in units:",
+"            audio=[]; prev=None",
+"            for unit,_ur in units:",
+"                has=any(c.isalnum() for c in unit)",
+"                if has: CUR_READS[0]=_ur",
+"                # pausa automatica solo tra due unita di parlato: una riga con '.' e' una pausa esplicita",
+"                if audio and has and prev is not None and INNER_PAUSES:",
+"                    gap=inner_gap(prev)",
+"                    if gap>0: audio.append(torch.zeros((1,int(model.sr*gap))))",
+"                if has and COMPARE_R and _ur>1:",
+"                    print('   [CONFRONTO] stessa parte in lettura singola, {:.0f} s di silenzio, poi {}x'.format(COMPARE_GAP,_ur),flush=True)",
+"                    CUR_READS[0]=1",
+"                    audio.append(generate_recoverable(unit,vp,attempts,depth=1))",
+"                    audio.append(torch.zeros((1,int(model.sr*COMPARE_GAP))))",
+"                    CUR_READS[0]=_ur",
 "                audio.append(generate_recoverable(unit,vp,attempts,depth=1))",
+"                prev=unit if has else None",
 "            return torch.cat(audio,dim=-1)",
 "    words_n=max(1,len(tts_txt.split()))",
 "    min_dur=max(0.18, words_n/5.0)  # Controllo prudenziale per ogni frase",
 "    last_err=None",
+"    r_eff=CUR_READS[0]",
+"    if r_eff>1 and words_n>R2_MAX_WORDS:",
+"        print('   [r] parte di {} parole (> {}): lettura singola, la doppia lettura su testi lunghi e meno stabile'.format(words_n,R2_MAX_WORDS),flush=True); r_eff=1",
 "    for attempt_i,ap in enumerate(attempts):",
 "        try:",
-"            wav=model.generate(tts_txt,language_id='it',audio_prompt_path=vp,",
+"            n_r=r_eff if attempt_i<len(attempts)-1 else 1  # ultimo tentativo: lettura singola",
+"            gen_txt=repeat_text(tts_txt,n_r) if n_r>1 else tts_txt",
+"            wav=model.generate(gen_txt,language_id='it',audio_prompt_path=vp,",
 "                exaggeration=ap['exaggeration'],cfg_weight=ap['cfg_weight'],",
 "                temperature=ap['temperature'],min_p=ap['min_p'],top_p=ap['top_p'],repetition_penalty=REPETITION_PENALTY)",
 "            wav=wav.detach().cpu()",
 "            if wav.dim()==1: wav=wav.unsqueeze(0)",
 "            if not wav.numel() or not torch.isfinite(wav).all() or wav.abs().max()<1e-6:",
 "                raise ValueError('Audio vuoto, silenzioso o non valido')",
+"            if n_r>1:",
+"                wav,_why=take_last_copy(wav,model.sr,n_r)",
+"                if wav is None: raise ValueError('doppia lettura: '+_why)",
 "            wav=full_process(wav, model.sr)",
 "            # I silenzi interni non devono mascherare una frase saltata.",
 "            frame=max(1,int(model.sr*0.02))",
@@ -1373,7 +2180,7 @@ natural_fn,
 "                print('   SOSPETTO: {:.1f}s per {} parole (atteso >= {:.1f}s) - possibile testo saltato, riprovo'.format(got_dur, words_n, min_dur))",
 "                last_err='audio troppo corto rispetto al testo (possibile salto)'",
 "                continue",
-"            return wav",
+"            return apply_tempo(wav,CUR_RATE[0])",
 "        except Exception as e:",
 "            last_err=e",
 "            print('   ERR tentativo {}: {}'.format(attempt_i+1, e), flush=True)",
@@ -1398,13 +2205,16 @@ natural_fn,
 "    del _warm",
 "except Exception as _warm_err:",
 "    print('Warm-up non riuscito (non blocca la generazione): {}'.format(_warm_err))",
+CHECKPOINT_RUNTIME,
+"initialize_job()",
 "segs=[]; fail=[]",
 "st=time.time()",
 "print('\\n'+'='*55)",
 "print('AVVIO GENERAZIONE [{}]'.format(DEVICE.type.upper()))",
 "print('Pause Naturali: {}'.format('ATTIVE' if NATURAL_PAUSES else 'disattive'))",
+"print('Pause tra frasi: {} (x{})  |  Tempo lettura: x{}'.format('ATTIVE' if INNER_PAUSES else 'disattive',INNER_SCALE,TEMPO))",
 "print('='*55)",
-"for i,(txt,vo,em,ps,tp,ek,jk) in enumerate(tc):",
+"for i,(txt,vo,em,ps,tp,ek,jk,tmf) in enumerate(tc):",
 "    if i>0:",
 "        el=time.time()-st; av=el/i; rm=av*(len(tc)-i)",
 "        eta='  ETA:{:.0f}s'.format(rm)",
@@ -1435,30 +2245,47 @@ natural_fn,
 "    elif vo=='v2' and HAS2: vp=AUDIO_V2",
 "    else:                   vp=AUDIO_V1",
 "    p=pp(em,ek); ok=False",
+"    if SAFE_R and RR.search(txt) and REGEN_CFG is None:",
+"        p,_ch=safe_params(p)",
+"        if _ch: print('   [r] parametri di sicurezza per questo blocco: '+_ch,flush=True)",
+"    if RR.search(txt): print('   Letture per parte: '+' | '.join('{}x'.format(_r) for _,_r in split_reads(txt))); RMERGED.clear()",
+"    CUR_RATE[0]=max(0.80,min(1.15,TEMPO*tmf))",
+"    if abs(CUR_RATE[0]-1.0)>=0.01: print('   tempo lettura: x{:.2f}'.format(CUR_RATE[0]))",
+"    _bk=(tts_txt,vo,em,ek,round(CUR_RATE[0],3))",
+"    _occ=SEEN.get(_bk,0); SEEN[_bk]=_occ+1",
+"    sig=block_sig(tts_txt,vo,em,ek,CUR_RATE[0],_occ)",
 "    attempts=[dict(p) for _ in range(3)]",
+"    if (i+1) in REGEN and REGEN_CFG is not None:",
+"        for _a in attempts: _a['cfg_weight']=REGEN_CFG",
 "    last_err=None",
 "    try:",
-"        wav=generate_recoverable(tts_txt,vp,attempts)",
-"        if tp>0:",
-"            wav=torch.cat([wav,torch.zeros((wav.shape[0],int(model.sr*tp)))],dim=-1)",
-"        segs.append(wav); ok=True",
-"        print('   OK!')",
+"        saved=cached_chunk(i,sig,(i+1) in REGEN)",
+"        if saved is None:",
+"            wav=generate_recoverable(tts_txt,vp,attempts)",
+"            if tp>0:",
+"                wav=torch.cat([wav,torch.zeros((wav.shape[0],int(model.sr*tp)))],dim=-1)",
+"            saved=save_chunk(i,sig,wav)",
+"            del wav",
+"            print('   OK! Blocco salvato.',flush=True)",
+"        else:",
+"            print('   OK! Recuperato dal salvataggio.',flush=True)",
+"        segs.append(saved); ok=True",
 "    except Exception as e:",
 "        last_err=e",
 "    if not ok:",
 "        print('   FALLITO:{}'.format(last_err)); fail.append(i)",
-"if not segs: print('Nessun audio.'); exit(1)",
+"        progress['errors'][str(i+1)]=dict(text=tts_txt,error=str(last_err))",
+"        save_progress()",
 "if fail:",
-"    print('Generazione annullata: chunk falliti {}'.format([n+1 for n in fail]))",
-"    print('Nessun file parziale è stato salvato.')",
-"    exit(1)",
+"    progress['status']='incompleto'; save_progress()",
+"    print('Generazione incompleta: chunk falliti {}'.format([n+1 for n in fail]))",
+"    print('Blocchi riusciti salvati in: {}'.format(job_dir.resolve()))",
+"    print('Premi Genera con lo stesso testo e impostazioni per riprovare solo i blocchi mancanti.')",
+"    print('__CHATTERTEXT_INCOMPLETE__',flush=True)",
+"    exit(3)",
+"if not segs: print('Nessun testo pronunciabile.'); exit(1)",
 "od=pathlib.Path('1.Output'); od.mkdir(exist_ok=True)",
-"used=[]",
-"for fp in od.glob('audiolibro_*.wav'):",
-"    m=re.fullmatch(r'audiolibro_(\\d+)\\.wav',fp.name,re.IGNORECASE)",
-"    if m: used.append(int(m.group(1)))",
-"num=(max(used) if used else 0)+1",
-"out=od/'audiolibro_{:02d}.wav'.format(num)",
+"out=od/('audiolibro_'+job_dir.name+'.wav')",
 "SCENE={}".format(pl(scene)),
 "DIALOG={}".format(pl(dialog)),
 "EMOW={}".format(pl(emow)),
@@ -1521,25 +2348,9 @@ natural_fn,
 "    if mode=='silence': return torch.cat([s1,sil,s2],dim=-1) if sil is not None else torch.cat([s1,s2],dim=-1)",
 "    if mode=='hard': return torch.cat([s1,sil,s2],dim=-1) if sil is not None else torch.cat([s1,s2],dim=-1)",
 "    return cf(s1,s2,sr)",
-"jl=[x[6] for x in tc]",
-"fa=None",
-"for i,seg in enumerate(segs):",
-"    if fa is None: fa=seg; continue",
-"    jt=jl[i-1]; res=asmb(fa,seg,model.sr,jt,existing_pause=tc[i-1][4])",
-"    if res is None:",
-"        if tc[i-1][4]>0:",
-"            # La pausa esplicita è già stata aggiunta al segmento precedente.",
-"            fa=torch.cat([fa,seg],dim=-1); js='tag-pausa'",
-"        else:",
-"            pau=dyn_pause(tc[i-1][0], emo=tc[i-1][2])",
-"            sil=torch.zeros((seg.shape[0],int(model.sr*pau)))",
-"            fa=torch.cat([fa,sil,seg],dim=-1)",
-"            js='auto({:.2f}s)'.format(pau)",
-"    else: fa=res; js=jt if jt else 'auto'",
-"    print(f'   -> join {i}: {js}')",
-"fa=rms_normalize(fa)",
-"ta.save(out,fa,model.sr)",
-"dur=fa.shape[-1]/model.sr; tot=time.time()-st",
+"print('Unione dei blocchi salvati...',flush=True)",
+"dur=assemble_saved(segs,out); tot=time.time()-st",
+"out=pathlib.Path(progress['output'])",
 "print(f'\\n FILE: {out}')",
 "print(f'   Durata: {dur:.1f}s ({dur/60:.1f} min)')",
 "print(f'   Tempo:  {tot:.1f}s ({tot/60:.1f} min)')",
@@ -1553,7 +2364,10 @@ natural_fn,
 "print('\\nProcesso completato!')",
 "print('__CHATTERTEXT_DONE__')",
     ]
-    return "\n".join(L)
+    script = "\n".join(L)
+    base = re.sub(r"chunks=\[[\s\S]*?\n\]\n", "chunks=[]\n", script, count=1)
+    settings_id = hashlib.sha256(base.encode("utf-8")).hexdigest()[:24]
+    return script.replace("@@SETTINGS_ID@@", settings_id)
 
 # =========================================================
 # WIDGET HELPERS
@@ -1664,7 +2478,7 @@ class PresetWindow(tk.Toplevel):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("ChatterText v3.0 + Multilingual V3")
+        self.title("ChatterText v3.3 + Multilingual V3")
         self.geometry("1100x980"); self.minsize(900,700)
         self.configure(bg=C["bg"])
         self._app_icon = None
@@ -1682,6 +2496,10 @@ class App(tk.Tk):
         self.vreadstyle  = tk.StringVar(value="narrativa")
         self.vaggclean   = tk.BooleanVar(value=False)
         self.vnatpauses  = tk.BooleanVar(value=True)   # nuovo v3.0
+        self.vrhythm     = tk.BooleanVar(value=True)   # v3.1: virgole di ritmo
+        self.vinnerpause = tk.BooleanVar(value=True)   # v3.1: pause tra frasi
+        self.vcompare    = tk.BooleanVar(value=False)  # v3.4: confronto [r2] (entrambe le versioni)
+        self.vsafer      = tk.BooleanVar(value=False)   # v3.4: parametri di sicurezza sui blocchi con [r2]
         self._build_ui(); self._detect_device()
 
     # ---- LAYOUT ----
@@ -1743,8 +2561,6 @@ class App(tk.Tk):
         self._hdr(r)
         self._inp_sec(r)
         self._voices_sec(r)
-        from qwen_voice_box import mount
-        mount(self, r, C)
         self._action_bar(r)
         self._stats_sec(r); self._log_sec(r); self._chunks_sec(r)
         self._style_sec(r)
@@ -1893,7 +2709,47 @@ class App(tk.Tk):
                  text="Le pause audio in secondi vengono mantenute: i due sistemi si sommano per la massima naturalezza.",
                  font=FS, fg=C["warning"], bg="#0a1a0a").pack(anchor="w", pady=(4,0))
 
+        rtf = tk.Frame(sec, bg="#1a160a", highlightthickness=1,
+                       highlightbackground=C["warning"], padx=14, pady=10)
+        rtf.pack(fill="x", pady=(12,0))
+        tk.Label(rtf, text="Ritmo e velocità (v3.1)", font=("Segoe UI",10,"bold"),
+                 fg=C["warning"], bg="#1a160a").pack(anchor="w")
+        rtr = sf(rtf, bg="#1a160a"); rtr.pack(fill="x", pady=(6,0))
+        tk.Checkbutton(rtr, text="Virgole di ritmo automatiche", variable=self.vrhythm,
+                       font=FS, fg=C["text"], bg="#1a160a", selectcolor="#1a160a",
+                       activeforeground=C["text"], activebackground="#1a160a",
+                       cursor="hand2").pack(side="left", padx=(0,14))
+        tk.Checkbutton(rtr, text="Pause automatiche tra frasi", variable=self.vinnerpause,
+                       font=FS, fg=C["text"], bg="#1a160a", selectcolor="#1a160a",
+                       activeforeground=C["text"], activebackground="#1a160a",
+                       cursor="hand2").pack(side="left", padx=(0,14))
+        tk.Checkbutton(rtr, text="Confronto [r2]: nell'audio metto entrambe le versioni", variable=self.vcompare,
+                       font=FS, fg=C["text"], bg="#1a160a", selectcolor="#1a160a",
+                       activeforeground=C["text"], activebackground="#1a160a",
+                       cursor="hand2").pack(side="left", padx=(0,14))
+        tk.Checkbutton(rtr, text="Parametri di sicurezza sui blocchi con [r2]", variable=self.vsafer,
+                       font=FS, fg=C["text"], bg="#1a160a", selectcolor="#1a160a",
+                       activeforeground=C["text"], activebackground="#1a160a",
+                       cursor="hand2").pack(side="left", padx=(0,14))
+        rtv = sf(rtf, bg="#1a160a"); rtv.pack(fill="x", pady=(8,0))
+        self.vtempo = self._le(rtv, "Tempo lettura (1.00 = normale)", "1.00")
+        self.vinnerscale = self._le(rtv, "Pause frasi (x)", "1.00")
+        rgr = sf(rtf, bg="#1a160a"); rgr.pack(fill="x", pady=(10,0))
+        self.vregen = self._le(rgr, "Rigenera blocchi (es. 12, 45, 78)", "", wide=True)
+        self.vregencfg = self._le(rgr, "cfg_weight per questi blocchi", "")
+        tk.Label(rtf, text="Dopo ogni generazione trovi accanto al file il suo elenco *_mappa.txt (tempo → blocco → testo). "
+                           "Scrivi i numeri dei blocchi difettosi e premi Genera: si rifanno solo quelli, il resto resta com'è. "
+                           "Per l'accento inglese prova cfg_weight 0.0-0.3. Vale per una sola generazione.",
+                 font=FS, fg=C["text_dim"], bg="#1a160a", anchor="w", justify="left",
+                 wraplength=900).pack(fill="x", pady=(4,0))
+        tk.Label(rtf, text="Tempo < 1 = più lento (0.93-1.00; richiede pip install pytsmod). "
+                           "Tag per blocco: [lento] [lentissimo] [veloce]. Con \"Confronto [r2]\" ogni parte [r2] esce due volte: "
+                           "prima in lettura singola, poi (dopo 2 s di silenzio) in lettura r2; tieni la versione che preferisci.",
+                 font=FS, fg=C["text_dim"], bg="#1a160a", anchor="w").pack(fill="x", pady=(4,0))
+
         prf = sf(sec); prf.pack(fill="x", pady=(10,0))
+        sb_btn(prf, "Copia Prompt REGISTA (tutti i generi)", lambda: self._copy_prompt("regista"),
+               color=C["success"]).pack(side="left", padx=(0,8))
         sb_btn(prf, "Copia Prompt NARRATIVA", lambda: self._copy_prompt("narrativa"),
                color=C["style_narr"]).pack(side="left", padx=(0,8))
         sb_btn(prf, "Copia Prompt POESIA", lambda: self._copy_prompt("poesia"),
@@ -1922,6 +2778,8 @@ class App(tk.Tk):
             self.vexag.set(str(st["exaggeration"]))
             self.vcfg.set(str(st["cfg_weight"]))
             self.vtemp.set(str(st["temperature"]))
+        if hasattr(self, 'vtempo'):
+            self.vtempo.set("{:.2f}".format(st.get("tempo", 1.0)))
         if hasattr(self, 'vminp'):
             self.vminp.set(str(st["min_p"]))
             self.vtopp.set(str(st["top_p"]))
@@ -1931,7 +2789,10 @@ class App(tk.Tk):
             self.vtrim.set(str(st["trim_threshold_db"]))
 
     def _copy_prompt(self, style):
-        if style == "poesia":
+        if style == "regista":
+            self.clipboard_clear(); self.clipboard_append(DIRECTOR_PROMPT)
+            messagebox.showinfo("Copiato!", "Prompt REGISTA v3.2 copiato!\nCompila titolo/autore/genere in cima e incolla il testo in fondo.")
+        elif style == "poesia":
             self.clipboard_clear(); self.clipboard_append(POETRY_PROMPT)
             messagebox.showinfo("Copiato!", "Prompt POESIA v3.0 copiato!")
         else:
@@ -1952,11 +2813,13 @@ class App(tk.Tk):
             p2 = dest / "PROMPT_POESIA_v3.0.txt"
             p1.write_text(GUIDE_PROMPT, encoding="utf-8")
             p2.write_text(POETRY_PROMPT, encoding="utf-8")
+            p3 = dest / "PROMPT_REGISTA_v3.2.txt"
+            p3.write_text(DIRECTOR_PROMPT, encoding="utf-8")
         except OSError as ex:
             messagebox.showerror("Salvataggio non riuscito", "Impossibile salvare i prompt:\n{}".format(ex))
             return
-        messagebox.showinfo("Prompt salvati", "File aggiornati salvati in:\n{}\n\n• {}\n• {}".format(
-            dest, p1.name, p2.name))
+        messagebox.showinfo("Prompt salvati", "File aggiornati salvati in:\n{}\n\n• {}\n• {}\n• {}".format(
+            dest, p1.name, p2.name, p3.name))
 
     def _inp_sec(self, r):
         sec = self._sec(r, "Testo")
@@ -2005,14 +2868,14 @@ class App(tk.Tk):
         )
         self._darken_text_scrollbar(self.txt)
         self.txt.pack(fill="x", pady=(0,10))
-        self.txt.insert("1.0", "Incolla qui il tuo testo (fino a 10000 caratteri)...")
+        self.txt.insert("1.0", "Incolla qui il tuo testo (anche lungo; salvataggio progressivo dei blocchi)...")
         self.txt.bind("<FocusIn>", lambda e: self.txt.delete("1.0","end")
                       if "Incolla qui" in self.txt.get("1.0","end-1c") else None)
-        self.vcc = tk.StringVar(value="0 / 10000")
+        self.vcc = tk.StringVar(value="0 caratteri")
         tk.Label(sec, textvariable=self.vcc, font=FS, fg=C["text_dim"],
                  bg=C["surface"], anchor="e").pack(fill="x")
         self.txt.bind("<KeyRelease>", lambda e: self.vcc.set(
-            "{} / 10000".format(len(self.txt.get("1.0","end-1c")))))
+            "{} caratteri".format(len(self.txt.get("1.0","end-1c")))))
 
     def _param_sec(self, r):
         sec = self._sec(r, "Parametri di Generazione")
@@ -2289,6 +3152,14 @@ class App(tk.Tk):
         tg(rc, [("[e1]","#e67e22","Leggera\n+0.10"),("[e2]","#e84357","Forte\n+0.25"),
                 ("[ep]","#9b59b6","Poetica\n+0.15")])
 
+        sl(rc, "VELOCITÀ DEL BLOCCO (v3.1)")
+        tg(rc, [("[lento]","#3498db","circa -7%"),("[lentissimo]","#2980b9","circa -14%"),
+                ("[veloce]","#e67e22","circa +6%")])
+
+        sl(rc, "LETTURA SINGOLA / DOPPIA (v3.4) - vale dal tag fino al tag successivo o a fine blocco")
+        tg(rc, [("[r1]","#00b894","Lettura normale\n(uso comune,\nin maggioranza)"),("[r2]","#00cec9","Frase intera piu\nespressiva o cambio\ndi tono (raro)"),
+                ("[r3]","#74b9ff","Letta 3 volte,\nsi tiene la 3a"),("[r4]","#a29bfe","Letta 4 volte,\nsi tiene la 4a")])
+
         sl(rc, "GIUNZIONI")
         fj = tk.Frame(rc, bg=C["surface"]); fj.pack(fill="x", pady=(0,6))
         for ci, (tag, col, desc) in enumerate([
@@ -2446,6 +3317,10 @@ class App(tk.Tk):
         if not raw or "Incolla qui" in raw:
             messagebox.showwarning("Attenzione", "Inserisci testo!"); return
 
+        # v3.1: scheda e segnaposto del Prompt Regista non fanno parte del testo
+        raw = re.sub(r"<<<SCHEDA>>>[\s\S]*?<<<FINE SCHEDA>>>", "", raw)
+        raw = re.sub(r"<<<GLOSSARIO>>>[\s\S]*?<<<FINE GLOSSARIO>>>", "", raw)
+        raw = re.sub(r"<<<CONTINUA DA:[^>]*>>>", "", raw).strip()
         has_t = bool(re.search(r"\[inizio\]", raw, re.IGNORECASE))
 
         if has_t:
@@ -2455,6 +3330,10 @@ class App(tk.Tk):
         else:
             with_pauses = newlines_to_pauses(raw)
             norm = normalize_text(with_pauses)
+
+        n_rhythm = 0
+        if self.vrhythm.get():
+            norm, n_rhythm = auto_rhythm(norm)
 
         errs = analyze_text(norm)
         ws = [w for w in norm.split() if w]
@@ -2471,6 +3350,7 @@ class App(tk.Tk):
         if pc:  pts.append("{} pause".format(pc))
         if enc: pts.append("{} enfasi".format(enc))
         if jc:  pts.append("{} giunzioni".format(jc))
+        if n_rhythm: pts.append("{} virgole di ritmo".format(n_rhythm))
 
         # Mostra anteprima pause naturali se attive
         np_active = self.vnatpauses.get()
@@ -2626,6 +3506,10 @@ class App(tk.Tk):
         except: rms = -18
         try: trim = float(self.vtrim.get())
         except: trim = -45
+        try: tempo = max(0.80, min(1.15, float(self.vtempo.get().replace(",", "."))))
+        except: tempo = 1.0
+        try: inner_scale = max(0.2, min(3.0, float(self.vinnerscale.get().replace(",", "."))))
+        except: inner_scale = 1.0
         style_key = self.vreadstyle.get()
         style = READING_STYLES.get(style_key, READING_STYLES["narrativa"])
         pause_scale = style["pause_scale"]
@@ -2642,7 +3526,9 @@ class App(tk.Tk):
             pause_scale=pause_scale, preset_scale=preset_scale,
             aggressive_clean=self.vaggclean.get(),
             natural_pauses=self.vnatpauses.get(), min_p=min_p, top_p=top_p,
-            repetition_penalty=repetition_penalty, seed=seed
+            repetition_penalty=repetition_penalty, seed=seed,
+            tempo=tempo, inner_pauses=self.vinnerpause.get(), inner_scale=inner_scale,
+            compare_r=self.vcompare.get(), safe_r=self.vsafer.get()
         )
 
     def save_script(self):
@@ -2653,8 +3539,6 @@ class App(tk.Tk):
         messagebox.showinfo("Salvato", "Script:\n{}".format(p))
 
     def run_chatterbox(self):
-        if getattr(self, "_qwen_box", None) and self._qwen_box.busy:
-            messagebox.showwarning("GPU occupata", "Attendi o interrompi la generazione Qwen VoiceDesign."); return
         if self._proc and self._proc.poll() is None:
             messagebox.showwarning("In corso", "Generazione già in corso! Premi Stop."); return
         s = self._mk_script()
@@ -2676,17 +3560,22 @@ class App(tk.Tk):
         self.stopbtn.config(state="normal")
         self._t0 = time.time()
         self._chatter_starting = True
+        regen_val = self.vregen.get().strip(); regen_cfg = self.vregencfg.get().strip()
         def _run():
             try:
-                env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"
+                env = os.environ.copy(); env["PYTHONIOENCODING"] = "utf-8"; env["PYTHONUNBUFFERED"] = "1"
+                env["CHATTERTEXT_REGEN"] = regen_val; env["CHATTERTEXT_REGEN_CFG"] = regen_cfg
                 proc = subprocess.Popen([self._chatterbox_python(), str(sf2)], cwd=str(dest),
                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                     text=True, encoding="utf-8", errors="replace", env=env,
                     **HIDDEN_SUBPROCESS)
                 self._proc = proc
                 self._chatter_starting = False
+                self._last_out = None
                 for line in proc.stdout:
                     self._alog(line)
+                    mf = re.match(r"\s*FILE:\s*(.+?)\s*$", line)
+                    if mf: self._last_out = mf.group(1)
                     if "Caricamento Chatterbox" in line:
                         self.after(0, lambda m=model_lbl: self.veta.set("Caricamento modello {}...".format(m)))
                     elif "Modello su" in line:
@@ -2712,9 +3601,14 @@ class App(tk.Tk):
                     self.after(0, lambda: self.veta.set("Totale: {:.1f}s".format(el)))
                     if self.vsound.get():
                         threading.Thread(target=play_sound, daemon=True).start()
-                    self._alog(">>> FILE SALVATO in 1.Output/\n")
+                    self._alog(">>> FILE SALVATO: {}\n".format(self._last_out or "1.Output/"))
+                    if regen_val:
+                        self.after(0, lambda: (self.vregen.set(""), self.vregencfg.set("")))
+                elif rc == 3:
+                    self._alog("Generazione incompleta: i blocchi riusciti sono salvati. Premi Genera con lo stesso testo e impostazioni per riprendere.\n")
+                    self.after(0, lambda: self.veta.set("Incompleto: blocchi salvati, ripresa disponibile"))
                 else:
-                    self._alog("Errore (code {})\n".format(rc))
+                    self._alog("Errore (code {}). I blocchi gia salvati restano disponibili per la ripresa.\n".format(rc))
             except Exception as ex:
                 self._alog("\nErrore: {}\n".format(ex))
             finally:
@@ -2741,10 +3635,10 @@ class App(tk.Tk):
 
     def clear_all(self):
         self.txt.delete("1.0","end")
-        self.txt.insert("1.0", "Incolla qui il tuo testo (fino a 10000 caratteri)...")
+        self.txt.insert("1.0", "Incolla qui il tuo testo (anche lungo; salvataggio progressivo dei blocchi)...")
         self.chunks = []; self.chunk_vars = []
         for v in (self.vwords, self.vchars, self.vchunks, self.verrs): v.set("0")
-        self.vcc.set("0 / 10000")
+        self.vcc.set("0 caratteri")
         self.stats.pack_forget(); self.chunksec.pack_forget(); self.logsec.pack_forget()
         self.stopbtn.config(state="disabled")
         for w in self.cbox.winfo_children(): w.destroy()
@@ -2762,7 +3656,7 @@ class App(tk.Tk):
         self.txt.insert("insert", text)
         self.txt.focus_set()
         self.txt.see("insert")
-        self.vcc.set("{} / 10000".format(len(self.txt.get("1.0", "end-1c"))))
+        self.vcc.set("{} caratteri".format(len(self.txt.get("1.0", "end-1c"))))
 
     def apply_emotion_tag(self):
         voice = self.vtagvoice.get().strip().upper() or "V1"
@@ -2792,7 +3686,7 @@ class App(tk.Tk):
 
         self.txt.focus_set()
         self.txt.see("insert")
-        self.vcc.set("{} / 10000".format(len(self.txt.get("1.0", "end-1c"))))
+        self.vcc.set("{} caratteri".format(len(self.txt.get("1.0", "end-1c"))))
 
     def insert_quick_tag(self):
         tag = self.vquicktag.get().strip()
@@ -2825,7 +3719,7 @@ class App(tk.Tk):
 
         self.txt.focus_set()
         self.txt.see("insert")
-        self.vcc.set("{} / 10000".format(len(self.txt.get("1.0", "end-1c"))))
+        self.vcc.set("{} caratteri".format(len(self.txt.get("1.0", "end-1c"))))
 
     def _browse(self):
         d = filedialog.askdirectory(title="Seleziona cartella Chatterbox")
